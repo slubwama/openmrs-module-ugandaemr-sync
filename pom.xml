@@ -15,6 +15,15 @@
     <name>UgandaemrSync</name>
     <description>no description</description>
 
+    <developers>
+        <developer>
+            <name>Charles Olupot</name>
+        </developer>
+        <developer>
+            <name>Samuel Lubwama</name>
+        </developer>
+    </developers>
+
     <url>https://wiki.openmrs.org/x/FQ4z</url>
 
     <scm>
