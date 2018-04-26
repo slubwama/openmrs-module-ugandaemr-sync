@@ -1,5 +1,5 @@
-org/openmrs/module/ugandaemrsync/api/UgandaEMRSyncServiceTest.class
 org/openmrs/module/ugandaemrsync/SyncProcessorTest.class
-org/openmrs/module/ugandaemrsync/dao/UgandaEMRSyncDaoTest.class
+org/openmrs/module/ugandaemrsync/api/UgandaEMRSyncServiceTest.class
 org/openmrs/module/ugandaemrsync/ugserver/HTTPURLConnectionTest.class
+org/openmrs/module/ugandaemrsync/dao/UgandaEMRSyncDaoTest.class
 org/openmrs/module/ugandaemrsync/ugserver/PostTest.class

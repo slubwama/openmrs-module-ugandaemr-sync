@@ -14,7 +14,6 @@
 package org.openmrs.module.ugandaemrsync.ugserver;
 
 import org.junit.Test;
-import org.openmrs.module.sync.SyncRecord;
 import org.openmrs.module.ugandaemrsync.server.SyncDataRecord;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 
@@ -46,12 +45,4 @@ public class PostTest extends BaseModuleContextSensitiveTest {
 	     Map<String, Object> result = syncDataRecord.syncData(content);
 	     assertNotNull(true);
 	 }*/
-	
-	@Test
-	public void shouldSendSyncRecords() throws Exception {
-		SyncDataRecord syncDataRecord = new SyncDataRecord();
-		int result = syncDataRecord.syncRecords(new ArrayList<SyncRecord>());
-		assertEquals(result, 0);
-	}
-	
 }

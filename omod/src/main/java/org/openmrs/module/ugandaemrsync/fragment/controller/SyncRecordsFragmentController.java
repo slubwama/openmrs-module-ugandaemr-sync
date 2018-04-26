@@ -36,16 +36,11 @@ public class SyncRecordsFragmentController {
 		
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		
-		Session session = Context.getRegisteredComponent("sessionFactory", SessionFactory.class).getCurrentSession();
-		String sql = "SELECT record_id,payload FROM sync_record WHERE state = 'NEW' AND contained_classes REGEXP 'org.openmrs.Encounter|org.openmrs.Obs|org.openmrs.Person|org.openmrs.PersonName|org.openmrs.PersonAddress|org.openmrs.PersonAttribute|org.openmrs.Patient|org.openmrs.PatientIdentifier|org.openmrs.Visit|org.openmrs.EncounterProvider|org.openmrs.Provider|org.openmrs.EncounterRole'";
-		SQLQuery query = session.createSQLQuery(sql);
-		List results = query.list();
-		
 		SyncDataRecord syncDataRecord = new SyncDataRecord();
 		
-		int numberSynced = syncDataRecord.syncRecords(results);
+		List numberSynced = syncDataRecord.syncData();
 		
-		pageModel.put("syncRecords", numberSynced);
+		pageModel.put("syncRecords", numberSynced.size());
 	}
 	
 }

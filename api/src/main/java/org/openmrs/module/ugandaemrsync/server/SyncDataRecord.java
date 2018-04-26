@@ -10,6 +10,7 @@ import org.hibernate.type.StringType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 
 import java.io.IOException;
 import java.util.*;
@@ -48,7 +49,6 @@ public class SyncDataRecord {
 					Integer uuid = Integer.valueOf(String.valueOf(row[0]));
 					String success = String.valueOf(response.get("response"));
 					if (success.equalsIgnoreCase("successful")) {
-						ugandaEMRRecord.updateSyncedRecord(uuid);
 						size += 1;
 					}
 				}
@@ -99,7 +99,7 @@ public class SyncDataRecord {
 	
 	private List getDatabaseRecord(String query, String from, String to, int datesToBeReplaced, List<String> columns) {
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-		
+		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 		String facilityId = syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
 		String lastSyncDate = syncGlobalProperties.getGlobalProperty(LAST_SYNC_DATE);
 		
@@ -113,12 +113,8 @@ public class SyncDataRecord {
 		} else {
 			finalQuery = String.format(query, facilityId, from, to);
 		}
-		Session session = Context.getRegisteredComponent("sessionFactory", SessionFactory.class).getCurrentSession();
-		SQLQuery sqlQuery = session.createSQLQuery(finalQuery);
-		for (String column : columns) {
-			sqlQuery.addScalar(column, StringType.INSTANCE);
-		}
-		return sqlQuery.list();
+		List list = ugandaEMRSyncService.getFinalList(columns, finalQuery);
+		return list;
 	}
 	
 	private List getDatabaseRecord(String query) {
@@ -177,13 +173,14 @@ public class SyncDataRecord {
 	}
 	
 	public List syncData() {
+		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 		
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		
 		String lastSyncDate = syncGlobalProperties.getGlobalProperty(SyncConstant.LAST_SYNC_DATE);
 		String totalsQuery = SyncConstant.TABLES_TOTAL_QUERY;
 		
-		List totals = getDatabaseRecord(totalsQuery.replaceAll("lastSync", lastSyncDate));
+		List totals = ugandaEMRSyncService.getDatabaseRecord(totalsQuery.replaceAll("lastSync", lastSyncDate));
 		
 		Integer max = Integer.valueOf(syncGlobalProperties.getGlobalProperty(SyncConstant.MAX_NUMBER_OF_ROWS));
 		

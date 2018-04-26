@@ -16,6 +16,8 @@ import org.openmrs.module.ugandaemrsync.Item;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 
+import java.util.List;
+
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
 	
 	UgandaEMRSyncDao dao;
@@ -48,5 +50,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		}
 		
 		return dao.saveItem(item);
+	}
+	
+	@Override
+	public List getDatabaseRecord(String query) {
+		return dao.getDatabaseRecord(query);
+	}
+	
+	@Override
+	public List getFinalList(List<String> columns, String finalQuery) {
+		return dao.getFinalResults(columns, finalQuery);
 	}
 }

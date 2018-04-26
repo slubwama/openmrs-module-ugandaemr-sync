@@ -12,30 +12,6 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
- 
- 	<!-- Uncomment the changeset below if you want to make the Item class persistable, see also Item and UgandaemrSyncDaoTest -->
- 	<!--
-	<changeSet id="ugandaemrsync-2016-08-02-12-21" author="raff">
-		<preConditions onFail="MARK_RAN">
-			<not><tableExists tableName="ugandaemrsync_item"/></not>
-		</preConditions>
-		<comment>
-			Creating the ugandaemrsync_item table
-		</comment>
-		<createTable tableName="ugandaemrsync_item">
-			<column name="ugandaemrsync_item_id" type="int" autoIncrement="true">
-				<constraints primaryKey="true" nullable="false"/>
-			</column>
-			<column name="uuid" type="char(38)">
-				<constraints nullable="false" unique="true"></constraints>
-			</column>
-			<column name="owner" type="int" />
-			<column name="description" type="varchar(255)" />
-		</createTable>
-        <addForeignKeyConstraint constraintName="ugandaemrsync_item_owner_fk" baseTableName="ugandaemrsync_item" baseColumnNames="owner"  referencedTableName="users"
-                                 referencedColumnNames="user_id" />
-    </changeSet> -->
-
     <changeSet id="20170221-1345" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">

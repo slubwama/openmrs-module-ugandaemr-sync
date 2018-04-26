@@ -40,12 +40,6 @@
             </dependency>
             <dependency>
                 <groupId>org.openmrs.module</groupId>
-                <artifactId>sync-api</artifactId>
-                <version>${syncModuleVersion}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.openmrs.module</groupId>
                 <artifactId>appui-omod</artifactId>
                 <version>${appuiVersion}</version>
                 <scope>provided</scope>
@@ -93,7 +87,6 @@
 
     <properties>
         <openmrsPlatformVersion>1.11.6</openmrsPlatformVersion>
-        <syncModuleVersion>1.3</syncModuleVersion>
         <appuiVersion>1.7</appuiVersion>
     </properties>
 </project>

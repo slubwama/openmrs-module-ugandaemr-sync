@@ -9,6 +9,6 @@ org/openmrs/module/ugandaemrsync/api/impl/UgandaEMRSyncServiceImpl.class
 org/openmrs/module/ugandaemrsync/server/SyncGlobalProperties.class
 org/openmrs/module/ugandaemrsync/SyncSetting.class
 org/openmrs/module/ugandaemrsync/api/UgandaEMRSyncService.class
-org/openmrs/module/ugandaemrsync/api/dao/UgandaEMRSyncDao.class
 org/openmrs/module/ugandaemrsync/SyncTask.class
+org/openmrs/module/ugandaemrsync/api/dao/UgandaEMRSyncDao.class
 org/openmrs/module/ugandaemrsync/UgandaEMRSyncConfig.class

@@ -16,6 +16,8 @@ import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.module.ugandaemrsync.Item;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * The main service of this module, which is exposed for other modules. See
  * moduleApplicationContext.xml on how it is wired up.
@@ -45,4 +47,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	@Authorized(UgandaEMRSyncConfig.MODULE_PRIVILEGE)
 	@Transactional
 	Item saveItem(Item item) throws APIException;
+	
+	/**
+	 * @param query
+	 * @return List
+	 */
+	public List getDatabaseRecord(String query);
+	
+	public List getFinalList(List<String> columns, String query);
 }
