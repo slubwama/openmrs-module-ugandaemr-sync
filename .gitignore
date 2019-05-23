@@ -6,4 +6,5 @@ omod/target/
 omod/*.iml
 ugandaemr.sync.iml
 api/*.iml
+ugandaemrsync.iml
 target/

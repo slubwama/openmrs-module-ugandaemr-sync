@@ -69,7 +69,7 @@ public class SyncDataRecord {
 	 * @return
 	 * @throws Exception
 	 */
-	private Map syncData(String syncRecord) throws Exception {
+	public Map syncData(String syncRecord) throws Exception {
 		String contentTypeXML = SyncConstant.XML_CONTENT_TYPE;
 		
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();

@@ -1,5 +1,5 @@
-/Users/lubwamasamuel/Projects/openmrs/modules/ugandaemr/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/dao/UgandaEMRSyncDaoTest.java
-/Users/lubwamasamuel/Projects/openmrs/modules/ugandaemr/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/SyncProcessorTest.java
-/Users/lubwamasamuel/Projects/openmrs/modules/ugandaemr/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/api/UgandaEMRSyncServiceTest.java
-/Users/lubwamasamuel/Projects/openmrs/modules/ugandaemr/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/ugserver/HTTPURLConnectionTest.java
-/Users/lubwamasamuel/Projects/openmrs/modules/ugandaemr/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/ugserver/PostTest.java
+/Users/lubwamasamuel/Projects/ugandaemr/modules/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/api/UgandaEMRSyncServiceTest.java
+/Users/lubwamasamuel/Projects/ugandaemr/modules/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/ugserver/HTTPURLConnectionTest.java
+/Users/lubwamasamuel/Projects/ugandaemr/modules/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/SyncProcessorTest.java
+/Users/lubwamasamuel/Projects/ugandaemr/modules/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/dao/UgandaEMRSyncDaoTest.java
+/Users/lubwamasamuel/Projects/ugandaemr/modules/openmrs-module-ugandaemr-sync/api/src/test/java/org/openmrs/module/ugandaemrsync/ugserver/PostTest.java
