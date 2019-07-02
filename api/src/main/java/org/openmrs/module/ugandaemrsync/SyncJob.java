@@ -7,14 +7,9 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 /**
  * Created by lubwamasamuel on 21/02/2017.
  */
-public class SyncTask extends AbstractTask {
+public class SyncJob extends AbstractTask {
 	
 	public void execute() {
-		Context.openSession();
-		if (!Context.isAuthenticated()) {
-			authenticate();
-		}
-		
 		SyncDataRecord syncDataRecord = new SyncDataRecord();
 		
 		syncDataRecord.syncData();

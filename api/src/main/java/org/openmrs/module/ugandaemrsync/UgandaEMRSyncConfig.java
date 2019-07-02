@@ -18,4 +18,28 @@ import org.springframework.stereotype.Component;
 public class UgandaEMRSyncConfig {
 	
 	public final static String MODULE_PRIVILEGE = "UgandaemrSync Privilege";
+	
+	public static final String MIRTH_URL = "http://mirth-tcp.globalhealthapp.net:6001";
+	
+	public static final String GOOGLE_COM = "http://www.google.com";
+	
+	public static final String SERVER_URL = "http://mirth-tcp.globalhealthapp.net";
+	
+	public static final String GOOGLE_SUCCESS = "Successful connection to the internet.";
+	
+	public static final String MIRHT_SUCCESS = "Successfully established connecton to Mirth server.";
+	
+	public static final String GOOGLE_FAILED = "Cannot establish internet connectivity.";
+	
+	public static final String MIRTH_FAILED = "Cannot establish connection to mirth server.";
+	
+	public static final String MIRTH_USERNAME = "admin";
+	
+	public static final String MIRTH_PASSWORD = "admin";
+	
+	public static final String HEADER_EMR_DATE = "x-emr-date";
+	
+	public static final String FACILITY_UUID = "ugandaemr.dhis2.organizationuuid";
+	
+	public static String EndPoint = "";
 }

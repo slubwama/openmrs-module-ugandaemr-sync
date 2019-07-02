@@ -14,6 +14,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.openmrs.module</groupId>
             <artifactId>ugandaemrsync-api</artifactId>
             <version>1.0.0-SNAPSHOT</version>

@@ -14,6 +14,8 @@ import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.module.ugandaemrsync.Item;
+import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -48,11 +50,37 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	@Transactional
 	Item saveItem(Item item) throws APIException;
 	
+	List<SyncTaskType> getAllSyncTaskType() throws APIException;
+	
+	@Transactional
+	SyncTaskType getSyncTaskTypeByUUID(String uuid) throws APIException;
+	
+	/**
+	 * @param syncTaskType
+	 * @return
+	 * @throws APIException
+	 */
+	@Transactional
+	SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) throws APIException;
+	
+	/**
+	 * @param syncTask
+	 * @return
+	 * @throws APIException
+	 */
+	@Transactional
+	SyncTask saveSyncTask(SyncTask syncTask) throws APIException;
+	
 	/**
 	 * @param query
-	 * @return List
+	 * @return
 	 */
 	public List getDatabaseRecord(String query);
 	
+	/**
+	 * @param columns
+	 * @param query
+	 * @return
+	 */
 	public List getFinalList(List<String> columns, String query);
 }

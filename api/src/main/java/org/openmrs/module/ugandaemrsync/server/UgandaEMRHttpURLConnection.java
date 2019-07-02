@@ -8,6 +8,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.Location;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.context.Context;
+import sun.net.www.protocol.https.HttpsURLConnectionImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,10 +17,12 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 public class UgandaEMRHttpURLConnection {
 	
@@ -28,7 +31,14 @@ public class UgandaEMRHttpURLConnection {
 	
 	private final String USER_AGENT = "Mozilla/5.0";
 	
-	// HTTP GET request
+	/**
+	 * HTTP GET request
+	 * 
+	 * @param content
+	 * @param protocol
+	 * @return
+	 * @throws Exception
+	 */
 	public HttpURLConnection sendGet(String content, String protocol) throws Exception {
 		
 		URL obj = new URL(protocol + content);
@@ -44,10 +54,24 @@ public class UgandaEMRHttpURLConnection {
 		
 	}
 	
+	/**
+	 * Checking if there is a connection
+	 * 
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
 	public int getCheckConnection(String url) throws Exception {
 		return sendGet(url, SyncConstant.SERVER_PROTOCOL_PLACE_HOLDER).getResponseCode();
 	}
 	
+	/**
+	 * Getting Response String
+	 * 
+	 * @param bufferedReader
+	 * @return
+	 * @throws IOException
+	 */
 	public StringBuffer getResponseString(BufferedReader bufferedReader) throws IOException {
 		String inputLine;
 		
@@ -59,48 +83,71 @@ public class UgandaEMRHttpURLConnection {
 		return response;
 	}
 	
-	// HTTP POST request
-	
-	public Map sendPostBy(String contentType, String content, String facilityId, String url) throws Exception {
+	/**
+	 * HTTP POST request
+	 * 
+	 * @param contentType
+	 * @param content
+	 * @param facilityId
+	 * @param url
+	 * @param username
+	 * @param password
+	 * @return
+	 * @throws Exception
+	 */
+	public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username,
+	        String password) throws Exception {
 		
 		try {
 			URL url1 = new URL(url);
-			URLConnection con = url1.openConnection();
+			URLConnection urlConnection = url1.openConnection();
+			
+			if (username != "" && password != null) {
+				String encoded = Base64.getEncoder().encodeToString(
+				    (username + ":" + password).getBytes(StandardCharsets.UTF_8)); //Java 8
+				urlConnection.setRequestProperty("Authorization", "Basic " + encoded);
+			}
+			
+			if (facilityId != "") {
+				urlConnection.setRequestProperty("Ugandaemr-Sync-Facility-Id", facilityId);
+			}
 			
 			// specify that we will send output and accept input
-			con.setDoInput(true);
-			con.setDoOutput(true);
-			con.setConnectTimeout(20000); // long timeout, but not infinite
-			con.setReadTimeout(20000);
-			con.setUseCaches(false);
-			con.setDefaultUseCaches(false);
+			urlConnection.setDoInput(true);
+			urlConnection.setDoOutput(true);
+			urlConnection.setConnectTimeout(20000); // long timeout, but not infinite
+			urlConnection.setReadTimeout(20000);
+			urlConnection.setUseCaches(false);
+			urlConnection.setDefaultUseCaches(false);
 			
 			// tell the web server what we are sending
-			con.setRequestProperty("Content-Type", contentType);
-			con.setRequestProperty("User-Agent", USER_AGENT);
-			con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-			if (facilityId == null) {
-				facilityId = "";
-			}
-			con.setRequestProperty("Ugandaemr-Sync-Facility-Id", facilityId);
+			urlConnection.setRequestProperty("Content-Type", contentType);
+			urlConnection.setRequestProperty("User-Agent", USER_AGENT);
+			urlConnection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 			
-			OutputStreamWriter writer = new OutputStreamWriter(con.getOutputStream());
+			OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream());
 			writer.write(content);
 			writer.flush();
 			writer.close();
 			
+			Map map = new HashMap();
+			int responseCode = ((HttpsURLConnectionImpl) urlConnection).getResponseCode();
 			// reading the response
-			InputStreamReader reader = new InputStreamReader(con.getInputStream());
-			StringBuilder buf = new StringBuilder();
-			char[] cbuf = new char[2048];
-			int num;
-			while (-1 != (num = reader.read(cbuf))) {
-				buf.append(cbuf, 0, num);
+			if (responseCode == CONNECTION_SUCCESS) {
+				InputStreamReader reader = new InputStreamReader(urlConnection.getInputStream());
+				StringBuilder buf = new StringBuilder();
+				char[] cbuf = new char[2048];
+				int num;
+				while (-1 != (num = reader.read(cbuf))) {
+					buf.append(cbuf, 0, num);
+				}
+				String result = buf.toString();
+				
+				ObjectMapper mapper = new ObjectMapper();
+				map = mapper.readValue(result, Map.class);
+			} else {
+				map.put("responseCode", responseCode);
 			}
-			String result = buf.toString();
-			
-			ObjectMapper mapper = new ObjectMapper();
-			Map map = mapper.readValue(result, Map.class);
 			return map;
 		}
 		catch (Throwable t) {
@@ -109,20 +156,36 @@ public class UgandaEMRHttpURLConnection {
 		return null;
 	}
 	
-	public Map sendPostBy(String url, String data) throws Exception {
+	/**
+	 * Send Post
+	 * 
+	 * @param url
+	 * @param data
+	 * @param facilityIdRequired
+	 * @return
+	 * @throws Exception
+	 */
+	public Map sendPostBy(String url, String data, boolean facilityIdRequired) throws Exception {
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		String contentTypeJSON = SyncConstant.JSON_CONTENT_TYPE;
-		
 		String serverIP = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_IP);
 		String serverProtocol = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_PROTOCOL);
-		String facilitySyncId = syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
+		String facilitySyncId = "";
+		if (facilityIdRequired) {
+			syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
+		}
 		String facilityURL = serverProtocol + serverIP + "/" + url;
 		
-		return sendPostBy(contentTypeJSON, data, facilitySyncId, facilityURL);
+		return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, facilityURL,
+		    syncGlobalProperties.getGlobalProperty(SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(SERVER_PASSWORD));
 	}
 	
-	/*Request for facility Id*/
-	
+	/**
+	 * Request for facility Id
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	public String requestFacilityId() throws Exception {
 		LocationService service = Context.getLocationService();
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
@@ -135,7 +198,7 @@ public class UgandaEMRHttpURLConnection {
 		
 		String jsonInString = mapper.writeValueAsString(facility);
 		
-		Map facilityMap = sendPostBy("api/facility", jsonInString);
+		Map facilityMap = sendPostBy("api/facility", jsonInString, true);
 		
 		String uuid = String.valueOf(facilityMap.get("uuid"));
 		

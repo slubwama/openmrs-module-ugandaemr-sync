@@ -34,75 +34,54 @@
         </require_module>
     </require_modules>
 
-    <!-- Extensions -->
-    <extension>
-        <point>org.openmrs.admin.list</point>
-        <class>org.openmrs.module.ugandaemrsync.extension.html.AdminList</class>
-    </extension>
-
     <aware_of_modules>
         <aware_of_module>org.openmrs.module.legacyui</aware_of_module>
     </aware_of_modules>
 
-
-    <!-- AOP
-    <advice>
-        <point>org.openmrs.api.FormService</point>
-        <class>@MODULE_PACKAGE@.advice.DuplicateFormAdvisor</class>
-    </advice>
-     /AOP -->
-
-
-    <!-- Required Privileges
-    <privilege>
-        <name>Form Entry</name>
-        <description>Allows user to access Form Entry pages/functions</description>
-    </privilege>
-     /Required Privileges -->
-
-
-    <!-- Required Global Properties
     <globalProperty>
-        <property>@MODULE_ID@.someProperty</property>
+        <property>ugandaemrsync.server.username</property>
         <defaultValue></defaultValue>
         <description>
-            A description of the global property goes here.  The description
-            should explain enough for administrators to understand the purpose
-            and possible values for the global property.
+            This is the username for server that the system would like to connect to
         </description>
     </globalProperty>
-    /Required Global Properties -->
 
-    <!--
-    <dwr>
-        <allow>
-            <create creator="new" javascript="DWRFormEntryService">
-                <param name="class" value="org.openmrs.module.@MODULE_ID@.web.DWRFormEntryService"/>
-                <include method="enterForm"/>
-            </create>
-        </allow>
-
-        <signatures>
-            <![CDATA[
-            import @MODULE_PACKAGE@.web.DWRFormEntryService;
-            DWRFormEntryService.enterForm(Integer patientId, Integer formId, boolean useEncounter, List<String> fields);
-            ]]>
-        </signatures>
-    </dwr>
-    -->
-
-    <!-- Servlets -->
-    <!-- Accessed through the url /pageContext()/moduleServlet/<moduleId>/<servlet-name>
-    <servlet>
-        <servlet-name>formDownload</servlet-name>
-        <servlet-class>@MODULE_PACKAGE@.web.FormDownloadServlet</servlet-class>
-    </servlet>
-    -->
-    <!-- /Servlets -->
-
-
+    <globalProperty>
+        <property>ugandaemrsync.server.password</property>
+        <defaultValue></defaultValue>
+        <description>
+            This is the password for server that the system would like to connect to
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
+
+    <sync_task_type>
+        <sync_task_type_id>1</sync_task_type_id>
+        <name>Encounter</name>
+        <creator>1</creator>
+        <date_created>2019-07-01 13:17:11</date_created>
+        <voided>0</voided>
+        <uuid>3551ca84-06c0-432b-9064-fcfeefd6f4ec</uuid>
+    </sync_task_type>
+
+    <sync_task_type>
+        <sync_task_type_id>2</sync_task_type_id>
+        <name>Observation</name>
+        <creator>1</creator>
+        <date_created>2019-07-01 13:17:11</date_created>
+        <voided>0</voided>
+        <uuid>71deaf48-0247-46a3-a0b5-971a6f669d52</uuid>
+    </sync_task_type>
+
+    <sync_task_type>
+        <sync_task_type_id>3</sync_task_type_id>
+        <name>Patient Attribute</name>
+        <creator>1</creator>
+        <date_created>2019-07-01 13:17:11</date_created>
+        <voided>0</voided>
+        <uuid>392ae412-96ec-417d-9e80-0b3f33c25fe1</uuid>
+    </sync_task_type>
     <messages>
         <lang>en</lang>
         <file>messages.properties</file>

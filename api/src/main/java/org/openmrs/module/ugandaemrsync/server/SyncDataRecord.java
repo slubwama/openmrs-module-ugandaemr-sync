@@ -1,12 +1,10 @@
 package org.openmrs.module.ugandaemrsync.server;
 
-import com.google.common.base.Joiner;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.type.StringType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
@@ -15,8 +13,7 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import java.io.IOException;
 import java.util.*;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -87,7 +84,9 @@ public class SyncDataRecord {
 			
 			facilitySyncId = uuid.toString();
 			
-			return ugandaEMRHttpURLConnection.sendPostBy(contentTypeXML, syncRecord, facilitySyncId, url);
+			return ugandaEMRHttpURLConnection.sendPostByWithBasicAuth(contentTypeXML, syncRecord, facilitySyncId, url,
+			    syncGlobalProperties.getGlobalProperty(SERVER_USERNAME),
+			    syncGlobalProperties.getGlobalProperty(SERVER_USERNAME));
 			
 		}
 		catch (IllegalArgumentException exception) {
@@ -126,7 +125,6 @@ public class SyncDataRecord {
 	public static Map<String, String> convertListOfMapsToJsonString(List list, List<String> columns) throws IOException {
 		JSONArray result = new JSONArray();
 		Iterator it = list.iterator();
-		List<String> valuesToBeUpdated = new ArrayList<String>();
 		Map<String, String> vals = new HashMap<String, String>();
 		while (it.hasNext()) {
 			Object rows[] = (Object[]) it.next();
@@ -139,7 +137,6 @@ public class SyncDataRecord {
 			result.put(row);
 		}
 		vals.put("json", result.toString());
-		vals.put("updateValues", Joiner.on(",").join(valuesToBeUpdated));
 		return vals;
 	}
 	
@@ -152,7 +149,7 @@ public class SyncDataRecord {
 			List records = getDatabaseRecord(query, String.valueOf(offset), String.valueOf(max), datesToBeReplaced, columns);
 			Map<String, String> data = SyncDataRecord.convertListOfMapsToJsonString(records, columns);
 			String json = data.get("json");
-			ugandaEMRHttpURLConnection.sendPostBy(url, json);
+			ugandaEMRHttpURLConnection.sendPostBy(url, json, true);
 			if (offset >= mySize || mySize <= max) {
 				entireListNotProcessed = false;
 			} else {

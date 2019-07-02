@@ -23,6 +23,10 @@ public class SyncConstant {
 	
 	public static final String SERVER_IP = "ugandaemrsync.serverIP";
 	
+	public static final String SERVER_USERNAME = "ugandaemrsync.server.username";
+	
+	public static final String SERVER_PASSWORD = "ugandaemrsync.server.password";
+	
 	public static final String HEALTH_CENTER_SYNC_ID = "ugandaemrsync.healthCenterSyncId";
 	
 	public static final String SERVER_PROTOCOL = "ugandaemrsync.protocol";
@@ -408,4 +412,7 @@ public class SyncConstant {
 	
 	public static List<String> FINGERPRINT_COLUMNS = Arrays.asList("patient", "finger", "fingerprint", "date_created",
 	    "facility", "state");
+	
+	public static final String VIRAL_LOAD_ENCOUNTER_QUERY = "select * from encounter inner join encounter_type on (encounter.encounter_type=encounter_type.encounter_type_id) where encounter_type.uuid='077c43ee-9745-11e9-bc42-526af7764f64'";
+	
 }
