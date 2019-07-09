@@ -23,7 +23,7 @@ import java.util.Map;
  * Posts Viral load data to the central server
  */
 
-public class SendViralLoadRequestTaskToCentralServer extends AbstractTask {
+public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
 	
 	protected Log log = LogFactory.getLog(getClass());
 	

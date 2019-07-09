@@ -1,9 +1,15 @@
 package org.openmrs.module.ugandaemrsync.model;
 
 import org.openmrs.BaseOpenmrsData;
-import org.openmrs.User;
 
-import javax.persistence.*;
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.util.Date;
 
 @Entity(name = "ugandaemrsync.SyncTask")

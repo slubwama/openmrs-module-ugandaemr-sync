@@ -6,7 +6,7 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 /**
  *A Task to Sync all data to the central server.
  */
-public class SendAllDataTaskCentralServer extends AbstractTask {
+public class SendAllDataCentralServerTask extends AbstractTask {
 	
 	public void execute() {
 		SyncDataRecord syncDataRecord = new SyncDataRecord();

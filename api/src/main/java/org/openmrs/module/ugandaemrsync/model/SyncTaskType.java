@@ -2,7 +2,13 @@ package org.openmrs.module.ugandaemrsync.model;
 
 import org.openmrs.BaseOpenmrsData;
 
-import javax.persistence.*;
+import javax.persistence.Basic;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+
 
 @Entity(name = "ugandaemrsync.SyncTaskType")
 @Table(name = "sync_task_type")

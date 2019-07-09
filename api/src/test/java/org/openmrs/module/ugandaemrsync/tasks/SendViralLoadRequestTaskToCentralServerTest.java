@@ -31,11 +31,11 @@ public class SendViralLoadRequestTaskToCentralServerTest extends BaseModuleConte
 		return super.getRuntimeProperties();
 	}
 	
-	private SendViralLoadRequestTaskToCentralServer sendViralLoadRequestTaskToCentralServer;
+	private SendViralLoadRequestToCentralServerTask sendViralLoadRequestTaskToCentralServer;
 	
 	@Before
 	public void setUp() {
-		sendViralLoadRequestTaskToCentralServer = new SendViralLoadRequestTaskToCentralServer();
+		sendViralLoadRequestTaskToCentralServer = new SendViralLoadRequestToCentralServerTask();
 	}
 	
 	@Test
