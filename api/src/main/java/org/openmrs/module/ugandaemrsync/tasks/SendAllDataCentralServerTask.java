@@ -4,7 +4,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncDataRecord;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 /**
- *A Task to Sync all data to the central server.
+ * A Task to Sync all data to the central server.
  */
 public class SendAllDataCentralServerTask extends AbstractTask {
 	

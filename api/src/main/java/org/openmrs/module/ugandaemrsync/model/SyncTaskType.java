@@ -9,7 +9,6 @@ import javax.persistence.Table;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
-
 @Entity(name = "ugandaemrsync.SyncTaskType")
 @Table(name = "sync_task_type")
 public class SyncTaskType extends BaseOpenmrsData {

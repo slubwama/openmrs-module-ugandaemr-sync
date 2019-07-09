@@ -2,7 +2,6 @@ package org.openmrs.module.ugandaemrsync.model;
 
 import org.openmrs.BaseOpenmrsData;
 
-
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;

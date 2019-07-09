@@ -12,11 +12,11 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
-    <changeSet id="ugandaemr-06272019-1637" author="slubwama">
+    <changeSet id="ugandaemrsync-06272019-1637" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM scheduler_task_config
-                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendViralLoadRequestTaskToCentralServer'
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendViralLoadRequestToCentralServerTask'
             </sqlCheck>
         </preConditions>
         <comment>Sending Viral Load Request to Central Server Task</comment>
@@ -33,7 +33,6 @@
             <column name="started" value="1"/>
             <column name="uuid" value="5eec5417-6a6d-4598-a7a9-03e27ca4cb91" />
         </insert>
-
     </changeSet>
 
     <changeSet id="20170221-1345" author="slubwama" dbms="mysql">
@@ -58,7 +57,7 @@
         </insert>
     </changeSet>
 
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-1">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-1">
         <createTable tableName="sync_task">
             <column defaultValueNumeric="0" name="sync_task_id" type="INT">
                 <constraints primaryKey="true"/>
@@ -90,7 +89,7 @@
             <column name="uuid" type="VARCHAR(38)"/>
         </createTable>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-2">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-2">
         <createTable tableName="sync_task_type">
             <column defaultValueNumeric="0" name="sync_task_type_id" type="INT">
                 <constraints primaryKey="true" unique="true"/>
@@ -107,60 +106,60 @@
             <column name="uuid" type="VARCHAR(38)"/>
         </createTable>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-3">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-3">
         <createIndex indexName="sync_task__creator_index" tableName="sync_task">
             <column name="creator"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-4">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-4">
         <createIndex indexName="sync_task_changed_by_index" tableName="sync_task">
             <column name="changed_by"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-5">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-5">
         <createIndex indexName="sync_task_type_changed_by_index" tableName="sync_task_type">
             <column name="changed_by"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-6">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-6">
         <createIndex indexName="sync_task_type_creator_index" tableName="sync_task_type">
             <column name="creator"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-7">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-7">
         <createIndex indexName="sync_task_type_id_fk" tableName="sync_task">
             <column defaultValueNumeric="0" name="sync_task_type"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-8">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-8">
         <createIndex indexName="sync_task_type_voided_by_index" tableName="sync_task_type">
             <column name="voided_by"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-9">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-9">
         <createIndex indexName="sync_task_voided_by_index" tableName="sync_task">
             <column name="voided_by"/>
         </createIndex>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-10">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-10">
         <addForeignKeyConstraint baseColumnNames="sync_task_type" baseTableName="sync_task" constraintName="sync_task_type_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="sync_task_type_id" referencedTableName="sync_task_type"/>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-11">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-11">
         <addForeignKeyConstraint baseColumnNames="creator" baseTableName="sync_task_type" constraintName="sync_task_type_users_user_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-12">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-12">
         <addForeignKeyConstraint baseColumnNames="changed_by" baseTableName="sync_task_type" constraintName="sync_task_type_users_user_id_fk_2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-13">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-13">
         <addForeignKeyConstraint baseColumnNames="voided_by" baseTableName="sync_task_type" constraintName="sync_task_type_users_user_id_fk_3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-14">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-14">
         <addForeignKeyConstraint baseColumnNames="creator" baseTableName="sync_task" constraintName="sync_task_users_user_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-15">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-15">
         <addForeignKeyConstraint baseColumnNames="changed_by" baseTableName="sync_task" constraintName="sync_task_users_user_id_fk_2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="lubwamasamuel" id="ugandaemrsync-1561871469104-16">
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-16">
         <addForeignKeyConstraint baseColumnNames="voided_by" baseTableName="sync_task" constraintName="sync_task_users_user_id_fk_3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
 </databaseChangeLog>

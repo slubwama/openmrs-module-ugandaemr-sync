@@ -76,7 +76,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
 		JSONObject row = new JSONObject();
 		Map<String, String> vals = new HashMap<String, String>();
 		
-		row.put("facility_Code", getHealthCenterCode());
+		row.put("facility_code", getHealthCenterCode());
 		row.put("destination_id", "UgandaEMR");
 		row.put("sample_id", encounter.getEncounterId().toString());
 		row.put("phlebotomist_contact", "None");

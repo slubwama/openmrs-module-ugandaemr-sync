@@ -17,7 +17,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
 
-
 /**
  * Created by lubwamasamuel on 07/11/2016.
  */
