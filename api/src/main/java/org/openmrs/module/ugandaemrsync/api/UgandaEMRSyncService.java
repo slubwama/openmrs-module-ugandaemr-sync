@@ -13,7 +13,6 @@ import org.openmrs.annotation.Authorized;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
-import org.openmrs.module.ugandaemrsync.Item;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,31 +26,18 @@ import java.util.List;
 public interface UgandaEMRSyncService extends OpenmrsService {
 	
 	/**
-	 * Returns an item by uuid. It can be called by any authenticated user. It is fetched in read
-	 * only transaction.
+	 * Getting all Sync Task Types
 	 * 
+	 * @return
+	 * @throws APIException
+	 */
+	List<SyncTaskType> getAllSyncTaskType() throws APIException;
+	
+	/**
 	 * @param uuid
 	 * @return
 	 * @throws APIException
 	 */
-	@Authorized()
-	@Transactional(readOnly = true)
-	Item getItemByUuid(String uuid) throws APIException;
-	
-	/**
-	 * Saves an item. Sets the owner to superuser, if it is not set. It can be called by users with
-	 * this module's privilege. It is executed in a transaction.
-	 * 
-	 * @param item
-	 * @return
-	 * @throws APIException
-	 */
-	@Authorized(UgandaEMRSyncConfig.MODULE_PRIVILEGE)
-	@Transactional
-	Item saveItem(Item item) throws APIException;
-	
-	List<SyncTaskType> getAllSyncTaskType() throws APIException;
-	
 	@Transactional
 	SyncTaskType getSyncTaskTypeByUUID(String uuid) throws APIException;
 	

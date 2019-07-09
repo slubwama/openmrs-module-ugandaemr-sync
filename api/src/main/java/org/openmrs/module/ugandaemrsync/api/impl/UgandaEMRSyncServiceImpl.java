@@ -12,7 +12,6 @@ package org.openmrs.module.ugandaemrsync.api.impl;
 import org.openmrs.api.APIException;
 import org.openmrs.api.UserService;
 import org.openmrs.api.impl.BaseOpenmrsService;
-import org.openmrs.module.ugandaemrsync.Item;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
@@ -40,30 +39,30 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		this.userService = userService;
 	}
 	
-	@Override
-	public Item getItemByUuid(String uuid) throws APIException {
-		return dao.getItemByUuid(uuid);
-	}
-	
-	@Override
-	public Item saveItem(Item item) throws APIException {
-		if (item.getOwner() == null) {
-			item.setOwner(userService.getUser(1));
-		}
-		
-		return dao.saveItem(item);
-	}
-	
+	/**
+	 * @return
+	 * @throws APIException
+	 */
 	@Override
 	public List<SyncTaskType> getAllSyncTaskType() throws APIException {
 		return dao.getAllSyncTaskType();
 	}
 	
+	/**
+	 * @param uuid
+	 * @return
+	 * @throws APIException
+	 */
 	@Override
 	public SyncTaskType getSyncTaskTypeByUUID(String uuid) throws APIException {
 		return dao.getSyncTaskTypeByUUID(uuid);
 	}
 	
+	/**
+	 * @param syncTaskType
+	 * @return
+	 * @throws APIException
+	 */
 	@Override
 	public SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) throws APIException {
 		if (syncTaskType.getCreator() == null) {
@@ -72,6 +71,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		return dao.saveSyncTaskType(syncTaskType);
 	}
 	
+	/**
+	 * @param syncTask
+	 * @return
+	 * @throws APIException
+	 */
 	@Override
 	public SyncTask saveSyncTask(SyncTask syncTask) throws APIException {
 		if (syncTask.getCreator() == null) {
@@ -80,11 +84,20 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		return dao.saveSyncTask(syncTask);
 	}
 	
+	/**
+	 * @param query
+	 * @return
+	 */
 	@Override
 	public List getDatabaseRecord(String query) {
 		return dao.getDatabaseRecord(query);
 	}
 	
+	/**
+	 * @param columns
+	 * @param finalQuery
+	 * @return
+	 */
 	@Override
 	public List getFinalList(List<String> columns, String finalQuery) {
 		return dao.getFinalResults(columns, finalQuery);

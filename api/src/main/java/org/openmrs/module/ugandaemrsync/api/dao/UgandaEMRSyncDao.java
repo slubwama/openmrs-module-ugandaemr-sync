@@ -14,7 +14,6 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.StringType;
 import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
-import org.openmrs.module.ugandaemrsync.Item;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,22 +35,10 @@ public class UgandaEMRSyncDao {
 	}
 	
 	/**
-	 * @param uuid
+	 * Getting All Sync task types
+	 * 
 	 * @return
 	 */
-	public Item getItemByUuid(String uuid) {
-		return (Item) getSession().createCriteria(Item.class).add(Restrictions.eq("uuid", uuid)).uniqueResult();
-	}
-	
-	/**
-	 * @param item
-	 * @return
-	 */
-	public Item saveItem(Item item) {
-		getSession().saveOrUpdate(item);
-		return item;
-	}
-	
 	public List<SyncTaskType> getAllSyncTaskType() {
 		return (List<SyncTaskType>) getSession().createCriteria(SyncTaskType.class).list();
 	}
