@@ -12,14 +12,14 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
-    <changeSet id="ugandaemr-06272019-1637" author="ssmusoke">
+    <changeSet id="ugandaemr-06272019-1637" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM scheduler_task_config
                 WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendViralLoadRequestTaskToCentralServer'
             </sqlCheck>
         </preConditions>
-        <comment>Inserting MCH Lost to Followup Exit Task into 'schedule_task_config' table</comment>
+        <comment>Sending Viral Load Request to Central Server Task</comment>
         <insert tableName="scheduler_task_config">
             <column name="name" value="Send Viral Load Request to Central Server Task" />
             <column name="description" value="Sends a viral load request to the central server" />
