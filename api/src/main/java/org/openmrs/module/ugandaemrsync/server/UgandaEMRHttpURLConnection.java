@@ -22,7 +22,11 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+
 
 public class UgandaEMRHttpURLConnection {
 	
@@ -97,7 +101,7 @@ public class UgandaEMRHttpURLConnection {
 	 */
 	public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username,
 	        String password) throws Exception {
-		
+
 		try {
 			URL url1 = new URL(url);
 			URLConnection urlConnection = url1.openConnection();

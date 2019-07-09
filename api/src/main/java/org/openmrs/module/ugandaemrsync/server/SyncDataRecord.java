@@ -13,7 +13,10 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import java.io.IOException;
 import java.util.*;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
+
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
