@@ -41,7 +41,9 @@ public class SyncConstant {
 	
 	public static final String HEALTH_CENTER_SYNC_ID_PLACE_HOLDER = "This will be filled when a connection is created to server";
 	
-	public static final int CONNECTION_SUCCESS = 200;
+	public static final int CONNECTION_SUCCESS_200 = 200;
+	
+	public static final int CONNECTION_SUCCESS_201 = 201;
 	
 	public static final String XML_CONTENT_TYPE = "application/xml";
 	

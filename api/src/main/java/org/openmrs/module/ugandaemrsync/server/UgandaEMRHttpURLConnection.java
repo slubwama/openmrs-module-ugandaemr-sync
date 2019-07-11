@@ -4,22 +4,19 @@ package org.openmrs.module.ugandaemrsync.server;
  * Created by lubwamasamuel on 11/10/16.
  */
 
-import org.apache.http.HttpHeaders;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.Location;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.context.Context;
+import sun.net.www.protocol.https.HttpsURLConnectionImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -102,32 +99,42 @@ public class UgandaEMRHttpURLConnection {
 	        String password) throws Exception {
 		
 		try {
-			
-			CloseableHttpClient client = HttpClients.createDefault();
-			HttpPost httpPost = new HttpPost(url);
-			StringEntity entity = new StringEntity(content);
-			httpPost.setEntity(entity);
-			httpPost.setHeader("User-Agent", USER_AGENT);
+			URL url1 = new URL(url);
+			URLConnection urlConnection = url1.openConnection();
 			
 			if (username != "" && password != null) {
 				String encoded = Base64.getEncoder().encodeToString(
 				    (username + ":" + password).getBytes(StandardCharsets.UTF_8)); //Java 8
-				httpPost.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + encoded);
+				urlConnection.setRequestProperty("Authorization", "Basic " + encoded);
 			}
 			
 			if (facilityId != "") {
-				httpPost.setHeader("Ugandaemr-Sync-Facility-Id", facilityId);
+				urlConnection.setRequestProperty("Ugandaemr-Sync-Facility-Id", facilityId);
 			}
 			
-			httpPost.setHeader("Accept", contentType);
-			httpPost.setHeader("Content-type", contentType);
-			CloseableHttpResponse response = client.execute(httpPost);
+			// specify that we will send output and accept input
+			urlConnection.setDoInput(true);
+			urlConnection.setDoOutput(true);
+			urlConnection.setConnectTimeout(20000); // long timeout, but not infinite
+			urlConnection.setReadTimeout(20000);
+			urlConnection.setUseCaches(false);
+			urlConnection.setDefaultUseCaches(false);
+			
+			// tell the web server what we are sending
+			urlConnection.setRequestProperty("Content-Type", contentType);
+			urlConnection.setRequestProperty("User-Agent", USER_AGENT);
+			urlConnection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			
+			OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream());
+			writer.write(content);
+			writer.flush();
+			writer.close();
 			
 			Map map = new HashMap();
-			int responseCode = response.getStatusLine().getStatusCode();
+			int responseCode = ((HttpsURLConnectionImpl) urlConnection).getResponseCode();
 			// reading the response
-			if (responseCode == CONNECTION_SUCCESS) {
-				InputStreamReader reader = new InputStreamReader(response.getEntity().getContent());
+			if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
+				InputStreamReader reader = new InputStreamReader(urlConnection.getInputStream());
 				StringBuilder buf = new StringBuilder();
 				char[] cbuf = new char[2048];
 				int num;
@@ -138,10 +145,10 @@ public class UgandaEMRHttpURLConnection {
 				
 				ObjectMapper mapper = new ObjectMapper();
 				map = mapper.readValue(result, Map.class);
+				map.put("responseCode", responseCode);
 			} else {
 				map.put("responseCode", responseCode);
 			}
-			client.close();
 			return map;
 		}
 		catch (Throwable t) {

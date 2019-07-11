@@ -37,7 +37,7 @@ public class SyncDataRecord {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-		if (connectionStatus == SyncConstant.CONNECTION_SUCCESS) {
+		if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
 			int size = 0;
 			Iterator it = newSyncRecords.iterator();
 			UgandaEMRRecord ugandaEMRRecord = new UgandaEMRRecord();

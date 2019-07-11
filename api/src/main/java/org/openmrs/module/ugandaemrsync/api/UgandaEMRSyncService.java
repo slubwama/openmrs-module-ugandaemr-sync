@@ -50,6 +50,16 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) throws APIException;
 	
 	/**
+	 * Get SyncTask
+	 * 
+	 * @param syncTask
+	 * @return
+	 * @throws APIException
+	 */
+	@Transactional
+	SyncTask getSyncTask(int syncTask) throws APIException;
+	
+	/**
 	 * @param syncTask
 	 * @return
 	 * @throws APIException

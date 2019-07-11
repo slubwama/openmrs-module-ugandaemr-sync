@@ -16,6 +16,7 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 	
 	UgandaEMRSyncDao dao;
 	
+	@Autowired
 	UserService userService;
 	
 	/**
@@ -69,6 +71,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 			syncTaskType.setCreator(userService.getUser(1));
 		}
 		return dao.saveSyncTaskType(syncTaskType);
+	}
+	
+	@Override
+	public SyncTask getSyncTask(int syncTask) throws APIException {
+		return dao.getSyncTask(syncTask);
 	}
 	
 	/**

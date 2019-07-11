@@ -64,6 +64,17 @@ public class UgandaEMRSyncDao {
 	}
 	
 	/**
+	 * Get Sync Task
+	 * 
+	 * @param sync_task
+	 * @return
+	 */
+	public SyncTask getSyncTask(int sync_task) {
+		return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", sync_task))
+		        .uniqueResult();
+	}
+	
+	/**
 	 * @param syncTask
 	 * @return
 	 */

@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_201;
+
 /**
  * Posts Viral load data to the central server
  */
@@ -36,25 +39,35 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
 		for (List<Object> row : result) {
 			
 			Encounter encounter = Context.getEncounterService().getEncounter((Integer) result.get(0).get(0));
-			
-			Map<String, String> dataOutput = generateRecordToSync(encounter);
-			
-			String json = dataOutput.get("json");
-			try {
-				Map map = ugandaEMRHttpURLConnection.sendPostBy("vlsync/", json, false);
-				if (map != null) {
-					SyncTask syncTask = new SyncTask();
-					syncTask.setDateSent(new Date());
-					syncTask.setSentToUrl("vlsync");
-					syncTask.setStatusCode((Integer) map.get("response"));
-					syncTask.setStatus("SUCCESS");
-					syncTask.setSyncTaskType(ugandaEMRSyncService
-					        .getSyncTaskTypeByUUID("3551ca84-06c0-432b-9064-fcfeefd6f4ec"));
-					ugandaEMRSyncService.saveSyncTask(syncTask);
+			SyncTask syncTask = ugandaEMRSyncService.getSyncTask(encounter.getEncounterId());
+			if (syncTask == null
+			        || (syncTask.getStatusCode() != CONNECTION_SUCCESS_200 && syncTask.getStatusCode() != CONNECTION_SUCCESS_201)) {
+				Map<String, String> dataOutput = generateRecordToSync(encounter);
+				
+				String json = dataOutput.get("json");
+				try {
+					Map map = ugandaEMRHttpURLConnection.sendPostBy("vlsync/", json, false);
+					if (map != null) {
+						SyncTask newSyncTask = new SyncTask();
+						newSyncTask.setDateSent(new Date());
+						newSyncTask.setCreator(Context.getUserService().getUser(1));
+						newSyncTask.setSentToUrl("vlsync");
+						newSyncTask.setSyncTask(encounter.getEncounterId());
+						newSyncTask.setStatusCode((Integer) map.get("responseCode"));
+						if (newSyncTask.getStatusCode() == CONNECTION_SUCCESS_200
+						        || newSyncTask.getStatusCode() == CONNECTION_SUCCESS_201) {
+							newSyncTask.setStatus("SUCCESS");
+						} else {
+							newSyncTask.setStatus("FAILED");
+						}
+						newSyncTask.setSyncTaskType(ugandaEMRSyncService
+						        .getSyncTaskTypeByUUID("3551ca84-06c0-432b-9064-fcfeefd6f4ec"));
+						ugandaEMRSyncService.saveSyncTask(newSyncTask);
+					}
 				}
-			}
-			catch (Exception e) {
-				e.printStackTrace();
+				catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
