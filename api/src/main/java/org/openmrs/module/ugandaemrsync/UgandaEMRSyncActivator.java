@@ -11,7 +11,10 @@ package org.openmrs.module.ugandaemrsync;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.BaseModuleActivator;
+import org.openmrs.module.dataexchange.DataImporter;
+import org.openmrs.module.metadatadeploy.api.MetadataDeployService;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 
 /**
@@ -33,6 +36,18 @@ public class UgandaEMRSyncActivator extends BaseModuleActivator {
 		}
 		catch (Exception e) {
 			
+		}
+		
+		MetadataDeployService deployService = Context.getService(MetadataDeployService.class);
+		try {
+			DataImporter dataImporter = Context.getRegisteredComponent("dataImporter", DataImporter.class);
+			log.info("Installing SYNC TASK METADATA ");
+			dataImporter.importData("metadata/SYNC_TASK.xml");
+			log.info("SYNC TASK METADATA  Installation Complete");
+			
+		}
+		catch (Exception e) {
+			log.error(e);
 		}
 		log.info("Started UgandaemrSync");
 	}

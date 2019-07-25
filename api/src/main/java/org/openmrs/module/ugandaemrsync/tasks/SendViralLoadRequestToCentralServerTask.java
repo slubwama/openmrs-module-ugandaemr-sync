@@ -12,15 +12,15 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.server.UgandaEMRHttpURLConnection;
+import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_201;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_IDENTIFIER_TYPE;
 
 /**
  * Posts Viral load data to the central server
@@ -35,33 +35,26 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
 		UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 		List<List<Object>> result = getViralLoadRequestData();
-		
 		for (List<Object> row : result) {
 			
-			Encounter encounter = Context.getEncounterService().getEncounter((Integer) result.get(0).get(0));
+			Encounter encounter = Context.getEncounterService().getEncounter((Integer) row.get(0));
 			SyncTask syncTask = ugandaEMRSyncService.getSyncTask(encounter.getEncounterId());
-			if (syncTask == null
-			        || (syncTask.getStatusCode() != CONNECTION_SUCCESS_200 && syncTask.getStatusCode() != CONNECTION_SUCCESS_201)) {
+			if (syncTask == null) {
 				Map<String, String> dataOutput = generateRecordToSync(encounter);
-				
 				String json = dataOutput.get("json");
 				try {
 					Map map = ugandaEMRHttpURLConnection.sendPostBy("vlsync/", json, false);
-					if (map != null) {
+					if ((map != null) && UgandaEMRSyncUtil.getSuccessCodeList().contains(map.get("responseCode"))) {
 						SyncTask newSyncTask = new SyncTask();
 						newSyncTask.setDateSent(new Date());
 						newSyncTask.setCreator(Context.getUserService().getUser(1));
 						newSyncTask.setSentToUrl("vlsync");
+						newSyncTask.setRequireAction(true);
+						newSyncTask.setActionCompleted(false);
 						newSyncTask.setSyncTask(encounter.getEncounterId());
 						newSyncTask.setStatusCode((Integer) map.get("responseCode"));
-						if (newSyncTask.getStatusCode() == CONNECTION_SUCCESS_200
-						        || newSyncTask.getStatusCode() == CONNECTION_SUCCESS_201) {
-							newSyncTask.setStatus("SUCCESS");
-						} else {
-							newSyncTask.setStatus("FAILED");
-						}
-						newSyncTask.setSyncTaskType(ugandaEMRSyncService
-						        .getSyncTaskTypeByUUID("3551ca84-06c0-432b-9064-fcfeefd6f4ec"));
+						newSyncTask.setStatus("SUCCESS");
+						newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
 						ugandaEMRSyncService.saveSyncTask(newSyncTask);
 					}
 				}
@@ -93,25 +86,21 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
 		row.put("destination_id", "UgandaEMR");
 		row.put("sample_id", encounter.getEncounterId().toString());
 		row.put("phlebotomist_contact", "None");
-		row.put("patient_id", getPatientARTNO(encounter.getPatient(), "e1731641-30ab-102d-86b0-7a5022ba4115"));
+		row.put("patient_id", getPatientARTNO(encounter.getPatient(), PATIENT_IDENTIFIER_TYPE));
 		row.put("collection_date", encounter.getEncounterDatetime());
+		row.put("test_type", encounter.getEncounterType().getName());
+		
 		for (Obs obs : encounter.getAllObs()) {
-			
 			switch (obs.getConcept().getConceptId()) {
 				case 165153:
 					row.put("sample_type", obs.getValueCoded().getName().getName());
-					break;
-				case 165148:
-					row.put("test_type", obs.getValueCoded().getName().getName());
 					break;
 				case 159635:
 					row.put("requester_contact", obs.getValueText());
 					break;
 			}
 		}
-		
 		vals.put("json", row.toString());
-		
 		return vals;
 	}
 	
@@ -129,7 +118,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
 	/**
 	 * @return
 	 */
-	private String getHealthCenterCode() {
+	public String getHealthCenterCode() {
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		return syncGlobalProperties.getGlobalProperty("ugandaemr.dhis2.organizationuuid");
 	}

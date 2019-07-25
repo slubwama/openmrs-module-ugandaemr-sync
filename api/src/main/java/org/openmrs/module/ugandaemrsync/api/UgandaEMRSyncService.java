@@ -9,6 +9,9 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
@@ -17,6 +20,9 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -68,6 +74,24 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	SyncTask saveSyncTask(SyncTask syncTask) throws APIException;
 	
 	/**
+	 * Get SyncTask
+	 * 
+	 * @return
+	 * @throws APIException
+	 */
+	@Transactional
+	public List<SyncTask> getIncompleteActionSyncTask() throws APIException;
+	
+	/**
+	 * Get SyncTask
+	 * 
+	 * @return
+	 * @throws APIException
+	 */
+	@Transactional
+	public List<SyncTask> getAllSyncTask() throws APIException;
+	
+	/**
 	 * @param query
 	 * @return
 	 */
@@ -79,4 +103,50 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 * @return
 	 */
 	public List getFinalList(List<String> columns, String query);
+	
+	/**
+	 * @param patientARTNo
+	 * @return
+	 */
+	public Patient getPatientByPatientIdentifier(String patientARTNo);
+	
+	/**
+	 * @param replaceAll
+	 * @return
+	 */
+	public boolean validateFacility(String replaceAll);
+	
+	/**
+	 * @param s
+	 * @return
+	 */
+	public Collection<EncounterType> getEcounterTypes(String s);
+	
+	/**
+	 * @param vlQualitative
+	 * @param vlQuantitative
+	 * @param vlDate
+	 * @param encounter
+	 * @return
+	 */
+	public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter);
+	
+	/**
+	 * @param vlDate
+	 * @return
+	 */
+	public String getDateFormat(String vlDate);
+	
+	/**
+	 * @param string
+	 * @param time
+	 * @param dateFormat
+	 * @return
+	 */
+	public Date convertStringToDate(String string, String time, String dateFormat);
+	
+	/**
+	 * @return
+	 */
+	public String getHealthCenterCode();
 }

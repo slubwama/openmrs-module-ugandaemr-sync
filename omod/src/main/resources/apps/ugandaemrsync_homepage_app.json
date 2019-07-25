@@ -1,0 +1,17 @@
+[{
+  "id": "ugandaemrsync.referenceapplication.ugandaemrsync",
+  "description": "UgandaEMR Sync Page",
+  "order": 5,
+  "extensions": [
+    {
+      "id": "uganadaemrsync.referenceapplication.ugandaemrsync.homepageLink",
+      "extensionPointId": "systemAdministration.apps",
+      "type": "link",
+      "label": "UgandaEMR Sync",
+      "url": "ugandaemrsync/ugandaemrsync.page",
+      "icon": " icon-cog",
+      "requiredPrivilege": "App: coreapps.systemAdministration"
+    }
+  ]
+}
+]

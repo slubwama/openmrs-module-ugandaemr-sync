@@ -92,6 +92,13 @@
                 <version>4.4.5</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>metadatadeploy-api</artifactId>
+                <version>${metadatadeployVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
@@ -123,5 +130,6 @@
     <properties>
         <openmrsPlatformVersion>2.0.6</openmrsPlatformVersion>
         <appuiVersion>1.7</appuiVersion>
+        <metadatadeployVersion>1.7</metadatadeployVersion>
     </properties>
 </project>

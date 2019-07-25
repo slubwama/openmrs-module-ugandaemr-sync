@@ -28,16 +28,38 @@ public class SyncTask extends BaseOpenmrsData {
 	private int syncTask;
 	
 	@Column(name = "status", length = 255)
-	private String Status;
+	private String status;
 	
 	@Column(name = "status_code", length = 11)
-	private int StatusCode;
+	private int statusCode;
 	
 	@Column(name = "sent_to_url", length = 255)
-	private String SentToUrl;
+	private String sentToUrl;
 	
 	@Column(name = "date_sent")
-	private Date DateSent;
+	private Date dateSent;
+	
+	@Column(name = "require_action")
+	Boolean requireAction;
+	
+	@Column(name = "action_completed")
+	Boolean actionCompleted;
+	
+	public Boolean getRequireAction() {
+		return requireAction;
+	}
+	
+	public void setRequireAction(Boolean requireAction) {
+		this.requireAction = requireAction;
+	}
+	
+	public Boolean getActionCompleted() {
+		return actionCompleted;
+	}
+	
+	public void setActionCompleted(Boolean actionCompleted) {
+		this.actionCompleted = actionCompleted;
+	}
 	
 	public SyncTaskType getSyncTaskType() {
 		return syncTaskType;
@@ -56,35 +78,35 @@ public class SyncTask extends BaseOpenmrsData {
 	}
 	
 	public String getStatus() {
-		return Status;
+		return status;
 	}
 	
 	public void setStatus(String status) {
-		Status = status;
+		this.status = status;
 	}
 	
 	public int getStatusCode() {
-		return StatusCode;
+		return statusCode;
 	}
 	
 	public void setStatusCode(int statusCode) {
-		StatusCode = statusCode;
+		this.statusCode = statusCode;
 	}
 	
 	public String getSentToUrl() {
-		return SentToUrl;
+		return sentToUrl;
 	}
 	
 	public void setSentToUrl(String sentToUrl) {
-		SentToUrl = sentToUrl;
+		this.sentToUrl = sentToUrl;
 	}
 	
 	public Date getDateSent() {
-		return DateSent;
+		return dateSent;
 	}
 	
 	public void setDateSent(Date dateSent) {
-		DateSent = dateSent;
+		this.dateSent = dateSent;
 	}
 	
 	@Override

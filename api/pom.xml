@@ -52,6 +52,14 @@
             <groupId>org.openmrs.api</groupId>
             <artifactId>openmrs-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>metadatadeploy-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>dataexchange-api</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

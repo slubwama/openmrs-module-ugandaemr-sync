@@ -21,6 +21,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID;
+
 @Repository("ugandaemrsync.UgandaEMRSyncDao")
 public class UgandaEMRSyncDao {
 	
@@ -75,6 +77,15 @@ public class UgandaEMRSyncDao {
 	}
 	
 	/**
+	 * Get All Sync Task
+	 * 
+	 * @return
+	 */
+	public List<SyncTask> getAllSyncTask() {
+		return (List<SyncTask>) getSession().createCriteria(SyncTask.class).list();
+	}
+	
+	/**
 	 * @param syncTask
 	 * @return
 	 */
@@ -105,4 +116,18 @@ public class UgandaEMRSyncDao {
 		return sqlQuery.list();
 	}
 	
+	/**
+	 * Get List of Viral Load Lab requests without Results Received
+	 * 
+	 * @return
+	 */
+	public List<SyncTask> getIncompleteActionSyncTask() {
+		SQLQuery sqlQuery = getSession()
+		        .createSQLQuery(
+		            "select sync_task.* from sync_task inner join sync_task_type on (sync_task_type.sync_task_type_id=sync_task.sync_task_type) where sync_task_type.data_type_id='"
+		                    + VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID
+		                    + "' and  require_action=true and action_completed=false;");
+		sqlQuery.addEntity(SyncTask.class);
+		return sqlQuery.list();
+	}
 }

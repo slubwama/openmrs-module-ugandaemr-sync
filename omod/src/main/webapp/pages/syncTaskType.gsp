@@ -101,10 +101,38 @@
 
                     <div class="div-table">
                         <div class="div-row">
-                            <label>Sync Task Type Name</label>
-                            <input type=" text" name="name" id="name">
+                            <div class="div-col4">
+                                <label>Sync Task Type Name</label>
+                                <input type=" text" name="name" id="name">
+                            </div>
 
-                            <div class="dialog-content form div-col2">
+                            <div class="div-col4">
+                                <label>Data Type</label>
+                                <select name="datatype">
+                                    <option value=""></option>
+                                    <option value="java.lang.Boolean">java.lang.Boolean</option>
+                                    <option value="java.lang.Character">java.lang.Character</option>
+                                    <option value="java.lang.Float">java.lang.Float</option>
+                                    <option value="java.lang.Integer">java.lang.Integer</option>
+                                    <option value="java.lang.String">java.lang.String</option>
+                                    <option value="org.openmrs.Concept">org.openmrs.Concept</option>
+                                    <option value="org.openmrs.Drug">org.openmrs.Drug</option>
+                                    <option value="org.openmrs.Encounter">org.openmrs.Encounter</option>
+                                    <option value="org.openmrs.Location">org.openmrs.Location</option>
+                                    <option value="org.openmrs.Patient">org.openmrs.Patient</option>
+                                    <option value="org.openmrs.Person">org.openmrs.Person</option>
+                                    <option value="org.openmrs.ProgramWorkflow">org.openmrs.ProgramWorkflow</option>
+                                    <option value="org.openmrs.Provider">org.openmrs.Provider</option>
+                                    <option value="org.openmrs.User">org.openmrs.User</option>
+                                    <option value="org.openmrs.util.AttributableDate">org.openmrs.util.AttributableDate</option>
+                                </select>
+                            </div>
+
+                            <div class="div-col4">
+                                <label>Data Type Identifier (eg uuid for enounter type)</label>
+                                <input type=" text" name="datatypeid" id="datatypeid">
+                            </div>
+                            <div class="dialog-content form div-col4">
                                 <br/>
                                 <input type="submit" class="confirm" value="${ui.message("Save")}">
                             </div>

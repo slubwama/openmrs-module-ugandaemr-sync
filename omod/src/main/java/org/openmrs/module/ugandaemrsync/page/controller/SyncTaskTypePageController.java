@@ -31,16 +31,18 @@ public class SyncTaskTypePageController {
 	}
 	
 	public void post(@SpringBean PageModel pageModel, @RequestParam(value = "returnUrl", required = false) String returnUrl,
-	        @RequestParam(value = "name", required = false) String name, UiSessionContext uiSessionContext, UiUtils uiUtils,
-	        HttpServletRequest request) {
+	        @RequestParam(value = "name", required = false) String name,
+	        @RequestParam(value = "datatype", required = false) String dataType,
+	        @RequestParam(value = "datatypeid", required = false) String dataTypeId, UiSessionContext uiSessionContext,
+	        UiUtils uiUtils, HttpServletRequest request) {
 		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 		SyncTaskType syncTaskType = new SyncTaskType();
 		syncTaskType.setDateCreated(new Date());
 		syncTaskType.setName(name);
+		syncTaskType.setDataType(dataType);
+		syncTaskType.setDataTypeId(dataTypeId);
 		syncTaskType.setCreator(Context.getAuthenticatedUser());
-		
 		ugandaEMRSyncService.saveSyncTaskType(syncTaskType);
 		pageModel.put("syncTaskTypes", ugandaEMRSyncService.getAllSyncTaskType());
-		
 	}
 }

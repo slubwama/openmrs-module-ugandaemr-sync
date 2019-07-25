@@ -61,6 +61,40 @@ public class SyncConstant {
 	
 	public static final String MAX_NUMBER_OF_ROWS_PLACE_HOLDER = "500";
 	
+	public static final String HIV_ENCOUNTER_PAGE_UUID = "8d5b2be0-c2cc-11de-8d13-0010c6dffd0f";
+	
+	public static final String VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID = "077c43ee-9745-11e9-bc42-526af7764f64";
+	
+	public static final String VIRAL_LOAD_SYNC_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
+	
+	public static final String PATIENT_IDENTIFIER_TYPE = "e1731641-30ab-102d-86b0-7a5022ba4115";
+	
+	public static final int VL_SAMPLE_ID_CELL_NO = 0;
+	
+	public static final int VL_FORM_NUMBER_CELL_NO = 1;
+	
+	public static final int VL_DATE_COLLECTION_CELL_NO = 2;
+	
+	public static final int VL_DATE_RECIEVED_CELL_NO = 3;
+	
+	public static final int VL_RELEASED_CELL_NO = 4;
+	
+	public static final int VL_RELEASE_TIME_CELL_NO = 5;
+	
+	public static final int VL_FACILITY_NAME_CELL_NO = 6;
+	
+	public static final int VL_FACILITY_DHIS2_ID_CELL_NO = 7;
+	
+	public static final int VL_PATIENT_ART_ID_CELL_NO = 8;
+	
+	public static final int VL_RESULTS_NUMERIC_CELL_NO = 9;
+	
+	public static final int VL_RESULTS_ALHPA_NUMERIC_CELL_NO = 10;
+	
+	public static final int VL_SUPPRESSED_CELL_NO = 11;
+	
+	public static final String GP_DHIS2 = "ugandaemr.dhis2.organizationuuid";
+	
 	public static final String PERSON_QUERY = "SELECT\n" + "  gender,\n" + "  birthdate,\n" + "  birthdate_estimated,\n"
 	        + "  dead,\n" + "  death_date,\n" + "  (SELECT c.uuid\n" + "   FROM concept c\n"
 	        + "   WHERE c.concept_id = p.cause_of_death) AS cause_of_death,\n" + "  (SELECT u.uuid\n" + "   FROM users u\n"
@@ -417,4 +451,7 @@ public class SyncConstant {
 	
 	public static final String VIRAL_LOAD_ENCOUNTER_QUERY = "select * from encounter inner join encounter_type on (encounter.encounter_type=encounter_type.encounter_type_id) where encounter_type.uuid='077c43ee-9745-11e9-bc42-526af7764f64'";
 	
+	public static List<String> VL_SYNC_TASK_COLUMNS = Arrays.asList("sync_task_id", "sync_task_type", "sync_task", "status",
+	    "status_code", "sent_to_url", "require_action", "action_completed", "date_sent", "creator", "date_created",
+	    "changed_by", "date_changed", "voided", "date_voided", "voided_by ", "void_reason", "uuid");
 }

@@ -10,10 +10,7 @@ import org.openmrs.api.LocationService;
 import org.openmrs.api.context.Context;
 import sun.net.www.protocol.https.HttpsURLConnectionImpl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -123,7 +120,7 @@ public class UgandaEMRHttpURLConnection {
 			// tell the web server what we are sending
 			urlConnection.setRequestProperty("Content-Type", contentType);
 			urlConnection.setRequestProperty("User-Agent", USER_AGENT);
-			urlConnection.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+			urlConnection.setRequestProperty("Accept", contentType);
 			
 			OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream());
 			writer.write(content);
@@ -132,20 +129,10 @@ public class UgandaEMRHttpURLConnection {
 			
 			Map map = new HashMap();
 			int responseCode = ((HttpsURLConnectionImpl) urlConnection).getResponseCode();
-			// reading the response
+			//reading the response
 			if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
-				InputStreamReader reader = new InputStreamReader(urlConnection.getInputStream());
-				StringBuilder buf = new StringBuilder();
-				char[] cbuf = new char[2048];
-				int num;
-				while (-1 != (num = reader.read(cbuf))) {
-					buf.append(cbuf, 0, num);
-				}
-				String result = buf.toString();
-				
-				ObjectMapper mapper = new ObjectMapper();
-				map = mapper.readValue(result, Map.class);
-				map.put("responseCode", responseCode);
+				InputStream inputStreamReader = urlConnection.getInputStream();
+				map = getMapOfResults(inputStreamReader, responseCode);
 			} else {
 				map.put("responseCode", responseCode);
 			}
@@ -154,8 +141,23 @@ public class UgandaEMRHttpURLConnection {
 		catch (Throwable t) {
 			t.printStackTrace(System.out);
 		}
-		
 		return null;
+	}
+	
+	public Map getMapOfResults(InputStream inputStreamReader, int responseCode) throws IOException {
+		Map map = new HashMap();
+		InputStreamReader reader = new InputStreamReader(inputStreamReader);
+		StringBuilder buf = new StringBuilder();
+		char[] cbuf = new char[2048];
+		int num;
+		while (-1 != (num = reader.read(cbuf))) {
+			buf.append(cbuf, 0, num);
+		}
+		String result = buf.toString();
+		ObjectMapper mapper = new ObjectMapper();
+		map = mapper.readValue(result, Map.class);
+		map.put("responseCode", responseCode);
+		return map;
 	}
 	
 	/**
