@@ -95,6 +95,10 @@ public class SyncConstant {
 	
 	public static final String GP_DHIS2 = "ugandaemr.dhis2.organizationuuid";
 	
+	public static final String VL_SEND_SAMPLE_FHIR_JSON_STRING = "{\"resourceType\":\"ServiceRequest\",\"locationCode\":\"%s\",\"locationReference\":\"%s\",\"code\":\"%s\",\"note\":\"%s\",\"performerType\":\"????\",\"status\":\"active\",\"intent\":\"order\",\"subject\":{\"resourceType\":\"Patient\",\"identifier\":\"%s\"},\"specimen\":[{\"resourceType\":\"Specimen\",\"identifier\":\"%s\",\"type\":\"%s\",\"status\":\"available\",\"collection\":{\"collectedDateTime\":\"%s\",\"collector\":{\"resourceType\":\"Practitioner\",\"name\":\"%s\",\"telecom\":\"%s\"}}}],\"requester\":{\"resourceType\":\"Practitioner\",\"name\":\"%s\",\"telecom\":\"%s\"},\"performer\":[{\"resourceType\":\"Organization\",\"endpoint\":\"%s\"}]}";
+	
+	public static final String VL_RECEIVE_RESULT_FHIR_JSON_STRING = "{\"resourceType\":\"ServiceRequest\",\"locationCode\":\"%s\",\"code\":\"VL-1\",\"note\":\"UgandaEMR\",\"subject\":{\"resourceType\":\"Patient\",\"identifier\":\"%s\"},\"specimen\":[{\"resourceType\":\"Specimen\",\"identifier\":\"%s\"}]}";
+	
 	public static final String PERSON_QUERY = "SELECT\n" + "  gender,\n" + "  birthdate,\n" + "  birthdate_estimated,\n"
 	        + "  dead,\n" + "  death_date,\n" + "  (SELECT c.uuid\n" + "   FROM concept c\n"
 	        + "   WHERE c.concept_id = p.cause_of_death) AS cause_of_death,\n" + "  (SELECT u.uuid\n" + "   FROM users u\n"

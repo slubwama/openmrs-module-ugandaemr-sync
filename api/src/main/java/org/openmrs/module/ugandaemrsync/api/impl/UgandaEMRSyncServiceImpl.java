@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_IDENTIFIER_TYPE;
 
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
 	
@@ -197,10 +198,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 	}
 	
 	public Collection<EncounterType> getEcounterTypes(String encounterTypesUUID) {
-		Collection<EncounterType> encounterTypes = new ArrayList<>();
-		encounterTypes.add(Context.getEncounterService().getEncounterTypeByUuid(encounterTypesUUID));
-		return encounterTypes;
-	}
+        Collection<EncounterType> encounterTypes = new ArrayList<>();
+        encounterTypes.add(Context.getEncounterService().getEncounterTypeByUuid(encounterTypesUUID));
+        return encounterTypes;
+    }
 	
 	public Date convertStringToDate(String string, String time, String dateFormat) {
 		DateFormat format = new SimpleDateFormat(dateFormat, Locale.ENGLISH);
@@ -256,9 +257,27 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		return syncGlobalProperties.getGlobalProperty(GP_DHIS2);
 	}
+
+    public String getHealthCenterName() {
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        return syncGlobalProperties.getGlobalProperty("aijar.healthCenterName");
+    }
 	
 	public String getHealthCenterViralLoadToken() {
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		return syncGlobalProperties.getGlobalProperty("ugandaemr.viralload.token");
+	}
+	
+	public String getPatientARTNO(Patient patient) {
+		String query = "select patient_identifier.identifier from patient_identifier inner join patient_identifier_type on(patient_identifier.identifier_type=patient_identifier_type.patient_identifier_type_id) where patient_identifier_type.uuid in ('"
+		        + PATIENT_IDENTIFIER_TYPE + "') AND patient_id=" + patient.getPatientId() + "";
+		
+		List list = Context.getAdministrationService().executeSQL(query, true);
+		String patientARTNO = "";
+		
+		if (list.size() > 0) {
+			patientARTNO = list.get(0).toString().replace("[", "").replace("]", "");
+		}
+		return patientARTNO;
 	}
 }

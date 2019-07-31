@@ -8,6 +8,12 @@
     ui.includeJavascript("ugandaemrsync", "synctasktype.js")
 %>
 <script type="text/javascript">
+    var breadcrumbs = [
+        { icon: "icon-home", link: '/' + OPENMRS_CONTEXT_PATH + '/index.htm' },
+        { label: "${ ui.message("coreapps.app.systemAdministration.label")}", link: '/' + OPENMRS_CONTEXT_PATH + '/coreapps/systemadministration/systemAdministration.page'},
+        { label: "UgandaEMR Sync", link: '/' + OPENMRS_CONTEXT_PATH + '/ugandaemrsync/ugandaemrsync.page'},
+        { label: "Sync Task Type"}
+    ];
 
     jq(document).ready(function () {
 

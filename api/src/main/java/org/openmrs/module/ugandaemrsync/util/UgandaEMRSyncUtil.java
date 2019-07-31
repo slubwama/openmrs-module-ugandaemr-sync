@@ -8,10 +8,10 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SU
 
 public class UgandaEMRSyncUtil {
 	
-	public static List getSuccessCodeList() {
-        List<String> success = new ArrayList<>();
-        success.add(CONNECTION_SUCCESS_200 + "");
-        success.add(CONNECTION_SUCCESS_201 + "");
+	public static List<Object> getSuccessCodeList() {
+        List<Object> success = new ArrayList<>();
+        success.add(CONNECTION_SUCCESS_200);
+        success.add(CONNECTION_SUCCESS_201);
         return success;
     }
 }

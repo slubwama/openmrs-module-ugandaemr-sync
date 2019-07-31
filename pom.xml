@@ -99,6 +99,13 @@
                 <scope>provided</scope>
             </dependency>
 
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>metadatasharing-api</artifactId>
+                <version>${metadatasharingVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
@@ -131,5 +138,6 @@
         <openmrsPlatformVersion>2.0.6</openmrsPlatformVersion>
         <appuiVersion>1.7</appuiVersion>
         <metadatadeployVersion>1.7</metadatadeployVersion>
+        <metadatasharingVersion>1.5.0</metadatasharingVersion>
     </properties>
 </project>

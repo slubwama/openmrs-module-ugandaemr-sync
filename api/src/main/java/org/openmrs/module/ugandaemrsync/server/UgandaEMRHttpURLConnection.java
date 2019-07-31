@@ -18,10 +18,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 public class UgandaEMRHttpURLConnection {
+	
+	Log log = LogFactory.getLog(getClass());
 	
 	public UgandaEMRHttpURLConnection() {
 	}
@@ -112,8 +116,8 @@ public class UgandaEMRHttpURLConnection {
 			// specify that we will send output and accept input
 			urlConnection.setDoInput(true);
 			urlConnection.setDoOutput(true);
-			urlConnection.setConnectTimeout(20000); // long timeout, but not infinite
-			urlConnection.setReadTimeout(20000);
+			urlConnection.setConnectTimeout(60000); // long timeout, but not infinite
+			urlConnection.setReadTimeout(120000);
 			urlConnection.setUseCaches(false);
 			urlConnection.setDefaultUseCaches(false);
 			
@@ -139,7 +143,8 @@ public class UgandaEMRHttpURLConnection {
 			return map;
 		}
 		catch (Throwable t) {
-			t.printStackTrace(System.out);
+			log.error(t);
+			
 		}
 		return null;
 	}

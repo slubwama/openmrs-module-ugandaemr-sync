@@ -9,6 +9,15 @@
 %>
 <script type="text/javascript">
 
+</script>
+<script type="text/javascript">
+    var breadcrumbs = [
+        { icon: "icon-home", link: '/' + OPENMRS_CONTEXT_PATH + '/index.htm' },
+        { label: "${ ui.message("coreapps.app.systemAdministration.label")}", link: '/' + OPENMRS_CONTEXT_PATH + '/coreapps/systemadministration/systemAdministration.page'},
+        { label: "UgandaEMR Sync", link: '/' + OPENMRS_CONTEXT_PATH + '/ugandaemrsync/ugandaemrsync.page'},
+        { label: "Sync Task Logs"}
+    ];
+
     jq(document).ready(function () {
 
         jq("#okay").click(function () {
