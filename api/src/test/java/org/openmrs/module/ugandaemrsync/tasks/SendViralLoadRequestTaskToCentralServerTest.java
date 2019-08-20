@@ -11,7 +11,8 @@ public class SendViralLoadRequestTaskToCentralServerTest extends BaseModuleConte
 	@Test
 	public void convertToFHIRMap() {
 		SendViralLoadRequestToCentralServerTask sendViralLoadRequestToCentralServerTask = new SendViralLoadRequestToCentralServerTask();
-		sendViralLoadRequestToCentralServerTask.generateVLFHIRTestRequestBody(new Encounter(), VL_SEND_SAMPLE_FHIR_JSON_STRING);
+		sendViralLoadRequestToCentralServerTask.generateVLFHIRTestRequestBody(new Encounter(),
+		    VL_SEND_SAMPLE_FHIR_JSON_STRING);
 	}
 	
 }

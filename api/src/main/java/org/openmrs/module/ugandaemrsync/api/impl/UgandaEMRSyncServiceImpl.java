@@ -257,11 +257,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 		return syncGlobalProperties.getGlobalProperty(GP_DHIS2);
 	}
-
-    public String getHealthCenterName() {
-        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-        return syncGlobalProperties.getGlobalProperty("aijar.healthCenterName");
-    }
+	
+	public String getHealthCenterName() {
+		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+		return syncGlobalProperties.getGlobalProperty("aijar.healthCenterName");
+	}
 	
 	public String getHealthCenterViralLoadToken() {
 		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();

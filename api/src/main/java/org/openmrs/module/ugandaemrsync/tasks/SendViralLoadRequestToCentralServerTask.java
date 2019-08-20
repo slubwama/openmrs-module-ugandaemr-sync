@@ -27,58 +27,58 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_SEND_SAMPL
  */
 
 public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
-
-    protected Log log = LogFactory.getLog(getClass());
-
-    @Override
-    public void execute() {
-        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
-        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        List<List<Object>> result = getViralLoadRequestData();
-        for (List<Object> row : result) {
-
-            Encounter encounter = Context.getEncounterService().getEncounter((Integer) row.get(0));
-            SyncTask syncTask = ugandaEMRSyncService.getSyncTask(encounter.getEncounterId());
-            if (syncTask == null) {
-                Map<String, String> dataOutput = generateVLFHIRTestRequestBody(encounter, VL_SEND_SAMPLE_FHIR_JSON_STRING);
-                String json = dataOutput.get("json");
-                try {
-                    Map map = ugandaEMRHttpURLConnection.sendPostBy("api/send_sample", json, false);
-                    if ((map != null) && UgandaEMRSyncUtil.getSuccessCodeList().contains(map.get("responseCode"))) {
-                        SyncTask newSyncTask = new SyncTask();
-                        newSyncTask.setDateSent(new Date());
-                        newSyncTask.setCreator(Context.getUserService().getUser(1));
-                        newSyncTask.setSentToUrl("vlsync");
-                        newSyncTask.setRequireAction(true);
-                        newSyncTask.setActionCompleted(false);
-                        newSyncTask.setSyncTask(encounter.getEncounterId());
-                        newSyncTask.setStatusCode((Integer) map.get("responseCode"));
-                        newSyncTask.setStatus("SUCCESS");
-                        newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
-                        ugandaEMRSyncService.saveSyncTask(newSyncTask);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    /**
-     * @return
-     */
-    private List<List<Object>> getViralLoadRequestData() {
-        return Context.getAdministrationService().executeSQL(SyncConstant.VIRAL_LOAD_ENCOUNTER_QUERY, false);
-    }
-
-
-    /**
-     * Generate VL test Request
-     *
-     * @param encounter
-     * @return
-     */
-    public Map<String, String> generateVLFHIRTestRequestBody(Encounter encounter, String jsonFhirMap) {
+	
+	protected Log log = LogFactory.getLog(getClass());
+	
+	@Override
+	public void execute() {
+		UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+		List<List<Object>> result = getViralLoadRequestData();
+		for (List<Object> row : result) {
+			
+			Encounter encounter = Context.getEncounterService().getEncounter((Integer) row.get(0));
+			SyncTask syncTask = ugandaEMRSyncService.getSyncTask(encounter.getEncounterId());
+			if (syncTask == null) {
+				Map<String, String> dataOutput = generateVLFHIRTestRequestBody(encounter, VL_SEND_SAMPLE_FHIR_JSON_STRING);
+				String json = dataOutput.get("json");
+				try {
+					Map map = ugandaEMRHttpURLConnection.sendPostBy("api/send_sample", json, false);
+					if ((map != null) && UgandaEMRSyncUtil.getSuccessCodeList().contains(map.get("responseCode"))) {
+						SyncTask newSyncTask = new SyncTask();
+						newSyncTask.setDateSent(new Date());
+						newSyncTask.setCreator(Context.getUserService().getUser(1));
+						newSyncTask.setSentToUrl("vlsync");
+						newSyncTask.setRequireAction(true);
+						newSyncTask.setActionCompleted(false);
+						newSyncTask.setSyncTask(encounter.getEncounterId());
+						newSyncTask.setStatusCode((Integer) map.get("responseCode"));
+						newSyncTask.setStatus("SUCCESS");
+						newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
+						ugandaEMRSyncService.saveSyncTask(newSyncTask);
+					}
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * @return
+	 */
+	private List<List<Object>> getViralLoadRequestData() {
+		return Context.getAdministrationService().executeSQL(SyncConstant.VIRAL_LOAD_ENCOUNTER_QUERY, false);
+	}
+	
+	/**
+	 * Generate VL test Request
+	 * 
+	 * @param encounter
+	 * @return
+	 */
+	public Map<String, String> generateVLFHIRTestRequestBody(Encounter encounter, String jsonFhirMap) {
         Map<String, String> jsonMap = new HashMap<>();
         UgandaEMRSyncService ugandaEMRSyncService = new UgandaEMRSyncServiceImpl();
         String filledJsonFile = "";
@@ -110,13 +110,13 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         jsonMap.put("json", filledJsonFile);
         return jsonMap;
     }
-
-    private String getProviderByEncounterRole(Encounter encounter, String encounterRoleName) {
-        for (EncounterProvider provider : encounter.getActiveEncounterProviders()) {
-            if (provider.getEncounterRole().getName() == encounterRoleName) {
-                return provider.getProvider().getName();
-            }
-        }
-        return null;
-    }
+	
+	private String getProviderByEncounterRole(Encounter encounter, String encounterRoleName) {
+		for (EncounterProvider provider : encounter.getActiveEncounterProviders()) {
+			if (provider.getEncounterRole().getName() == encounterRoleName) {
+				return provider.getProvider().getName();
+			}
+		}
+		return null;
+	}
 }

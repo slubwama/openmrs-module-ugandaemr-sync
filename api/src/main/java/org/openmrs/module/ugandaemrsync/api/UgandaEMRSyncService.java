@@ -145,14 +145,16 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 */
 	public Date convertStringToDate(String string, String time, String dateFormat);
 	
-	/** Get heaalth Center Identifier
+	/**
+	 * Get heaalth Center Identifier
+	 * 
 	 * @return
 	 */
 	public String getHealthCenterCode();
-
-
+	
 	/**
 	 * Get Health Center Name
+	 * 
 	 * @return
 	 */
 	public String getHealthCenterName();
