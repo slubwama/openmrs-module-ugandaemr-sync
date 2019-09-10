@@ -40,7 +40,6 @@ public class SyncDataRecord {
 		if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
 			int size = 0;
 			Iterator it = newSyncRecords.iterator();
-			UgandaEMRRecord ugandaEMRRecord = new UgandaEMRRecord();
 			while (it.hasNext()) {
 				Object row[] = (Object[]) it.next();
 				try {

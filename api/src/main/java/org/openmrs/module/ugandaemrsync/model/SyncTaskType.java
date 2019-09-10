@@ -23,6 +23,9 @@ public class SyncTaskType extends BaseOpenmrsData {
 	@Column(name = "data_type_id", length = 255)
 	private String dataTypeId;
 	
+	@Column(name = "url_end_point", length = 255)
+	private String url;
+	
 	@Override
 	public Integer getId() {
 		return syncTaskTypeId;

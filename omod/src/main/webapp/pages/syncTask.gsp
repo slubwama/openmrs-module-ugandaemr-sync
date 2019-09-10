@@ -129,7 +129,6 @@
                     <td>${it.syncTask}</td>
                     <td>${it.status}</td>
                     <td>${it.statusCode}</td>
-                    <td>${it.dateSent}</td>
                     <td>${it.sentToUrl}</td>
                     <td>${it.requireAction}</td>
                     <td>${it.actionCompleted}</td>

@@ -85,7 +85,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 	}
 	
 	@Override
-	public SyncTask getSyncTask(int syncTask) throws APIException {
+	public SyncTask getSyncTask(String syncTask) throws APIException {
 		return dao.getSyncTask(syncTask);
 	}
 	
@@ -137,7 +137,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		return dao.getFinalResults(columns, finalQuery);
 	}
 	
-	public Encounter addVLToEncounter(String qualitativeVl, String quantitativeVl, String vlDate, Encounter encounter) {
+	public Encounter addVLToEncounter(String qualitativeVl, String quantitativeVl, String vlDate, Encounter encounter,
+	        Order order) {
 		
 		Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
 		Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
@@ -156,9 +157,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 			valueCoded = Context.getConceptService().getConcept("1301");
 		}
 		
-		Obs obs = createObs(encounter, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
-		Obs obs1 = createObs(encounter, viralLoadQualitative, valueCoded, null, null);
-		Obs obs2 = createObs(encounter, viralLoadQuantitative, null, null, Double.valueOf(quantitativeVl));
+		Obs obs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat),
+		    null);
+		Obs obs1 = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
+		Obs obs2 = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(quantitativeVl));
 		
 		//Void Similar observation
 		voidObsFound(encounter, dateSampleTaken);
@@ -230,7 +232,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		return formatter.parse(formattedDate);
 	}
 	
-	private Obs createObs(Encounter encounter, Concept concept, Concept valueCoded, Date valueDatetime, Double valueNumeric) {
+	private Obs createObs(Encounter encounter, Order order, Concept concept, Concept valueCoded, Date valueDatetime,
+	        Double valueNumeric) {
 		Obs newObs = new Obs();
 		newObs.setConcept(concept);
 		newObs.setValueCoded(valueCoded);
@@ -239,6 +242,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		newObs.setCreator(encounter.getCreator());
 		newObs.setDateCreated(encounter.getDateCreated());
 		newObs.setEncounter(encounter);
+		newObs.setOrder(order);
 		newObs.setPerson(encounter.getPatient());
 		return newObs;
 	}

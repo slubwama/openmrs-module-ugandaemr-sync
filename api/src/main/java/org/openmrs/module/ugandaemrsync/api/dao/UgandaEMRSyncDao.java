@@ -71,7 +71,7 @@ public class UgandaEMRSyncDao {
 	 * @param sync_task
 	 * @return
 	 */
-	public SyncTask getSyncTask(int sync_task) {
+	public SyncTask getSyncTask(String sync_task) {
 		return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", sync_task))
 		        .uniqueResult();
 	}

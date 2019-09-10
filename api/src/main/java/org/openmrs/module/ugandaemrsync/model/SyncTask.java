@@ -25,7 +25,7 @@ public class SyncTask extends BaseOpenmrsData {
 	private SyncTaskType syncTaskType;
 	
 	@Column(name = "sync_task", length = 255)
-	private int syncTask;
+	private String syncTask;
 	
 	@Column(name = "status", length = 255)
 	private String status;
@@ -69,11 +69,11 @@ public class SyncTask extends BaseOpenmrsData {
 		this.syncTaskType = syncTaskType;
 	}
 	
-	public int getSyncTask() {
+	public String getSyncTask() {
 		return syncTask;
 	}
 	
-	public void setSyncTask(int syncTask) {
+	public void setSyncTask(String syncTask) {
 		this.syncTask = syncTask;
 	}
 	

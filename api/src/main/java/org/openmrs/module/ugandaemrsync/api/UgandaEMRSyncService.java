@@ -12,6 +12,7 @@ package org.openmrs.module.ugandaemrsync.api;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Patient;
+import org.openmrs.Order;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
@@ -63,7 +64,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 * @throws APIException
 	 */
 	@Transactional
-	SyncTask getSyncTask(int syncTask) throws APIException;
+	SyncTask getSyncTask(String syncTask) throws APIException;
 	
 	/**
 	 * @param syncTask
@@ -129,7 +130,8 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 * @param encounter
 	 * @return
 	 */
-	public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter);
+	public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter,
+	        Order order);
 	
 	/**
 	 * @param vlDate

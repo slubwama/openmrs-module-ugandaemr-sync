@@ -124,6 +124,7 @@
                                     <option value="org.openmrs.Concept">org.openmrs.Concept</option>
                                     <option value="org.openmrs.Drug">org.openmrs.Drug</option>
                                     <option value="org.openmrs.Encounter">org.openmrs.Encounter</option>
+                                    <option value="org.openmrs.Order">org.openmrs.Order</option>
                                     <option value="org.openmrs.Location">org.openmrs.Location</option>
                                     <option value="org.openmrs.Patient">org.openmrs.Patient</option>
                                     <option value="org.openmrs.Person">org.openmrs.Person</option>
@@ -154,8 +155,10 @@
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Names</th>
-                    <th>Date</th>
+                    <th>NAME</th>
+                    <th>URL</th>
+                    <th>DATE</th>
+                    <th>UUID</th>
                     <th>ACTION</th>
                 </tr>
                 </thead>
@@ -165,7 +168,9 @@
                 <tr>
                     <td>${it.syncTaskTypeId}</td>
                     <td>${it.name}</td>
+                    <td>${it.url}</td>
                     <td>${it.dateCreated}</td>
+                    <td>${it.uuid}</td>
                     <td><i class="icon-trash" title="Delete" onclick="location.href = ''"></i></td>
                     <% }
                     } %>

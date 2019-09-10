@@ -114,7 +114,7 @@ public class ViralLoadUploadPageController {
 
                             if (encounters.size() > 0) {
                                 try {
-                                    ugandaEMRSyncService.addVLToEncounter(vlQualitative, vlQuantitative, vlDate, encounters.get(0));
+                                    ugandaEMRSyncService.addVLToEncounter(vlQualitative, vlQuantitative, vlDate, encounters.get(0),null);
                                 } catch (ArrayIndexOutOfBoundsException e) {
                                     log.error(e);
                                 }

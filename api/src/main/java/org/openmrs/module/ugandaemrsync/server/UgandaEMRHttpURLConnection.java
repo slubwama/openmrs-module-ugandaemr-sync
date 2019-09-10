@@ -4,7 +4,12 @@ package org.openmrs.module.ugandaemrsync.server;
  * Created by lubwamasamuel on 11/10/16.
  */
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openmrs.Location;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.context.Context;
@@ -18,8 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
@@ -155,12 +158,17 @@ public class UgandaEMRHttpURLConnection {
 		StringBuilder buf = new StringBuilder();
 		char[] cbuf = new char[2048];
 		int num;
-		while (-1 != (num = reader.read(cbuf))) {
+		while (true) {
+			if (!(-1 != (num = reader.read(cbuf))))
+				break;
 			buf.append(cbuf, 0, num);
 		}
 		String result = buf.toString();
 		ObjectMapper mapper = new ObjectMapper();
-		map = mapper.readValue(result, Map.class);
+		if (isJSONValid(result)) {
+			map = mapper.readValue(result, Map.class);
+		}
+		
 		map.put("responseCode", responseCode);
 		return map;
 	}
@@ -217,6 +225,27 @@ public class UgandaEMRHttpURLConnection {
 			
 		}
 		return "Could not generate Facility ID";
+	}
+	
+	/**
+	 * Validate JSON String
+	 * 
+	 * @param test
+	 * @return
+	 */
+	public boolean isJSONValid(String test) {
+		try {
+			new JSONObject(test);
+		}
+		catch (JSONException ex) {
+			try {
+				new JSONArray(test);
+			}
+			catch (JSONException ex1) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 }

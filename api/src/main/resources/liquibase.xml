@@ -65,7 +65,7 @@
             <column defaultValueNumeric="0" name="sync_task_type" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueNumeric="0" name="sync_task" type="INT">
+            <column name="sync_task" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="VARCHAR(255)">
@@ -190,4 +190,23 @@
             <column name="uuid" value="18dc5ffa-cf2a-471e-aff4-c0449909f81c" />
         </insert>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-09042019-1027" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '3551ca84-06c0-432b-9064-fcfeefd6f4ec'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Order" />
+            <column name="data_type" value="org.openmrs.Order" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="" />
+            <column name="creator" value="1" />
+            <column name="date_created" value="2019-07-10 06:23:27" />
+            <column name="uuid" value="3551ca84-06c0-432b-9064-fcfeefd6f4ec" />
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
