@@ -33,9 +33,14 @@
             org.openmrs.module.appui
         </require_module>
         <require_module>
+            org.openmrs.module.reporting
+        </require_module>
+        <require_module>
+            org.openmrs.module.ugandaemrreports
+        </require_module>
+        <require_module>
             org.openmrs.module.metadatadeploy
         </require_module>
-
         <require_module>
             org.openmrs.module.dataexchange
         </require_module>
@@ -49,6 +54,87 @@
         <aware_of_module>org.openmrs.module.legacyui</aware_of_module>
     </aware_of_modules>
 
+
+    <!-- AOP
+    <advice>
+        <point>org.openmrs.api.FormService</point>
+        <class>@MODULE_PACKAGE@.advice.DuplicateFormAdvisor</class>
+    </advice>
+     /AOP -->
+
+
+    <!-- Required Privileges
+    <privilege>
+        <name>Form Entry</name>
+        <description>Allows user to access Form Entry pages/functions</description>
+    </privilege>
+     /Required Privileges -->
+
+
+    <!-- Required Global Properties-->
+    <globalProperty>
+        <property>ugandaemrsync.recency.server.url</property>
+        <defaultValue></defaultValue>
+        <description> </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.recency.server.password</property>
+        <defaultValue></defaultValue>
+        <description>This is the recency password that the system will connect to</description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.serverIP</property>
+        <defaultValue></defaultValue>
+        <description> </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.healthCenterSyncId</property>
+        <defaultValue></defaultValue>
+        <description> </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.protocol</property>
+        <defaultValue></defaultValue>
+        <description> </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.recency.last.successful.submission.date</property>
+        <defaultValue></defaultValue>
+        <description>The last successful submission date for recency send data task scheduler</description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.recency.submit.data.once.daily</property>
+        <defaultValue>true</defaultValue>
+        <description>Turns on and off the submission of recency data once daily or multiple time in specified interval</description>
+    </globalProperty>
+
+    <!--
+    <dwr>
+        <allow>
+            <create creator="new" javascript="DWRFormEntryService">
+                <param name="class" value="org.openmrs.module.@MODULE_ID@.web.DWRFormEntryService"/>
+                <include method="enterForm"/>
+            </create>
+        </allow>
+
+        <signatures>
+            <![CDATA[
+            import @MODULE_PACKAGE@.web.DWRFormEntryService;
+            DWRFormEntryService.enterForm(Integer patientId, Integer formId, boolean useEncounter, List<String> fields);
+            ]]>
+        </signatures>
+    </dwr>
+    -->
+
+    <!-- Servlets -->
+    <!-- Accessed through the url /pageContext()/moduleServlet/<moduleId>/<servlet-name>
+    <servlet>
+        <servlet-name>formDownload</servlet-name>
+        <servlet-class>@MODULE_PACKAGE@.web.FormDownloadServlet</servlet-class>
+    </servlet>
+    -->
+    <!-- /Servlets -->
+
     <globalProperty>
         <property>ugandaemrsync.server.username</property>
         <defaultValue></defaultValue>
@@ -56,7 +142,6 @@
             This is the username for server that the system would like to connect to
         </description>
     </globalProperty>
-
     <globalProperty>
         <property>ugandaemrsync.server.password</property>
         <defaultValue></defaultValue>

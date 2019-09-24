@@ -51,6 +51,7 @@ public class SyncGlobalProperties {
 			setGlobalProperty(MAX_NUMBER_OF_ROWS, MAX_NUMBER_OF_ROWS_PLACE_HOLDER);
 			log.info("Place Holder for max number of row is set");
 		}
+		
 	}
 	
 	public GlobalProperty setGlobalProperty(String property, String propertyValue) {

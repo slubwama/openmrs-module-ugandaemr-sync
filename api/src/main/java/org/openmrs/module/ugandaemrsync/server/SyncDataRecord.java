@@ -51,7 +51,6 @@ public class SyncDataRecord {
 					}
 				}
 				catch (Exception e) {
-					System.out.println("Why no ");
 					e.printStackTrace();
 				}
 			}
