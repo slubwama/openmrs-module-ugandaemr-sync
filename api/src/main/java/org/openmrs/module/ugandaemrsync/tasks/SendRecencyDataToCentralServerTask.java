@@ -30,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -57,6 +58,7 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 	public void execute() {
 		Date todayDate = new Date();
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		if (!isGpRecencyServerUrlSet()) {
 			return;
 		}
@@ -76,8 +78,16 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 		        .getGlobalPropertyObject(GP_SUBMIT_RECENCY_DATA_ONCE_DAILY).getPropertyValue();
 		
 		if (!isBlank(strSubmissionDate)) {
-			
-			if (strSubmissionDate.equals(dateFormat.format(todayDate)) && strSubmitOnceDaily.equals("true")) {
+			Date gpSubmissionDate = null;
+			try {
+				gpSubmissionDate = new SimpleDateFormat("yyyy-MM-dd").parse(strSubmissionDate);
+			}
+			catch (ParseException e) {
+				log.info("Error parsing last successful submission date " + strSubmissionDate + e);
+				e.printStackTrace();
+			}
+			if (dateFormat.format(gpSubmissionDate).equals(dateFormat.format(todayDate))
+			        && strSubmitOnceDaily.equals("true")) {
 				log.info("Last successful submission was on" + strSubmissionDate
 				        + " and once data submission daily is set as " + strSubmitOnceDaily
 				        + "so this task will not run again today. If you need to send data, run the task manually."
@@ -98,7 +108,8 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 		String bodyText = getRecencyDataExport();
 		HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(recencyServerUrlEndPoint, bodyText);
 		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-			ReportUtil.updateGlobalProperty(GP_RECENCY_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE, dateFormat.format(todayDate));
+			ReportUtil.updateGlobalProperty(GP_RECENCY_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
+			    dateTimeFormat.format(todayDate));
 			log.info("Recency data has been sent to central server");
 		} else {
 			log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
