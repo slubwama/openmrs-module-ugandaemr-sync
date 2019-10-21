@@ -25,6 +25,15 @@ public class SyncTaskType extends BaseOpenmrsData {
 	
 	@Column(name = "url_end_point", length = 255)
 	private String url;
+
+	@Column(name = "url_token", length = 255)
+	private String urlToken;
+
+	@Column(name = "url_username", length = 255)
+	private String urlUserName;
+
+	@Column(name = "url_password", length = 255)
+	private String urlPassword;
 	
 	@Override
 	public Integer getId() {
@@ -58,5 +67,37 @@ public class SyncTaskType extends BaseOpenmrsData {
 	
 	public void setDataTypeId(String dataTypeId) {
 		this.dataTypeId = dataTypeId;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getUrlToken() {
+		return urlToken;
+	}
+
+	public void setUrlToken(String urlToken) {
+		this.urlToken = urlToken;
+	}
+
+	public String getUrlUserName() {
+		return urlUserName;
+	}
+
+	public void setUrlUserName(String urlUserName) {
+		this.urlUserName = urlUserName;
+	}
+
+	public String getUrlPassword() {
+		return urlPassword;
+	}
+
+	public void setUrlPassword(String urlPassword) {
+		this.urlPassword = urlPassword;
 	}
 }

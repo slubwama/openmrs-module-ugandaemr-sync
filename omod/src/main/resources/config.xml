@@ -42,10 +42,6 @@
             org.openmrs.module.metadatadeploy
         </require_module>
         <require_module>
-            org.openmrs.module.dataexchange
-        </require_module>
-
-        <require_module>
             org.openmrs.module.metadatasharing
         </require_module>
     </require_modules>
@@ -74,32 +70,32 @@
     <!-- Required Global Properties-->
     <globalProperty>
         <property>ugandaemrsync.recency.server.url</property>
-        <defaultValue></defaultValue>
+        <defaultValue> </defaultValue>
         <description> </description>
     </globalProperty>
     <globalProperty>
         <property>ugandaemrsync.recency.server.password</property>
-        <defaultValue></defaultValue>
+        <defaultValue> </defaultValue>
         <description>This is the recency password that the system will connect to</description>
     </globalProperty>
     <globalProperty>
         <property>ugandaemrsync.serverIP</property>
-        <defaultValue></defaultValue>
+        <defaultValue> </defaultValue>
         <description> </description>
     </globalProperty>
     <globalProperty>
         <property>ugandaemrsync.healthCenterSyncId</property>
-        <defaultValue></defaultValue>
+        <defaultValue> </defaultValue>
         <description> </description>
     </globalProperty>
     <globalProperty>
         <property>ugandaemrsync.protocol</property>
-        <defaultValue></defaultValue>
+        <defaultValue> </defaultValue>
         <description> </description>
     </globalProperty>
     <globalProperty>
         <property>ugandaemrsync.recency.last.successful.submission.date</property>
-        <defaultValue></defaultValue>
+        <defaultValue> </defaultValue>
         <description>The last successful submission date for recency send data task scheduler</description>
     </globalProperty>
     <globalProperty>
@@ -151,33 +147,6 @@
     </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
-
-    <sync_task_type>
-        <sync_task_type_id>1</sync_task_type_id>
-        <name>Encounter</name>
-        <creator>1</creator>
-        <date_created>2019-07-01 13:17:11</date_created>
-        <voided>0</voided>
-        <uuid>3551ca84-06c0-432b-9064-fcfeefd6f4ec</uuid>
-    </sync_task_type>
-
-    <sync_task_type>
-        <sync_task_type_id>2</sync_task_type_id>
-        <name>Observation</name>
-        <creator>1</creator>
-        <date_created>2019-07-01 13:17:11</date_created>
-        <voided>0</voided>
-        <uuid>71deaf48-0247-46a3-a0b5-971a6f669d52</uuid>
-    </sync_task_type>
-
-    <sync_task_type>
-        <sync_task_type_id>3</sync_task_type_id>
-        <name>Patient Attribute</name>
-        <creator>1</creator>
-        <date_created>2019-07-01 13:17:11</date_created>
-        <voided>0</voided>
-        <uuid>392ae412-96ec-417d-9e80-0b3f33c25fe1</uuid>
-    </sync_task_type>
     <messages>
         <lang>en</lang>
         <file>messages.properties</file>

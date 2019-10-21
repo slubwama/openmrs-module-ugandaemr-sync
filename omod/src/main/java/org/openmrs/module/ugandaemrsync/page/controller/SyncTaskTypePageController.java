@@ -15,34 +15,58 @@ import java.util.Date;
 import java.util.List;
 
 public class SyncTaskTypePageController {
-	
-	protected final org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
-	
-	public SyncTaskTypePageController() {
-	}
-	
-	public void controller(@SpringBean PageModel pageModel,
-	        @RequestParam(value = "breadcrumbOverride", required = false) String breadcrumbOverride,
-	        UiSessionContext sessionContext, PageModel model, UiUtils ui) {
-		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-		List<SyncTaskType> syncTaskTypes = ugandaEMRSyncService.getAllSyncTaskType();
-		pageModel.put("syncTaskTypes", syncTaskTypes);
-		pageModel.put("breadcrumbOverride", breadcrumbOverride);
-	}
-	
-	public void post(@SpringBean PageModel pageModel, @RequestParam(value = "returnUrl", required = false) String returnUrl,
-	        @RequestParam(value = "name", required = false) String name,
-	        @RequestParam(value = "datatype", required = false) String dataType,
-	        @RequestParam(value = "datatypeid", required = false) String dataTypeId, UiSessionContext uiSessionContext,
-	        UiUtils uiUtils, HttpServletRequest request) {
-		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-		SyncTaskType syncTaskType = new SyncTaskType();
-		syncTaskType.setDateCreated(new Date());
-		syncTaskType.setName(name);
-		syncTaskType.setDataType(dataType);
-		syncTaskType.setDataTypeId(dataTypeId);
-		syncTaskType.setCreator(Context.getAuthenticatedUser());
-		ugandaEMRSyncService.saveSyncTaskType(syncTaskType);
-		pageModel.put("syncTaskTypes", ugandaEMRSyncService.getAllSyncTaskType());
-	}
+
+    protected final org.apache.commons.logging.Log log = LogFactory.getLog(getClass());
+
+    public SyncTaskTypePageController() {
+    }
+
+    public void controller(@SpringBean PageModel pageModel, @RequestParam(value = "breadcrumbOverride", required = false) String breadcrumbOverride, UiSessionContext sessionContext, PageModel model, UiUtils ui) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        List<SyncTaskType> syncTaskTypes = ugandaEMRSyncService.getAllSyncTaskType();
+        pageModel.put("syncTaskTypes", syncTaskTypes);
+        pageModel.put("breadcrumbOverride", breadcrumbOverride);
+    }
+
+    public void post(@SpringBean PageModel pageModel,
+                     @RequestParam(value = "returnUrl", required = false) String returnUrl,
+                     @RequestParam(value = "syncTaskTypeName", required = false) String name,
+                     @RequestParam(value = "syncTaskTypeId", required = false) String syncTaskTypeId,
+                     @RequestParam(value = "datatype", required = false) String dataType,
+                     @RequestParam(value = "url", required = false) String url,
+                     @RequestParam(value = "username", required = false) String username,
+                     @RequestParam(value = "password", required = false) String password,
+                     @RequestParam(value = "token", required = false) String token,
+                     @RequestParam(value = "datatypeId", required = false) String dataTypeId,
+                     UiSessionContext uiSessionContext, UiUtils uiUtils, HttpServletRequest request) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+
+
+        if (syncTaskTypeId.equals("")) {
+            SyncTaskType neSyncTaskType = new SyncTaskType();
+            neSyncTaskType.setDateCreated(new Date());
+            neSyncTaskType.setName(name);
+            neSyncTaskType.setDataType(dataType);
+            neSyncTaskType.setUrl(url);
+            neSyncTaskType.setUrlUserName(username);
+            neSyncTaskType.setUrlPassword(password);
+            neSyncTaskType.setUrlToken(token);
+            neSyncTaskType.setDataTypeId(dataTypeId);
+            neSyncTaskType.setCreator(Context.getAuthenticatedUser());
+            ugandaEMRSyncService.saveSyncTaskType(neSyncTaskType);
+        } else {
+            SyncTaskType syncTaskType=Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(syncTaskTypeId);
+            syncTaskType.setName(name);
+            syncTaskType.setDataType(dataType);
+            syncTaskType.setUrl(url);
+            syncTaskType.setUrlUserName(username);
+            syncTaskType.setUrlPassword(password);
+            syncTaskType.setUrlToken(token);
+            syncTaskType.setDataTypeId(dataTypeId);
+            syncTaskType.setCreator(Context.getAuthenticatedUser());
+            ugandaEMRSyncService.saveSyncTaskType(syncTaskType);
+        }
+
+        pageModel.put("syncTaskTypes", ugandaEMRSyncService.getAllSyncTaskType());
+    }
 }

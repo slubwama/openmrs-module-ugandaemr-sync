@@ -114,8 +114,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 	}
 	
 	@Override
-	public List<SyncTask> getIncompleteActionSyncTask() throws APIException {
-		return dao.getIncompleteActionSyncTask();
+	public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) throws APIException {
+		return dao.getIncompleteActionSyncTask(syncTaskTypeIdentifier);
 	}
 	
 	/**

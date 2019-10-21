@@ -81,7 +81,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 * @throws APIException
 	 */
 	@Transactional
-	public List<SyncTask> getIncompleteActionSyncTask() throws APIException;
+	public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) throws APIException;
 	
 	/**
 	 * Get SyncTask
