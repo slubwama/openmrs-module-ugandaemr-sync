@@ -110,9 +110,8 @@
                     <th>Sync Task Type</th>
                     <th>Sync Task Data Type</th>
                     <th>Sync Task</th>
-                    <th>Status<th></th>
+                    <th>Status</th>
                     <th>Status Code</th>
-                    <th>URL</th>
                     <th>Require Action</th>
                     <th>Action Completed</th>
                     <th>Date Sent</th>
@@ -129,7 +128,6 @@
                     <td>${it.syncTask}</td>
                     <td>${it.status}</td>
                     <td>${it.statusCode}</td>
-                    <td>${it.sentToUrl}</td>
                     <td>${it.requireAction}</td>
                     <td>${it.actionCompleted}</td>
                     <td>${it.dateSent}</td>

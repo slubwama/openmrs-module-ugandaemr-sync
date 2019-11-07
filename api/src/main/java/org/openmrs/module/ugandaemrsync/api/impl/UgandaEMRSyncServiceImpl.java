@@ -170,7 +170,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 		encounter.addObs(obs);
 		encounter.addObs(obs1);
 		encounter.addObs(obs2);
-		
+
+		try {
+			Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return Context.getEncounterService().saveEncounter(encounter);
 		
 	}

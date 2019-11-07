@@ -47,10 +47,11 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
             }
 
             if (results != null && results.size() > 0 && UgandaEMRSyncUtil.getSuccessCodeList().contains(results.get("responseCode"))) {
-                Map result = (Map) results.get("result");
+                Map reasonReference = (Map) results.get("reasonReference");
+                ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
                 //Save Viral Load Results
                 if (order.getEncounter() != null) {
-                    ugandaEMRSyncService.addVLToEncounter(result.get("valueString").toString(), result.get("valueInteger").toString(), order.getEncounter().getEncounterDatetime().toString(), order.getEncounter(), order);
+                    ugandaEMRSyncService.addVLToEncounter(result.get(0).get("valueString").toString(), result.get(0).get("valueInteger").toString(), order.getEncounter().getEncounterDatetime().toString(), order.getEncounter(), order);
                     syncTask.setActionCompleted(true);
                     ugandaEMRSyncService.saveSyncTask(syncTask);
                     try {
