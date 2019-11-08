@@ -25,6 +25,49 @@
         });
     });
 </script>
+
+<script>
+    if (jQuery) {
+        jq(document).ready(function () {
+            jq('#addEditSyncTaskTypeModel').on('show.bs.modal', function (event) {
+                var button = jq(event.relatedTarget);
+                var syncTaskTypeId = button.data('synctaskid');
+                var modal = jq(this);
+
+                modal.find("#syncTaskTypeId").val("");
+                modal.find("#syncTaskTypeName").val("");
+                modal.find("#dataType select").find().val("");
+                modal.find("#dataTypeId").val("");
+                modal.find("#username").val("");
+                modal.find("#password").val("");
+                modal.find("#url").val("");
+                modal.find("#token").val("");
+
+                jq.get('${ ui.actionLink("ugandaemrsync","syncTaskType","getSyncTaskType",) }', {
+                    "syncTaskTypeId": syncTaskTypeId
+                }, function (response) {
+                    var syncTaskType=JSON.parse(response.replace("syncTaskType=", "\"syncTaskType\":").trim());
+
+                    modal.find("#syncTaskTypeId").val(syncTaskTypeId);
+                    modal.find("#syncTaskTypeName").val(syncTaskType.syncTaskType.name);
+                    modal.find("#dataType select").find().val(syncTaskType.syncTaskType.dataType);
+                    modal.find("#dataTypeId").val(syncTaskType.syncTaskType.dataTypeId);
+                    modal.find("#username").val(syncTaskType.syncTaskType.urlUserName);
+                    modal.find("#password").val(syncTaskType.syncTaskType.urlPassword);
+                    modal.find("#url").val(syncTaskType.syncTaskType.url);
+                    modal.find("#token").val(syncTaskType.syncTaskType.urlToken);
+                    if (!response) {
+                        ${ ui.message("coreapps.none ") }
+                    }
+                });
+            });
+        });
+    }
+
+    function samuel() {
+
+    }
+</script>
 <style>
 .dashboard .que-container {
     display: inline;
@@ -88,9 +131,8 @@
 
                     <div class="">
 
-                        <button type="button" style="font-size: 25px" class="icon-plus-sign" data-toggle="modal"
-                                data-target="#exampleModal"
-                                data-whatever="@mdo">Create Sync Task Type</button>
+                        <button type="button" style="font-size: 25px" class="confirm icon-plus-sign" data-toggle="modal"
+                                data-target="#addEditSyncTaskTypeModel"  data-whatever="@mdo">     Create</button>
                     </div>
 
                     <div class="vertical"></div>
@@ -132,9 +174,7 @@
                     <td>${it.dateCreated}</td>
                     <td>${it.uuid}</td>
                     <td>
-                        <i style="font-size: 25px" class="icon-trash" title="Delete" onclick="location.href = ''"></i>
-                        <i style="font-size: 25px" class="icon-edit edit-action" title="Edit"
-                           onclick="location.href = ''"></i>
+                        <i style="font-size: 25px" data-toggle="modal" data-target="#addEditSyncTaskTypeModel" data-synctaskid="${it.uuid}" class="icon-edit edit-action" title="Edit"></i>
                     </td>
                     <% }
                     } %>
@@ -146,20 +186,20 @@
 </div>
 
 
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
-     aria-labelledby="exampleModalLabel"
+<div class="modal fade" id="addEditSyncTaskTypeModel" tabindex="-1" role="dialog"
+     aria-labelledby="addEditSyncTaskTypeModelLabel"
      aria-hidden="true">
     <div class="modal-dialog  modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">New message</h5>
+                <h5 class="modal-title" id="addEditSyncTaskTypeModelLabel">New message</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
             <form method="post">
-                <input type="hidden" name="syncTaskTypeId" id="syncTaskTypeId">
+                <input type="hidden" name="syncTaskTypeId" id="syncTaskTypeId" value="">
 
                 <div class="modal-body">
                     <div class="container">
@@ -173,7 +213,8 @@
 
                                 <div class="form-group">
                                     <label>Data Type</label>
-                                    <select class="form-control" name="datatype" id="datatype">
+                                    <select class="form-control" name="dataType" id="dataType">
+                                        <option value="">Select Data Type</option>
                                         <option value="java.lang.Boolean">java.lang.Boolean</option>
                                         <option value="java.lang.Character">java.lang.Character</option>
                                         <option value="java.lang.Float">java.lang.Float</option>
@@ -183,7 +224,7 @@
                                         <option value="org.openmrs.Drug">org.openmrs.Drug</option>
                                         <option value="org.openmrs.Encounter">org.openmrs.Encounter</option>
                                         <option value="org.openmrs.Order">org.openmrs.Order</option>
-                                        <option value="org.openmrs.Order">org.openmrs.TestOrder</option>
+                                        <option value="org.openmrs.TestOrder">org.openmrs.TestOrder</option>
                                         <option value="org.openmrs.Location">org.openmrs.Location</option>
                                         <option value="org.openmrs.Patient">org.openmrs.Patient</option>
                                         <option value="org.openmrs.Person">org.openmrs.Person</option>
@@ -212,8 +253,8 @@
 
                                 <div class="form-group">
                                     <label>Data Type Identifier (eg uuid for enounter type)</label>
-                                    <input type="text" class="form-control" id="datatypeId"
-                                           placeholder=" ie Send Tests to Reference lab" id="datatypeId">
+                                    <input type="text" class="form-control" id="dataTypeId"
+                                           placeholder=" ie Send Tests to Reference lab" name="dataTypeId">
                                 </div>
 
                                 <div class="form-group">
@@ -241,3 +282,4 @@
         </div>
     </div>
 </div>
+
