@@ -1,6 +1,13 @@
 <div id="apps">
+    admin/maintenance/settings.list?show=Aijar
+    <a id="ugandaemrsync-get-facility-id" href="${ui.pageLink("admin","maintenance/settings",[show: "Ugandaemrsync"])}" class="button app big">
+
+        <i class="icon-lock"></i>
+        Request Facility ID
+    </a>
+
     <% if (requestFacility == true) { %>
-    <a id="ugandaemrsync-get-facility-id" href="/openmrs/ugandaemrsync/getFacility.page" class="button app big">
+    <a id="ugandaemrsync-get-facility-id" href="${ui.pageLink("ugandaemrsync","getFacility")}" class="button app big">
 
         <i class="icon-lock"></i>
         Request Facility ID
@@ -8,8 +15,7 @@
     <% } %>
 
     <% if (requestFacility == false) { %>
-
-    <a id="ugandaemrsync-sync-data" href="/openmrs/ugandaemrsync/syncData.page" class="button app big">
+    <a id="ugandaemrsync-sync-data" href="${ui.pageLink("ugandaemrsync","syncData")}" class="button app big">
 
         <i class="icon-refresh"></i>
 
@@ -18,7 +24,7 @@
     <% } %>
     <% if (requestFacility == false && initialSync == true) { %>
 
-    <a id="ugandaemrsync-generate-initial-data" href="/openmrs/ugandaemrsync/initialDataGeneration.page"
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","initialDataGeneration")}"
        class="button app big">
 
         <i class="icon-building"></i>
@@ -26,19 +32,19 @@
     </a>
     <% } %>
 
-    <a id="ugandaemrsync-generate-initial-data" href="/openmrs/ugandaemrsync/viralLoadUpload.page"
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","viralLoadUpload")}"
        class="button app big">
 
         <i class=" icon-upload"></i>
         Upload Viral Load Results
     </a>
-    <a id="ugandaemrsync-generate-initial-data" href="/openmrs/ugandaemrsync/syncTask.page"
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","syncTask")}"
        class="button app big">
         <i class="icon-list-ul"></i>
         Sync Task Logs
     </a>
 
-    <a id="ugandaemrsync-generate-initial-data" href="/openmrs/ugandaemrsync/syncTaskType.page"
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","syncTaskType")}"
        class="button app big">
 
         <i class="icon-list-ul"></i>

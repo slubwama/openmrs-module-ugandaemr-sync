@@ -57,6 +57,7 @@ public class SyncTaskTypePageController {
             ugandaEMRSyncService.saveSyncTaskType(neSyncTaskType);
         } else {
             SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(syncTaskTypeId);
+            syncTaskType.setId(syncTaskType.getId());
             syncTaskType.setName(name);
             syncTaskType.setDataType(dataType);
             syncTaskType.setUrl(url);
