@@ -15,8 +15,6 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openmrs.Location;
-import org.openmrs.Patient;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
@@ -31,9 +29,6 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 import java.util.Date;
 import java.util.List;
 
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
 
 /**
@@ -82,6 +77,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     @Test
     public void saveSyncTaskType_shouldSaveSyncTaskType() throws Exception {
         UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+        List<SyncTaskType> syncTaskTypesBeforeSavingingMore=ugandaEMRSyncService.getAllSyncTaskType();
         SyncTaskType neSyncTaskType = new SyncTaskType();
         neSyncTaskType.setDateCreated(new Date());
         neSyncTaskType.setName("SyncTaskType1");
@@ -96,7 +92,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         List<SyncTaskType> syncTaskTypes=ugandaEMRSyncService.getAllSyncTaskType();
 
-        Assert.assertEquals(3,syncTaskTypes.size());
+        Assert.assertEquals(syncTaskTypesBeforeSavingingMore.size()+1,syncTaskTypes.size());
     }
 
     @Test
@@ -116,7 +112,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         ugandaEMRSyncService.saveSyncTask(newSyncTask);
         List<SyncTask> syncTasks=ugandaEMRSyncService.getAllSyncTask();
 
-        Assert.assertEquals(1,syncTasks.size());
+        Assert.assertEquals(2,syncTasks.size());
     }
 
 
