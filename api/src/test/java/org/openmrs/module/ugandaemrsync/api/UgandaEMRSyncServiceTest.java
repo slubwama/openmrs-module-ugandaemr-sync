@@ -96,7 +96,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         List<SyncTaskType> syncTaskTypes=ugandaEMRSyncService.getAllSyncTaskType();
 
-        Assert.assertEquals(1,syncTaskTypes.size());
+        Assert.assertEquals(3,syncTaskTypes.size());
     }
 
     @Test
