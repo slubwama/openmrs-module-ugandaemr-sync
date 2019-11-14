@@ -29,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_IDENTIFIER_TYPE;
 
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
 
@@ -80,11 +79,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTask(java.lang.String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTaskBySyncTaskId(java.lang.String)
      */
     @Override
-    public SyncTask getSyncTask(String syncTask) throws APIException {
-        return dao.getSyncTask(syncTask);
+    public SyncTask getSyncTaskBySyncTaskId(String syncTaskId) throws APIException {
+        return dao.getSyncTask(syncTaskId);
     }
 
     /**

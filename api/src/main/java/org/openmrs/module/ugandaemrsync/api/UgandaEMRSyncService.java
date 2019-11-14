@@ -50,7 +50,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	
 	/**
 	 * Saves the syn task Type
-	 * @param syncTaskType
+	 * @param syncTaskType the sync task to be saved.
 	 * @return SyncTaskType saved sync task type
 	 * @throws APIException
 	 */
@@ -59,12 +59,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	
 	/**
 	 * Gets SyncTask that matches the sync task parameter
-	 * @param syncTask a string containing an id or uuid of the sync task
+	 * @param syncTaskId a string containing an id or uuid of the sync task
 	 * @return SyncTask that matches the sync task id or uuid in the parameter set
 	 * @throws APIException
 	 */
 	@Transactional
-	SyncTask getSyncTask(String syncTask) throws APIException;
+	SyncTask getSyncTaskBySyncTaskId(String syncTaskId) throws APIException;
 
 	/**
 	 * Saves or updates the sync task set or given

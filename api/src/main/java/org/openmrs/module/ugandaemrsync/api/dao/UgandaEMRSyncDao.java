@@ -21,8 +21,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID;
-
 @Repository("ugandaemrsync.UgandaEMRSyncDao")
 public class UgandaEMRSyncDao {
 	
@@ -61,7 +59,7 @@ public class UgandaEMRSyncDao {
 	}
 
 	/**
-	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTask(java.lang.String)
+	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTaskBySyncTaskId(java.lang.String)
 	 */
 	public SyncTask getSyncTask(String syncTask) {
 		return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", syncTask))

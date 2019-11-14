@@ -45,7 +45,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
 
         for (Order order : orderList) {
-            SyncTask syncTask = ugandaEMRSyncService.getSyncTask(order.getAccessionNumber());
+            SyncTask syncTask = ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getAccessionNumber());
             if (syncTask == null) {
                 Map<String, String> dataOutput = generateVLFHIROrderTestRequestBody((TestOrder) order, VL_SEND_SAMPLE_FHIR_JSON_STRING);
                 String json = dataOutput.get("json");
