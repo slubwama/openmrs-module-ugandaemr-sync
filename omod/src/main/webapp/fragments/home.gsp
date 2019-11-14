@@ -1,7 +1,7 @@
 <div id="apps">
     <a id="ugandaemrsync-get-facility-id" href="${ui.pageLink("admin","maintenance/settings",[show: "Ugandaemrsync"])}" class="button app big">
 
-        <i class="icon-lock"></i>
+        <i class="fas fa-cogs"></i>
         Sync Settings
     </a>
 
