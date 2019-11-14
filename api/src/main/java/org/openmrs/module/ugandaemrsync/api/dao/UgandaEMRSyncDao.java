@@ -37,57 +37,49 @@ public class UgandaEMRSyncDao {
 	}
 	
 	/**
-	 * Getting All Sync task types
-	 * 
-	 * @return
+	 /**
+	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTaskType()
 	 */
 	public List<SyncTaskType> getAllSyncTaskType() {
 		return (List<SyncTaskType>) getSession().createCriteria(SyncTaskType.class).list();
 	}
-	
+
 	/**
-	 * Get Sync Task Type by uuid
-	 * 
-	 * @param uuid
-	 * @return
+	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
 	 */
 	public SyncTaskType getSyncTaskTypeByUUID(String uuid) {
 		return (SyncTaskType) getSession().createCriteria(SyncTaskType.class).add(Restrictions.eq("uuid", uuid))
 		        .uniqueResult();
 	}
-	
+
 	/**
-	 * @param syncTaskType
-	 * @return
+	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
 	 */
 	public SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) {
 		getSession().saveOrUpdate(syncTaskType);
 		return syncTaskType;
 	}
-	
+
 	/**
-	 * Get Sync Task
-	 * 
-	 * @param sync_task
-	 * @return
+	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTask(java.lang.String)
 	 */
-	public SyncTask getSyncTask(String sync_task) {
-		return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", sync_task))
+	public SyncTask getSyncTask(String syncTask) {
+		return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", syncTask))
 		        .uniqueResult();
 	}
 	
 	/**
-	 * Get All Sync Task
-	 * 
-	 * @return
+	 /**
+	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTask()
 	 */
 	public List<SyncTask> getAllSyncTask() {
 		return (List<SyncTask>) getSession().createCriteria(SyncTask.class).list();
 	}
-	
+
+
 	/**
-	 * @param syncTask
-	 * @return
+	 /**
+	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTask(org.openmrs.module.ugandaemrsync.model.SyncTask)
 	 */
 	public SyncTask saveSyncTask(SyncTask syncTask) {
 		getSession().saveOrUpdate(syncTask);
@@ -115,11 +107,10 @@ public class UgandaEMRSyncDao {
 		}
 		return sqlQuery.list();
 	}
-	
+
 	/**
-	 * Get List of Viral Load Lab requests without Results Received
-	 * 
-	 * @return
+	 /**
+	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getIncompleteActionSyncTask(java.lang.String)
 	 */
 	public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) {
 		SQLQuery sqlQuery = getSession()

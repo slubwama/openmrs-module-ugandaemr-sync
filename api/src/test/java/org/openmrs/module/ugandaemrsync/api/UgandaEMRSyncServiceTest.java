@@ -9,18 +9,26 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openmrs.Location;
+import org.openmrs.Patient;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.UserService;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 import org.openmrs.module.ugandaemrsync.api.impl.UgandaEMRSyncServiceImpl;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
+
+import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
@@ -66,4 +74,25 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
        // assertNotNull(facilityId);
         //assertTrue(query.contains(facilityId));
     }
+
+    @Test
+    public void saveSyncTaskType_shouldSaveSyncTaskType() throws Exception {
+        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+        SyncTaskType neSyncTaskType = new SyncTaskType();
+        neSyncTaskType.setDateCreated(new Date());
+        neSyncTaskType.setName("SyncTaskType1");
+        neSyncTaskType.setDataType("org.openmrs.Concepts");
+        neSyncTaskType.setUrl("http://google.com");
+        neSyncTaskType.setUrlUserName("samuel");
+        neSyncTaskType.setUrlPassword("samule");
+        neSyncTaskType.setUrlToken("agehgyryteghuteded");
+        neSyncTaskType.setDataTypeId("4672");
+        neSyncTaskType.setCreator(Context.getAuthenticatedUser());
+        ugandaEMRSyncService.saveSyncTaskType(neSyncTaskType);
+
+        List<SyncTaskType> syncTaskTypes=ugandaEMRSyncService.getAllSyncTaskType();
+
+        Assert.assertEquals(1,syncTaskTypes.size());
+    }
+
 }

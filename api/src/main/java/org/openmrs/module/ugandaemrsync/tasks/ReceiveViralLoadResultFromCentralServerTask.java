@@ -2,19 +2,14 @@ package org.openmrs.module.ugandaemrsync.tasks;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.Encounter;
-import org.openmrs.EncounterType;
 import org.openmrs.Order;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
-import org.openmrs.module.ugandaemrsync.server.SyncConstant;
-import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.server.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
-import org.openmrs.parameter.EncounterSearchCriteria;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 import java.util.*;
@@ -34,7 +29,7 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
 
             Order order = getOrder(syncTask.getSyncTask());
 
-            String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, ugandaEMRSyncService.getHealthCenterCode(), ugandaEMRSyncService.getPatientARTNO(order.getEncounter().getPatient()), String.valueOf(syncTask.getSyncTask())).get("json");
+            String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, ugandaEMRSyncService.getHealthCenterCode(), ugandaEMRSyncService.getPatientIdentifier(order.getEncounter().getPatient(),PATIENT_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask())).get("json");
 
             Map results = new HashMap();
 

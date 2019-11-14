@@ -95,7 +95,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             String healthCenterCode = ugandaEMRSyncService.getHealthCenterCode();
             String requestType = encounter.getEncounterType().getName();
             String sourceSystem = "UgandaEMR";
-            String patientARTNO = ugandaEMRSyncService.getPatientARTNO(encounter.getPatient());
+            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(encounter.getPatient(),PATIENT_IDENTIFIER_TYPE);
             String sampleID = encounter.getEncounterId().toString();
             String sampleCollectionDate = encounter.getEncounterDatetime().toString();
             String clinicianNames = getProviderByEncounterRole(encounter, "clinician");
@@ -136,7 +136,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             String healthCenterCode = ugandaEMRSyncService.getHealthCenterCode();
             String requestType = proccessMappings(testOrder.getConcept());
             String sourceSystem = "UgandaEMR";
-            String patientARTNO = ugandaEMRSyncService.getPatientARTNO(testOrder.getPatient());
+            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(testOrder.getPatient(),PATIENT_IDENTIFIER_TYPE);
             String sampleID = testOrder.getAccessionNumber();
             String sampleCollectionDate = testOrder.getEncounter().getEncounterDatetime().toString();
             String clinicianNames = testOrder.getOrderer().getName();

@@ -33,60 +33,60 @@ import java.util.List;
 public interface UgandaEMRSyncService extends OpenmrsService {
 	
 	/**
-	 * Getting all Sync Task Types
-	 * 
-	 * @return
+	 * Getting all sync task types
+	 * @return List<SyncTaskType> returns all sync task type in a list
 	 * @throws APIException
 	 */
 	List<SyncTaskType> getAllSyncTaskType() throws APIException;
 	
 	/**
-	 * @param uuid
-	 * @return
+	 * Get Sync Task Type By uuid
+	 * @param uuid the uuid of the sync task type to return
+	 * @return SyncTaskType that matched the uuid parameter
 	 * @throws APIException
 	 */
 	@Transactional
 	SyncTaskType getSyncTaskTypeByUUID(String uuid) throws APIException;
 	
 	/**
+	 * Saves the syn task Type
 	 * @param syncTaskType
-	 * @return
+	 * @return SyncTaskType saved sync task type
 	 * @throws APIException
 	 */
 	@Transactional
 	SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) throws APIException;
 	
 	/**
-	 * Get SyncTask
-	 * 
-	 * @param syncTask
-	 * @return
+	 * Gets SyncTask that matches the sync task parameter
+	 * @param syncTask a string containing an id or uuid of the sync task
+	 * @return SyncTask that matches the sync task id or uuid in the parameter set
 	 * @throws APIException
 	 */
 	@Transactional
 	SyncTask getSyncTask(String syncTask) throws APIException;
-	
+
 	/**
-	 * @param syncTask
-	 * @return
+	 * Saves or updates the sync task set or given
+	 * @param syncTask the sync task that is to be saved
+	 * @return SyncTask the sync task that has been saved
 	 * @throws APIException
 	 */
 	@Transactional
 	SyncTask saveSyncTask(SyncTask syncTask) throws APIException;
-	
+
 	/**
-	 * Get SyncTask
-	 * 
-	 * @return
+	 * Gets a list of sync task that require an action yet the action is not complete
+	 * @param syncTaskTypeIdentifier the sync task type identifier for the sync tasks that need to be checked
+	 * @return List<SyncTask> that are have an action that is not completed
 	 * @throws APIException
 	 */
 	@Transactional
 	public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) throws APIException;
-	
+
 	/**
-	 * Get SyncTask
-	 * 
-	 * @return
+	 * Get all sync task
+	 * @return List<SyncTask> a list of sync tasks found
 	 * @throws APIException
 	 */
 	@Transactional
@@ -106,10 +106,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	public List getFinalList(List<String> columns, String query);
 	
 	/**
-	 * @param patientARTNo
-	 * @return
+	 /**
+	 * Gets patient Identifier by patientId
+	 * @param patientIdentifier this can be a uuid or patientId
+	 * @return Patient a patient that matches the patientId
 	 */
-	public Patient getPatientByPatientIdentifier(String patientARTNo);
+	public Patient getPatientByPatientIdentifier(String patientIdentifier);
 	
 	/**
 	 * @param replaceAll
@@ -122,13 +124,15 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 * @return
 	 */
 	public Collection<EncounterType> getEcounterTypes(String s);
-	
+
 	/**
-	 * @param vlQualitative
-	 * @param vlQuantitative
-	 * @param vlDate
-	 * @param encounter
-	 * @return
+	 * This method adds the viral load results to an encounter
+	 * @param vlQualitative the viral load qualitative value such as detected, not detected, sample rejected
+	 * @param vlQuantitative the viral load copies.
+	 * @param vlDate the date of sample collection date for the viral load results that are being returned
+	 * @param encounter the encounter where the viral load results will be written to
+	 * @param order the order which was used to order the viral load. this can be null.
+	 * @return Encounter the encounter where the viral load results have been added.
 	 */
 	public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter,
 	        Order order);
@@ -148,24 +152,23 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	public Date convertStringToDate(String string, String time, String dateFormat);
 	
 	/**
-	 * Get heaalth Center Identifier
-	 * 
-	 * @return
+	 /**
+	 * This method gets the dhis2 orgunit code for the facility
+	 * @return returns dhis2 orgunit code
 	 */
 	public String getHealthCenterCode();
-	
+
 	/**
-	 * Get Health Center Name
-	 * 
+	 * This method gets the health center name
 	 * @return
 	 */
 	public String getHealthCenterName();
-	
+
 	/**
-	 * Get Patient ARTNO
-	 * 
-	 * @param patient
-	 * @return
+	 * This Method gets the patient identifier that is based on patient Identifier type and the patient
+	 * @param patient the patient whose identifier is being searched
+	 * @param patientIdentifierTypeUUID the uuid of the patient identifier type that is being search
+	 * @return the identifier that matches both the patient and the patient identifier type UUID
 	 */
-	public String getPatientARTNO(Patient patient);
+	public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID);
 }
