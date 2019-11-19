@@ -210,7 +210,7 @@
             <column name="url_password" value="emrlabClient" />
             <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
             <column name="creator" value="1" />
-            <column name="voided" value="false" />
+            <column name="voided" value="0" />
             <column name="date_created" value="2019-07-10 06:23:27" />
             <column name="uuid" value="3551ca84-06c0-432b-9064-fcfeefd6f4ec" />
         </insert>
@@ -232,7 +232,7 @@
             <column name="url_password" value="emrlabClient" />
             <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
             <column name="creator" value="1" />
-            <column name="voided" value="false" />
+            <column name="voided" value="0" />
             <column name="date_created" value="2019-09-26 03:07:54" />
             <column name="uuid" value="3396dcf0-2106-4e73-9b90-c63978c3a8b4" />
         </insert>
