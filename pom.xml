@@ -47,6 +47,13 @@
             </dependency>
 
             <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.1.0</version>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.openmrs.api</groupId>
                 <artifactId>openmrs-api</artifactId>
                 <version>${openMRSVersion}</version>
@@ -68,6 +75,14 @@
                 <version>${openMRSVersion}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.openmrs.test</groupId>
+                <artifactId>openmrs-test</artifactId>
+                <version>${openmrsPlatformVersion}</version>
+                <type>pom</type>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -100,12 +115,6 @@
             </dependency>
 
             <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>19.0</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpmime</artifactId>
                 <version>4.5</version>
@@ -114,6 +123,18 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpcore</artifactId>
                 <version>4.4.5</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>metadatadeploy-api</artifactId>
+                <version>${metadatadeployVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>metadatasharing-api</artifactId>
+                <version>${metadatasharingVersion}</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.openmrs.module</groupId>
@@ -172,7 +193,15 @@
                 <type>jar</type>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>org.openmrs.web</groupId>
+                <artifactId>openmrs-web</artifactId>
+                <version>${openMRSVersion}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
+
+
 
     </dependencyManagement>
 
@@ -332,8 +361,9 @@
         <reportingVersion>1.13.0</reportingVersion>
         <calculationVersion>1.1</calculationVersion>
         <serialization.xstreamVersion>0.2.14</serialization.xstreamVersion>
-        <metadatadeployVersion>1.6</metadatadeployVersion>
-        <metadatasharingVersion>1.1.9</metadatasharingVersion>
-        <metadatamappingVersion>1.0.2</metadatamappingVersion>
+        <metadatadeployVersion>1.10.0</metadatadeployVersion>
+        <metadatasharingVersion>1.5.0</metadatasharingVersion>
+        <metadatamappingVersion>1.3.4</metadatamappingVersion>
+        <metadataexchangeVersion>1.3.3</metadataexchangeVersion>
     </properties>
 </project>

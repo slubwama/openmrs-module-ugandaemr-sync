@@ -10,6 +10,7 @@
 package org.openmrs.module.ugandaemrsync;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncDataRecord;
 
@@ -26,7 +27,7 @@ import static org.junit.Assert.assertTrue;
  * This is a unit test, which verifies logic in UgandaEMRSyncService. It doesn't extend
  * BaseModuleContextSensitiveTest, thus it is run without the in-memory DB and Spring context.
  */
-public class SyncProcessorTest {
+public class SyncProcessorTest extends Mockito {
 	
 	@Test
 	public void shouldConvertListToJsonString() throws IOException {

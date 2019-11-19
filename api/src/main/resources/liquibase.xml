@@ -12,11 +12,34 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
+    <changeSet id="ugandaemrsync-06272019-1637" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendViralLoadRequestToCentralServerTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sending Viral Load Request to Central Server Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Send Viral Load Request to Central Server Task" />
+            <column name="description" value="Sends a viral load request to the central server" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendViralLoadRequestToCentralServerTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2019-06-27T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="5eec5417-6a6d-4598-a7a9-03e27ca4cb91" />
+        </insert>
+    </changeSet>
+
     <changeSet id="20170221-1345" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM scheduler_task_config
-                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.SyncTask'
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendAllDataCentralServerTask'
                 And name = 'UgandaEMR Sync Task'
             </sqlCheck>
         </preConditions>
@@ -24,7 +47,7 @@
         <insert tableName="scheduler_task_config">
             <column name="name" value="UgandaEMR Sync Task" />
             <column name="description" value="Synchronises Data to given Server" />
-            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.SyncTask" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendAllDataCentralServerTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
             <column name="start_time" valueDate="2016-09-28 23:59:59" />
             <column name="repeat_interval" value="86400" />
@@ -33,6 +56,188 @@
             <column name="uuid" value="90326ea2-f81e-11e6-bc64-92361f002671" />
         </insert>
     </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-1">
+        <createTable tableName="sync_task">
+            <column autoIncrement="true" name="sync_task_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="sync_task_type" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sync_task" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="status_code" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sent_to_url" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="require_action" type="TINYINT(3)"/>
+            <column defaultValueNumeric="0" name="action_completed" type="TINYINT(3)"/>
+            <column name="date_sent" type="datetime"/>
+            <column name="creator" type="INT"/>
+            <column name="date_created" type="datetime"/>
+            <column name="changed_by" type="INT"/>
+            <column name="date_changed" type="datetime"/>
+            <column name="voided" type="TINYINT(3)"/>
+            <column name="date_voided" type="datetime"/>
+            <column name="voided_by" type="INT"/>
+            <column name="void_reason" type="VARCHAR(255)"/>
+            <column name="uuid" type="VARCHAR(38)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-2">
+        <createTable tableName="sync_task_type">
+            <column autoIncrement="true" name="sync_task_type_id" type="INT">
+                <constraints primaryKey="true" unique="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="data_type" type="VARCHAR(50)"/>
+            <column name="data_type_id" type="VARCHAR(255)"/>
+            <column name="url_end_point" type="VARCHAR(255)"/>
+            <column name="url_username" type="VARCHAR(255)"/>
+            <column name="url_password" type="VARCHAR(255)"/>
+            <column name="url_token" type="VARCHAR(255)"/>
+            <column name="creator" type="INT"/>
+            <column name="date_created" type="datetime"/>
+            <column name="changed_by" type="INT"/>
+            <column name="date_changed" type="datetime"/>
+            <column name="voided" type="TINYINT(3)"/>
+            <column name="date_voided" type="datetime"/>
+            <column name="voided_by" type="INT"/>
+            <column name="void_reason" type="VARCHAR(255)"/>
+            <column name="uuid" type="VARCHAR(38)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-3">
+        <createIndex indexName="sync_task__creator_index" tableName="sync_task">
+            <column name="creator"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-4">
+        <createIndex indexName="sync_task_changed_by_index" tableName="sync_task">
+            <column name="changed_by"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-5">
+        <createIndex indexName="sync_task_type_changed_by_index" tableName="sync_task_type">
+            <column name="changed_by"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-6">
+        <createIndex indexName="sync_task_type_creator_index" tableName="sync_task_type">
+            <column name="creator"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-7">
+        <createIndex indexName="sync_task_type_id_fk" tableName="sync_task">
+            <column defaultValueNumeric="0" name="sync_task_type"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-8">
+        <createIndex indexName="sync_task_type_voided_by_index" tableName="sync_task_type">
+            <column name="voided_by"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-9">
+        <createIndex indexName="sync_task_voided_by_index" tableName="sync_task">
+            <column name="voided_by"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-10">
+        <addForeignKeyConstraint baseColumnNames="sync_task_type" baseTableName="sync_task" constraintName="sync_task_type_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="sync_task_type_id" referencedTableName="sync_task_type"/>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-11">
+        <addForeignKeyConstraint baseColumnNames="creator" baseTableName="sync_task_type" constraintName="sync_task_type_users_user_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-12">
+        <addForeignKeyConstraint baseColumnNames="changed_by" baseTableName="sync_task_type" constraintName="sync_task_type_users_user_id_fk_2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-13">
+        <addForeignKeyConstraint baseColumnNames="voided_by" baseTableName="sync_task_type" constraintName="sync_task_type_users_user_id_fk_3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-14">
+        <addForeignKeyConstraint baseColumnNames="creator" baseTableName="sync_task" constraintName="sync_task_users_user_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-15">
+        <addForeignKeyConstraint baseColumnNames="changed_by" baseTableName="sync_task" constraintName="sync_task_users_user_id_fk_2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet author="slubwama" id="ugandaemrsync-1561871469104-16">
+        <addForeignKeyConstraint baseColumnNames="voided_by" baseTableName="sync_task" constraintName="sync_task_users_user_id_fk_3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-07232019-0456" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.ReceiveViralLoadResultFromCentralServerTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sending Viral Load Request to Central Server Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Request Viral Results" />
+            <column name="description" value="Request for viral load results from central server" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ReceiveViralLoadResultFromCentralServerTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2019-06-27T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="18dc5ffa-cf2a-471e-aff4-c0449909f81c" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-09042019-1027" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '3551ca84-06c0-432b-9064-fcfeefd6f4ec'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Send Viral Load To CPHL" />
+            <column name="data_type" value="org.openmrs.TestOrder" />
+            <column name="data_type_id" value="315124004" />
+            <column name="url_end_point" value="https://ughim.cphluganda.org:5000/emrlab/send_sample?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="url_username" value="emrlabClient" />
+            <column name="url_password" value="emrlabClient" />
+            <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="creator" value="1" />
+            <column name="voided" value="false" />
+            <column name="date_created" value="2019-07-10 06:23:27" />
+            <column name="uuid" value="3551ca84-06c0-432b-9064-fcfeefd6f4ec" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-23092019-0330" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '3396dcf0-2106-4e73-9b90-c63978c3a8b4'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Request Viral Load Results form CPHL" />
+            <column name="data_type" value="org.openmrs.TestOrder" />
+            <column name="data_type_id" value="315124004" />
+            <column name="url_end_point" value="https://ughim.cphluganda.org:5000/emrlab/sample_result?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="url_username" value="emrlabClient" />
+            <column name="url_password" value="emrlabClient" />
+            <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="creator" value="1" />
+            <column name="voided" value="false" />
+            <column name="date_created" value="2019-09-26 03:07:54" />
+            <column name="uuid" value="3396dcf0-2106-4e73-9b90-c63978c3a8b4" />
+        </insert>
+    </changeSet>
+
 
     <changeSet id="20190711-1207" author="echiteri">
         <preConditions onFail="MARK_RAN">
@@ -56,5 +261,5 @@
             <column name="uuid" value="89a805c4-0bd3-4eee-a43d-f3e264fbf0c7" />
         </insert>
     </changeSet>
- 
+
 </databaseChangeLog>

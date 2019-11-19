@@ -15,7 +15,7 @@ public class SyncGlobalProperties {
 	public SyncGlobalProperties() {
 	}
 	
-	protected Log log = LogFactory.getLog(getClass());
+	protected Log log = LogFactory.getLog(SyncGlobalProperties.class);
 	
 	public void setSyncFacilityProperties() {
 		/**

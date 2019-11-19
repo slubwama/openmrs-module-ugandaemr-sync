@@ -85,6 +85,7 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 			catch (ParseException e) {
 				log.info("Error parsing last successful submission date " + strSubmissionDate + e);
 				e.printStackTrace();
+				log.error(e);
 			}
 			if (dateFormat.format(gpSubmissionDate).equals(dateFormat.format(todayDate))
 			        && strSubmitOnceDaily.equals("true")) {

@@ -19,7 +19,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
  */
 public class UgandaEMRSyncActivator extends BaseModuleActivator {
 	
-	private Log log = LogFactory.getLog(this.getClass());
+	private Log log = LogFactory.getLog(UgandaEMRSyncActivator.class);
 	
 	/**
 	 * @see #started()

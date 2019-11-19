@@ -20,42 +20,89 @@ import java.util.Date;
 import java.util.List;
 
 public class SyncConstant {
-	
-	public static final String SERVER_IP = "ugandaemrsync.serverIP";
-	
-	public static final String HEALTH_CENTER_SYNC_ID = "ugandaemrsync.healthCenterSyncId";
-	
-	public static final String SERVER_PROTOCOL = "ugandaemrsync.protocol";
-	
-	public static final String INITIAL_SYNC = "ugandaemrsync.init";
-	
-	public static final String INITIAL_SYNC_PLACE_HOLDER = "false";
-	
-	public static final String SERVER_PROTOCOL_PLACE_HOLDER = "http://";
-	
-	public static final String SERVER_IP_PLACE_HOLDER = "192.168.1.28";
-	
-	public static final String HEALTH_CENTER_SYNC_ID_PLACE_HOLDER = "This will be filled when a connection is created to server";
-	
-	public static final int CONNECTION_SUCCESS = 200;
-	
-	public static final String XML_CONTENT_TYPE = "application/xml";
-	
-	public static final String JSON_CONTENT_TYPE = "application/json";
-	
-	public static final String LAST_SYNC_DATE = "ugandaemr.lastSyncDate";
-	
-	public static Date MINIMUM_DATE = new Date(Long.MIN_VALUE);
-	
-	public static DateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
-	
-	public static final String LAST_SYNC_DATE_PLACE_HOLDER = "1900-01-01 00:00:00";
-	
-	public static final String MAX_NUMBER_OF_ROWS = "ugandaemr.maxNumberOfRows";
-	
-	public static final String MAX_NUMBER_OF_ROWS_PLACE_HOLDER = "500";
-	
-	public static final String PERSON_QUERY = "SELECT\n" + "  gender,\n" + "  birthdate,\n" + "  birthdate_estimated,\n"
+
+    public static final String SERVER_IP = "ugandaemrsync.serverIP";
+
+    public static final String SERVER_USERNAME = "ugandaemrsync.server.username";
+
+    public static final String SERVER_PASSWORD = "ugandaemrsync.server.password";
+
+    public static final String HEALTH_CENTER_SYNC_ID = "ugandaemrsync.healthCenterSyncId";
+
+    public static final String SERVER_PROTOCOL = "ugandaemrsync.protocol";
+
+    public static final String INITIAL_SYNC = "ugandaemrsync.init";
+
+    public static final String INITIAL_SYNC_PLACE_HOLDER = "false";
+
+    public static final String SERVER_PROTOCOL_PLACE_HOLDER = "http://";
+
+    public static final String SERVER_IP_PLACE_HOLDER = "192.168.1.28";
+
+    public static final String HEALTH_CENTER_SYNC_ID_PLACE_HOLDER = "This will be filled when a connection is created to server";
+
+    public static final int CONNECTION_SUCCESS_200 = 200;
+
+    public static final int CONNECTION_SUCCESS_201 = 201;
+
+    public static final String XML_CONTENT_TYPE = "application/xml";
+
+    public static final String JSON_CONTENT_TYPE = "application/json";
+
+    public static final String LAST_SYNC_DATE = "ugandaemr.lastSyncDate";
+
+    public static Date MINIMUM_DATE = new Date(Long.MIN_VALUE);
+
+    public static DateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd kk:mm:ss");
+
+    public static final String LAST_SYNC_DATE_PLACE_HOLDER = "1900-01-01 00:00:00";
+
+    public static final String MAX_NUMBER_OF_ROWS = "ugandaemr.maxNumberOfRows";
+
+    public static final String MAX_NUMBER_OF_ROWS_PLACE_HOLDER = "500";
+
+    public static final String HIV_ENCOUNTER_PAGE_UUID = "8d5b2be0-c2cc-11de-8d13-0010c6dffd0f";
+
+    public static final String VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID = "077c43ee-9745-11e9-bc42-526af7764f64";
+
+    public static final String VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER = "315124004";
+
+    public static final String VIRAL_LOAD_SYNC_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
+    public static final String VIRAL_LOAD_RESULT_PULL_TYPE_UUID = "3396dcf0-2106-4e73-9b90-c63978c3a8b4";
+
+    public static final String PATIENT_IDENTIFIER_TYPE = "e1731641-30ab-102d-86b0-7a5022ba4115";
+
+    public static final int VL_SAMPLE_ID_CELL_NO = 0;
+
+    public static final int VL_FORM_NUMBER_CELL_NO = 1;
+
+    public static final int VL_DATE_COLLECTION_CELL_NO = 2;
+
+    public static final int VL_DATE_RECIEVED_CELL_NO = 3;
+
+    public static final int VL_RELEASED_CELL_NO = 4;
+
+    public static final int VL_RELEASE_TIME_CELL_NO = 5;
+
+    public static final int VL_FACILITY_NAME_CELL_NO = 6;
+
+    public static final int VL_FACILITY_DHIS2_ID_CELL_NO = 7;
+
+    public static final int VL_PATIENT_ART_ID_CELL_NO = 8;
+
+    public static final int VL_RESULTS_NUMERIC_CELL_NO = 9;
+
+    public static final int VL_RESULTS_ALHPA_NUMERIC_CELL_NO = 10;
+
+    public static final int VL_SUPPRESSED_CELL_NO = 11;
+
+    public static final String GP_DHIS2 = "ugandaemr.dhis2.organizationuuid";
+
+    public static final String VL_SEND_SAMPLE_FHIR_JSON_STRING = "{\"resourceType\":\"ServiceRequest\",\"locationCode\":\"%s\",\"locationReference\":\"%s\",\"code\":\"%s\",\"performerType\":\"????\",\"status\":\"active\",\"intent\":\"order\",\"subject\":{\"resourceType\":\"Location\",\"name\":\"%s\"},\"specimen\":[{\"subject\":{\"resourceType\":\"Patient\",\"identifier\":\"%s\"},\"resourceType\":\"Specimen\",\"identifier\":\"%s\",\"type\":\"%s\",\"status\":\"available\",\"collection\":{\"collectedDateTime\":\"%s\",\"collector\":{\"resourceType\":\"Practitioner\",\"name\":\"%s\",\"telecom\":\"%s\"}}}],\"requester\":{\"resourceType\":\"Practitioner\",\"name\":\"%s\",\"telecom\":\"%s\"},\"performer\":[{\"resourceType\":\"Organization\",\"endpoint\":\"%s\"}]}";
+
+    public static final String VL_RECEIVE_RESULT_FHIR_JSON_STRING = "{\"resourceType\":\"ServiceRequest\",\"locationCode\":\"%s\",\"subject\":{\"resourceType\":\"Location\",\"name\":\"UgandaEMR\"},\"specimen\":[{\"subject\":{\"resourceType\":\"Patient\",\"identifier\":\"%s\"},\"resourceType\":\"Specimen\",\"identifier\":\"%s\"}]}";
+
+    public static final String PERSON_QUERY = "SELECT\n" + "  gender,\n" + "  birthdate,\n" + "  birthdate_estimated,\n"
 	        + "  dead,\n" + "  death_date,\n" + "  (SELECT c.uuid\n" + "   FROM concept c\n"
 	        + "   WHERE c.concept_id = p.cause_of_death) AS cause_of_death,\n" + "  (SELECT u.uuid\n" + "   FROM users u\n"
 	        + "   WHERE u.user_id = p.creator)           AS creator,\n" + "  date_created,\n" + "  (SELECT u.uuid\n"
@@ -408,4 +455,12 @@ public class SyncConstant {
 	
 	public static List<String> FINGERPRINT_COLUMNS = Arrays.asList("patient", "finger", "fingerprint", "date_created",
 	    "facility", "state");
+
+    public static final String VIRAL_LOAD_ENCOUNTER_QUERY = "select * from encounter inner join encounter_type on (encounter.encounter_type=encounter_type.encounter_type_id) where encounter_type.uuid='077c43ee-9745-11e9-bc42-526af7764f64'";
+
+    public static final String VIRAL_LOAD_ORDERS_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) inner JOIN concept ON (orders.concept_id = concept.concept_id) inner join concept_reference_map on (concept.concept_id = concept_reference_map.concept_id) inner join concept_reference_term on (concept_reference_map.concept_reference_term_id = concept_reference_term.concept_reference_term_id) where accession_number!=\"\" AND specimen_source!=\"\" AND orders.instructions=\"REFER TO cphl\" AND code=\"" + VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER + "\"";
+
+    public static final String VIRAL_LOAD_ORDER_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) where accession_number=\"%s\"";
+
+    public static List<String> VL_SYNC_TASK_COLUMNS = Arrays.asList("sync_task_id", "sync_task_type", "sync_task", "status", "status_code", "sent_to_url", "require_action", "action_completed", "date_sent", "creator", "date_created", "changed_by", "date_changed", "voided", "date_voided", "voided_by ", "void_reason", "uuid");
 }

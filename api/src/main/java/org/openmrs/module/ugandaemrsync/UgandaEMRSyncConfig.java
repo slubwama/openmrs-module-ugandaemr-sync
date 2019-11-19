@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class UgandaEMRSyncConfig {
 	
 	public final static String MODULE_PRIVILEGE = "UgandaemrSync Privilege";
-	
+
 	public static final String GP_RECENCY_SERVER_URL = "ugandaemrsync.recency.server.url";
 	
 	public static final String CONNECTIVITY_CHECK_URL = "http://www.google.com";
@@ -34,7 +34,7 @@ public class UgandaEMRSyncConfig {
 	public static final String GP_RECENCY_SERVER_PASSWORD = "ugandaemrsync.recency.server.password";
 	
 	public static final String HEADER_EMR_DATE = "x-emr-date";
-	
+
 	public static final String GP_DHIS2_ORGANIZATION_UUID = "ugandaemr.dhis2.organizationuuid";
 	
 	public static final String RECENCY_CSV_FILE_NAME = "HTS_Recency_Client_Card_Data_Export_2019.csv";
