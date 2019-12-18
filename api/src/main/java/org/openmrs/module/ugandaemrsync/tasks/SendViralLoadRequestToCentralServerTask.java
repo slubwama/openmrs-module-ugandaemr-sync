@@ -10,7 +10,7 @@ import org.openmrs.module.ugandaemrsync.api.impl.UgandaEMRSyncServiceImpl;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncConstant;
-import org.openmrs.module.ugandaemrsync.server.UgandaEMRHttpURLConnection;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.scheduler.tasks.AbstractTask;
 

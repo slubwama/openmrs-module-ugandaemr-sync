@@ -1,7 +1,7 @@
 package org.openmrs.module.ugandaemrsync.tasks;
 
 import org.openmrs.module.ugandaemrsync.server.SyncDataRecord;
-import org.openmrs.module.ugandaemrsync.server.UgandaEMRHttpURLConnection;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 /**

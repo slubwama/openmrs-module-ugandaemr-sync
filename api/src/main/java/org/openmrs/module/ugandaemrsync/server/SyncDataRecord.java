@@ -8,6 +8,7 @@ import org.hibernate.SessionFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 
 import java.io.IOException;

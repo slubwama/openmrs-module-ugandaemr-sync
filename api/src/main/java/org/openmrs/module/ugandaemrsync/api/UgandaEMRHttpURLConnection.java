@@ -1,4 +1,4 @@
-package org.openmrs.module.ugandaemrsync.server;
+package org.openmrs.module.ugandaemrsync.api;
 
 /**
  * Created by lubwamasamuel on 11/10/16.
@@ -25,7 +25,9 @@ import org.openmrs.Location;
 import org.openmrs.User;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.context.Context;
-import sun.net.www.protocol.https.HttpsURLConnectionImpl;
+import org.openmrs.module.ugandaemrsync.server.Facility;
+import org.openmrs.module.ugandaemrsync.server.SyncConstant;
+import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
 
@@ -189,6 +191,7 @@ public class UgandaEMRHttpURLConnection {
 		if (facilityIdRequired) {
 			facilitySyncId = syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
 		}
+
 
 		return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, url, username, password);
 	}

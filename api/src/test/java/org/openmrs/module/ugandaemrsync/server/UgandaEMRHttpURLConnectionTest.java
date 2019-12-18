@@ -1,6 +1,7 @@
 package org.openmrs.module.ugandaemrsync.server;
 
 import org.junit.Test;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 
 import static org.junit.Assert.*;
 

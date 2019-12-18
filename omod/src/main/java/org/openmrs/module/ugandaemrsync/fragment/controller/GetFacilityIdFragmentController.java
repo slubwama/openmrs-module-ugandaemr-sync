@@ -10,7 +10,7 @@
 package org.openmrs.module.ugandaemrsync.fragment.controller;
 
 import org.openmrs.module.appui.UiSessionContext;
-import org.openmrs.module.ugandaemrsync.server.UgandaEMRHttpURLConnection;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
 import org.openmrs.ui.framework.page.PageModel;

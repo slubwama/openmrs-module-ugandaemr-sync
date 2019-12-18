@@ -175,6 +175,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         Obs obs1 = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
         Obs obs2 = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
 
+        Obs obs3 = createObs(encounter, order, order.getConcept(), null, null, null);
+        obs3.addGroupMember(obs);
+        obs3.addGroupMember(obs1);
+        obs3.addGroupMember(obs2);
+
         //Void Similar observation
         voidObsFound(encounter, dateSampleTaken);
         voidObsFound(encounter, viralLoadQualitative);
@@ -183,6 +188,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         encounter.addObs(obs);
         encounter.addObs(obs1);
         encounter.addObs(obs2);
+        encounter.addObs(obs3);
 
         try {
             Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
