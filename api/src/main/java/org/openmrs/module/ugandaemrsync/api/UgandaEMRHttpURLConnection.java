@@ -31,6 +31,8 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +43,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.security.Security;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -127,6 +132,7 @@ public class UgandaEMRHttpURLConnection {
 
         try {
             URL url1 = new URL(url);
+            disableSSLCertificatesChecks();
             URLConnection urlConnection = url1.openConnection();
 
             if (username != null && !username.equals("") && password != null && !password.equals("")) {
@@ -159,13 +165,16 @@ public class UgandaEMRHttpURLConnection {
 
             Map map = new HashMap();
             int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
+            String responseMessage = ((HttpURLConnection) urlConnection).getResponseMessage();
             //reading the response
             if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
                 InputStream inputStreamReader = urlConnection.getInputStream();
                 map = getMapOfResults(inputStreamReader, responseCode);
             } else {
                 map.put("responseCode", responseCode);
+                log.info(responseMessage);
             }
+            map.put("responseMessage", responseMessage);
             return map;
         } catch (Throwable t) {
             log.error(t);
@@ -352,5 +361,27 @@ public class UgandaEMRHttpURLConnection {
             }
         }
         return true;
+    }
+
+    public void disableSSLCertificatesChecks () throws Exception {
+        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+        final TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+                    }
+
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+                    }
+
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                }
+        };
     }
 }
