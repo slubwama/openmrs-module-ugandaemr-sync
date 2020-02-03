@@ -189,4 +189,9 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
         Assert.assertNotNull(ugandaEMRSyncService.convertStringToDate("2013-08-02", "00:00:00", "yyyy-MM-dd"));
     }
+
+    @Test
+    public void getDateFormat_shouldGetDateFormatFromGivenDate(){
+        Assert.assertEquals("yyyy-MM-dd",Context.getService(UgandaEMRSyncService.class).getDateFormat("2013-08-02"));
+    }
 }

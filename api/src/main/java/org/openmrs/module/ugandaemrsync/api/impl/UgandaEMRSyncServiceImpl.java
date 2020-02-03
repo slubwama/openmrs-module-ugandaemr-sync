@@ -297,10 +297,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      */
     private void voidObsFound(Encounter encounter, Concept concept) {
         ObsService obsService = Context.getObsService();
-        List<Obs> obsList = obsService.getObservationsByPersonAndConcept(encounter.getPatient(), concept);
-        for (Obs obs1 : obsList) {
-            if (obs1.getEncounter() == encounter) {
-                obsService.voidObs(obs1, "Observation has been replaced or updated.");
+        List<Obs> obsListToVoid = obsService.getObservationsByPersonAndConcept(encounter.getPatient(), concept);
+        for (Obs obsToVoid : obsListToVoid) {
+            if (obsToVoid.getEncounter() == encounter) {
+                obsService.voidObs(obsToVoid, "Observation has been replaced or updated.");
             }
         }
     }
