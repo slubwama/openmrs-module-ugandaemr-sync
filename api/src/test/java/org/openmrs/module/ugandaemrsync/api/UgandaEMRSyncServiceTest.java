@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openmrs.Patient;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
@@ -193,5 +194,12 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     @Test
     public void getDateFormat_shouldGetDateFormatFromGivenDate(){
         Assert.assertEquals("yyyy-MM-dd",Context.getService(UgandaEMRSyncService.class).getDateFormat("2013-08-02"));
+    }
+
+    @Test
+    public void getPatientIdentifier_shouldGetDateFormatFromGivenDate(){
+       Patient patient= Context.getService(UgandaEMRSyncService.class).getPatientByPatientIdentifier("101-6");
+        Assert.assertNotNull(patient);
+        Assert.assertEquals("101-6",patient.getPatientIdentifier().getIdentifier());
     }
 }
