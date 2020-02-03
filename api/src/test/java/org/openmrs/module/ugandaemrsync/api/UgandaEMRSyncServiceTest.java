@@ -26,7 +26,9 @@ import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
@@ -180,5 +182,11 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         Assert.assertEquals(VIRAL_LOAD_SYNC_TYPE_UUID,syncTasks.get(0).getSyncTaskType().getUuid());
         Assert.assertEquals(false,syncTasks.get(0).getActionCompleted());
         Assert.assertEquals(true,syncTasks.get(0).getRequireAction());
+    }
+
+    @Test
+    public void convertStringToDate_shouldReturnDate(){
+        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+        Assert.assertNotNull(ugandaEMRSyncService.convertStringToDate("2013-08-02", "00:00:00", "yyyy-MM-dd"));
     }
 }
