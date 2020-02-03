@@ -41,17 +41,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SY
 public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     protected static final String UGANDAEMRSYNC_GLOBALPROPERTY_DATASET_XML = "org/openmrs/module/ugandaemrsync/include/globalPropertiesDataSet.xml";
     protected static final String UGANDAEMRSYNC_STANDARDTESTDATA = "org/openmrs/module/ugandaemrsync/include/standardTestDataset.xml";
-    @InjectMocks
-    UgandaEMRSyncServiceImpl basicModuleService;
-
-    @Mock
-    UgandaEMRSyncDao dao;
-
-    @Mock
-    UserService userService;
-
-    @Mock
-    AdministrationService administrationService;
 
     @Before
     public void initialize() throws Exception {
@@ -201,5 +190,10 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
        Patient patient= Context.getService(UgandaEMRSyncService.class).getPatientByPatientIdentifier("101-6");
         Assert.assertNotNull(patient);
         Assert.assertEquals("101-6",patient.getPatientIdentifier().getIdentifier());
+    }
+
+    @Test
+    public void validateFacility_shouldReturnTrueWhenStringIsFacilityDHIS2UUID(){
+        Assert.assertTrue(Context.getService(UgandaEMRSyncService.class).validateFacility("7744yxP"));
     }
 }
