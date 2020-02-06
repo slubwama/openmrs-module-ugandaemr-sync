@@ -15,8 +15,10 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openmrs.Encounter;
 import org.openmrs.Patient;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.api.EncounterService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
@@ -62,14 +64,14 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         String query = "SELECT\n" + "  name,\n" + "  description,\n" + "  (SELECT uuid\n" + "   FROM users AS u\n" + "   WHERE u.user_id = er.creator)    AS creator,\n" + "  date_created,\n" + "  (SELECT uuid\n" + "   FROM users AS u\n" + "   WHERE u.user_id = er.changed_by) AS changed_by,\n" + "  date_changed,\n" + "  retired,\n" + "  (SELECT uuid\n" + "   FROM users AS u\n" + "   WHERE u.user_id = er.retired_by) AS retired_by,\n" + "  date_retired,\n" + "  retire_reason,\n" + "  uuid,\n" + String.format("  '%s'                        AS facility,\n", facilityId) + "  'NEW'                             AS state\n" + "FROM encounter_role er";
 
-       // assertNotNull(facilityId);
+        // assertNotNull(facilityId);
         //assertTrue(query.contains(facilityId));
     }
 
     @Test
     public void saveSyncTaskType_shouldSaveSyncTaskType() throws Exception {
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
-        List<SyncTaskType> syncTaskTypesBeforeSavingingMore=ugandaEMRSyncService.getAllSyncTaskType();
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        List<SyncTaskType> syncTaskTypesBeforeSavingingMore = ugandaEMRSyncService.getAllSyncTaskType();
         SyncTaskType neSyncTaskType = new SyncTaskType();
         neSyncTaskType.setDateCreated(new Date());
         neSyncTaskType.setName("SyncTaskType1");
@@ -82,14 +84,14 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         neSyncTaskType.setCreator(Context.getAuthenticatedUser());
         ugandaEMRSyncService.saveSyncTaskType(neSyncTaskType);
 
-        List<SyncTaskType> syncTaskTypes=ugandaEMRSyncService.getAllSyncTaskType();
+        List<SyncTaskType> syncTaskTypes = ugandaEMRSyncService.getAllSyncTaskType();
 
-        Assert.assertEquals(syncTaskTypesBeforeSavingingMore.size()+1,syncTaskTypes.size());
+        Assert.assertEquals(syncTaskTypesBeforeSavingingMore.size() + 1, syncTaskTypes.size());
     }
 
     @Test
     public void saveSyncTask_shouldSaveSyncTask() throws Exception {
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
         SyncTask newSyncTask = new SyncTask();
         newSyncTask.setDateSent(new Date());
@@ -102,24 +104,24 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         newSyncTask.setStatus("SUCCESS");
         newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
         ugandaEMRSyncService.saveSyncTask(newSyncTask);
-        List<SyncTask> syncTasks=ugandaEMRSyncService.getAllSyncTask();
+        List<SyncTask> syncTasks = ugandaEMRSyncService.getAllSyncTask();
 
-        Assert.assertEquals(2,syncTasks.size());
+        Assert.assertEquals(2, syncTasks.size());
     }
 
 
     @Test
-    public void getAllSyncTask_ShouldReturnAllsyncTaskTypes(){
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+    public void getAllSyncTask_ShouldReturnAllsyncTaskTypes() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-        List<SyncTaskType>  syncTaskTypes=ugandaEMRSyncService.getAllSyncTaskType();
+        List<SyncTaskType> syncTaskTypes = ugandaEMRSyncService.getAllSyncTaskType();
 
-        Assert.assertEquals(2,syncTaskTypes.size());
+        Assert.assertEquals(2, syncTaskTypes.size());
     }
 
     @Before
     public void initializeSyncTask() throws Exception {
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
         SyncTask newSyncTask = new SyncTask();
         newSyncTask.setDateSent(new Date());
@@ -135,65 +137,76 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     }
 
     @Test
-    public void getAllSyncTask_ShouldReturnAllSyncTask(){
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+    public void getAllSyncTask_ShouldReturnAllSyncTask() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-        List<SyncTask>  syncTask=ugandaEMRSyncService.getAllSyncTask();
+        List<SyncTask> syncTask = ugandaEMRSyncService.getAllSyncTask();
 
-        Assert.assertEquals(1,syncTask.size());
+        Assert.assertEquals(1, syncTask.size());
     }
 
     @Test
-    public void getSyncTaskBySyncTaskId_ShouldReturnSyncTask(){
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+    public void getSyncTaskBySyncTaskId_ShouldReturnSyncTask() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-        SyncTask  syncTask=ugandaEMRSyncService.getSyncTaskBySyncTaskId("1234");
+        SyncTask syncTask = ugandaEMRSyncService.getSyncTaskBySyncTaskId("1234");
 
-        Assert.assertEquals("1234",syncTask.getSyncTask());
+        Assert.assertEquals("1234", syncTask.getSyncTask());
     }
 
 
     @Test
-    public void getSyncTaskTypeByUUID_shouldReturnSyncTaskTypeThatMatchesUUID(){
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+    public void getSyncTaskTypeByUUID_shouldReturnSyncTaskTypeThatMatchesUUID() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
 
-        Assert.assertEquals(VIRAL_LOAD_SYNC_TYPE_UUID,syncTaskType.getUuid());
+        Assert.assertEquals(VIRAL_LOAD_SYNC_TYPE_UUID, syncTaskType.getUuid());
     }
 
     @Test
-    public void getSyncT_shouldReturnSyncTaskTypeThatMatchesUUID(){
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+    public void getSyncT_shouldReturnSyncTaskTypeThatMatchesUUID() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
         List<SyncTask> syncTasks = ugandaEMRSyncService.getIncompleteActionSyncTask(syncTaskType.getDataTypeId());
 
-        Assert.assertNotEquals(0,syncTasks.size());
-        Assert.assertEquals(VIRAL_LOAD_SYNC_TYPE_UUID,syncTasks.get(0).getSyncTaskType().getUuid());
-        Assert.assertEquals(false,syncTasks.get(0).getActionCompleted());
-        Assert.assertEquals(true,syncTasks.get(0).getRequireAction());
+        Assert.assertNotEquals(0, syncTasks.size());
+        Assert.assertEquals(VIRAL_LOAD_SYNC_TYPE_UUID, syncTasks.get(0).getSyncTaskType().getUuid());
+        Assert.assertEquals(false, syncTasks.get(0).getActionCompleted());
+        Assert.assertEquals(true, syncTasks.get(0).getRequireAction());
     }
 
     @Test
-    public void convertStringToDate_shouldReturnDate(){
-        UgandaEMRSyncService ugandaEMRSyncService=Context.getService(UgandaEMRSyncService.class);
+    public void convertStringToDate_shouldReturnDate() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         Assert.assertNotNull(ugandaEMRSyncService.convertStringToDate("2013-08-02", "00:00:00", "yyyy-MM-dd"));
     }
 
     @Test
-    public void getDateFormat_shouldGetDateFormatFromGivenDate(){
-        Assert.assertEquals("yyyy-MM-dd",Context.getService(UgandaEMRSyncService.class).getDateFormat("2013-08-02"));
+    public void getDateFormat_shouldGetDateFormatFromGivenDate() {
+        Assert.assertEquals("yyyy-MM-dd", Context.getService(UgandaEMRSyncService.class).getDateFormat("2013-08-02"));
     }
 
     @Test
-    public void getPatientIdentifier_shouldGetDateFormatFromGivenDate(){
-       Patient patient= Context.getService(UgandaEMRSyncService.class).getPatientByPatientIdentifier("101-6");
+    public void getPatientIdentifier_shouldGetDateFormatFromGivenDate() {
+        Patient patient = Context.getService(UgandaEMRSyncService.class).getPatientByPatientIdentifier("101-6");
         Assert.assertNotNull(patient);
-        Assert.assertEquals("101-6",patient.getPatientIdentifier().getIdentifier());
+        Assert.assertEquals("101-6", patient.getPatientIdentifier().getIdentifier());
     }
 
     @Test
-    public void validateFacility_shouldReturnTrueWhenStringIsFacilityDHIS2UUID(){
+    public void validateFacility_shouldReturnTrueWhenStringIsFacilityDHIS2UUID() {
         Assert.assertTrue(Context.getService(UgandaEMRSyncService.class).validateFacility("7744yxP"));
+    }
+
+    @Test
+    public void addVLToEncounter_shouldSaveViralLoadResultToSelectedEncounter() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        Encounter encounter = Context.getEncounterService().getEncounter(1000);
+        ugandaEMRSyncService.addVLToEncounter("Not detected", "400", "2009-08-01 00:00:00.0", encounter, null);
+        Context.getObsService().getObservations("Anet Test Oloo");
+
+        Assert.assertEquals(encounter, Context.getObsService().getObservations("Anet Test Oloo").get(1).getEncounter());
+        Assert.assertEquals("1306", Context.getObsService().getObservations("Anet Test Oloo").get(1).getValueCoded().getConceptId().toString());
     }
 }

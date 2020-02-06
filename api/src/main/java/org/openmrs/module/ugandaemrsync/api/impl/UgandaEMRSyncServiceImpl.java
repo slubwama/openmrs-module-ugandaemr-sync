@@ -3,7 +3,7 @@
  * v. 2.0. If a copy of the MPL was not distributed with this file, You can
  * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
  * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
- *
+ * <p>
  * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
  * graphic logo is a trademark of OpenMRS Inc.
  */
@@ -170,30 +170,38 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             valueCoded = Context.getConceptService().getConcept("1301");
         }
+        Concept viralLOadTestGroupConcept = null;
+        if (order != null) {
+            viralLOadTestGroupConcept = order.getConcept();
+        } else {
+            viralLOadTestGroupConcept = Context.getConceptService().getConcept(165412);
+        }
 
-        Obs obs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
-        Obs obs1 = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
-        Obs obs2 = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
+        Obs dateSampleTakenObs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
+        Obs viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
+        Obs viralLoadQuantitativeObs = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
 
-        Obs obs3 = createObs(encounter, order, order.getConcept(), null, null, null);
-        obs3.addGroupMember(obs);
-        obs3.addGroupMember(obs1);
-        obs3.addGroupMember(obs2);
+        Obs viralLoadTestGroupObs = createObs(encounter, order, viralLOadTestGroupConcept, null, null, null);
+        viralLoadTestGroupObs.addGroupMember(dateSampleTakenObs);
+        viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
+        viralLoadTestGroupObs.addGroupMember(viralLoadQuantitativeObs);
 
         //Void Similar observation
         voidObsFound(encounter, dateSampleTaken);
         voidObsFound(encounter, viralLoadQualitative);
         voidObsFound(encounter, viralLoadQuantitative);
 
-        encounter.addObs(obs);
-        encounter.addObs(obs1);
-        encounter.addObs(obs2);
-        encounter.addObs(obs3);
+        encounter.addObs(dateSampleTakenObs);
+        encounter.addObs(viralLoadQualitativeObs);
+        encounter.addObs(viralLoadQuantitativeObs);
+        encounter.addObs(viralLoadTestGroupObs);
 
         try {
-            Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+            if (order != null) {
+                Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+            }
         } catch (Exception e) {
-            log.error("Failed to discontinue order",e);
+            log.error("Failed to discontinue order", e);
         }
 
         return Context.getEncounterService().saveEncounter(encounter);
@@ -258,7 +266,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
             }
         } catch (ParseException e) {
-            log.error("failed to convert date to string",e);
+            log.error("failed to convert date to string", e);
         }
 
         return date;

@@ -99,6 +99,17 @@
 	<concept concept_id="159787" retired="false" datatype_id="2" class_id="3" is_set="false" creator="1" date_created="2008-08-15 15:27:51.0" version="" uuid="0cbe2ed3-cd5f-4f46-1159-26127c926522"/>
 	<concept concept_id="5240" retired="false" datatype_id="2" class_id="3" is_set="false" creator="1" date_created="2008-08-15 15:27:51.0" version="" uuid="0cbe2ed3-cd5f-4f46-1159-26127c926533"/>
 	<concept concept_id="90306" retired="false" datatype_id="2" class_id="3" is_set="false" creator="1" date_created="2008-08-15 15:27:51.0" version="" uuid="0cbe2ed3-cd5f-4f46-1159-26127c926544"/>
+	<concept concept_id="163157" retired="false" datatype_id="4" class_id="5" is_set="true" creator="1" date_created="2016-10-17 19:36:28" version="" changed_by="1" date_changed="2016-10-21 10:02:56"  uuid="163157AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"/>
+
+	<concept  concept_id="856"  retired="0" datatype_id="1"  class_id="1"  is_set="0"  creator="1"  date_created="2004-05-05 00:00:00"  version="1.0"  changed_by="1"  date_changed="2005-02-18 14:58:11" uuid="dc8d83e3-30ab-102d-86b0-7a5022ba4115"/>
+	<concept  concept_id="1301"  retired="0" datatype_id="4"  class_id="11"  is_set="0"  creator="1"  date_created="2006-06-05 16:55:42"  version="1.0"  changed_by="1"  date_changed="2016-06-23 15:49:05" uuid="dca10c94-30ab-102d-86b0-7a5022ba4115"/>
+	<concept  concept_id="1304"  retired="0" datatype_id="4"  class_id="11"  is_set="0"  creator="1"  date_created="2006-06-05 17:03:19"  version="1.0"  changed_by="1"  date_changed="2006-06-05 17:03:19" uuid="dca11907-30ab-102d-86b0-7a5022ba4115"/>
+	<concept  concept_id="1305"  retired="0" datatype_id="2"  class_id="1"  is_set="0"  creator="1"  date_created="2006-06-05 17:21:15"  version="1.0"  changed_by="1"  date_changed="2016-06-23 15:57:28" uuid="dca12261-30ab-102d-86b0-7a5022ba4115"/>
+	<concept  concept_id="1306"  retired="0" datatype_id="4"  class_id="11"  is_set="0"  creator="1"  date_created="2006-06-05 17:21:15"  version="1.0"  changed_by="1"  date_changed="2006-06-05 17:21:15" uuid="dca1269d-30ab-102d-86b0-7a5022ba4115"/>
+	<concept  concept_id="163023"  retired="0" datatype_id="6"  class_id="5"  is_set="0"  creator="1"  date_created="2016-04-01 17:34:46"  version="1.0"  changed_by="1"  date_changed="2016-04-01 17:34:46" uuid="0b434cfa-b11c-4d14-aaa2-9aed6ca2da88"/>
+	<concept  concept_id="165412"  retired="0"  datatype_id="4"  class_id="8"  is_set="1"  creator="1"  date_created="2019-11-05 14:12:44"  version="1.0.0"  changed_by="1"  date_changed="2019-11-05 14:12:44"  uuid="1eb05918-f50c-4cad-a827-3c78f296a10a"/>
+
+	<concept_numeric  concept_id="856" precise="false" />
 
 	<concept_name concept_id="99423" name="Treatment Outcome" locale="en_GB" creator="1" date_created="2004-08-12 00:00:00.0" concept_name_id="1939" concept_name_type="FULLY_SPECIFIED" locale_preferred="1" voided="false" uuid="9bc5693a-f558-40c9-8177-145a4b119cb9"/>
 	<concept_name concept_id="90306" name="Transferred out" locale="en_GB" creator="1" date_created="2004-08-12 00:00:00.0" concept_name_id="2439" concept_name_type="FULLY_SPECIFIED" locale_preferred="1" voided="false" uuid="9bc5693a-f558-40c9-8177-145a4b119cc4"/>
@@ -112,6 +123,32 @@
 	<concept_name concept_name_id="4614" concept_id="99370" name="HSD TB No" locale="en" locale_preferred="true" creator="1" date_created="2012-08-03 23:35:37.0" concept_name_type="FULLY_SPECIFIED" voided="false" uuid="142c6e5a-246b-464e-a5e1-a854adc84eee"/>
 	<concept_name concept_name_id="141251" concept_id="164955" name="Unit TB Number" locale="en" locale_preferred="true" creator="1" date_created="2017-05-31 12:56:29.0" concept_name_type="FULLY_SPECIFIED" voided="false" uuid="17a9b546-0f67-4e9c-a320-c32ad0daaea9"/>
 	<concept_name concept_name_id="4167" concept_id="99031" name="DISTRICT TB NUMBER" locale="en" locale_preferred="false" creator="1" date_created="2010-08-07 14:01:14.0" concept_name_type="FULLY_SPECIFIED" voided="true" uuid="c7c308dc-41a4-41b0-889d-e145e655b1b6"/>
+
+	<concept_name  concept_name_id="856"  concept_id="856"  name="HIV VIRAL LOAD"  locale="en"  locale_preferred="0"  creator="1"  date_created="2004-05-05 00:00:00"  concept_name_type="FULLY_SPECIFIED"  voided="0" uuid="df003c71-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="4088"  concept_id="856"  name="VIRAL LOAD"  locale="en"  locale_preferred="0"  creator="1"  date_created="2005-02-18 14:58:11"  concept_name_type="NULL"  voided="0" uuid="df832595-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="1299"  concept_id="1301"  name="DETECTED"  locale="en"  locale_preferred="1"  creator="1"  date_created="2006-06-05 16:55:42"  concept_name_type="FULLY_SPECIFIED"  voided="0" uuid="df1b2a58-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="1302"  concept_id="1304"  name="POOR SAMPLE QUALITY"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:03:19"  concept_name_type="FULLY_SPECIFIED"  voided="0" uuid="df1b3abe-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="3169"  concept_id="1304"  name="PSQ"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:03:19"  concept_name_type="SHORT"  voided="0" uuid="df65acc2-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="3879"  concept_id="1304"  name="PSQ"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:03:19"  concept_name_type="NULL"  voided="0" uuid="df7dbbd8-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="3206"  concept_id="1305"  name="VIRAL LOAD, QUAL"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:21:15"  concept_name_type="SHORT"  voided="0" uuid="df666dd1-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="4089"  concept_id="1305"  name="VIRAL LOAD - QUAL"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:21:54"  concept_name_type="NULL"  voided="0" uuid="df832967-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="134357"  concept_id="1305"  name="VIRAL LOAD QUALITATIVE"  locale="en"  locale_preferred="1"  creator="1"  date_created="2016-06-23 15:57:05"  concept_name_type="FULLY_SPECIFIED"  voided="0" uuid="633cff51-8bd3-460a-b88f-b4cc1de6ced6"/>
+	<concept_name  concept_name_id="1304"  concept_id="1306"  name="BEYOND DETECTABLE LIMIT"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:21:15"  concept_name_type="FULLY_SPECIFIED"  voided="0" uuid="df1b48db-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="2794"  concept_id="1306"  name="BDL"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:21:15"  concept_name_type="SHORT"  voided="0" uuid="df59d29d-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="3340"  concept_id="1306"  name="BDL"  locale="en"  locale_preferred="0"  creator="1"  date_created="2006-06-05 17:21:15"  concept_name_type="NULL"  voided="0" uuid="df6bd3bf-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_name  concept_name_id="134345"  concept_id="163023"  name="HIV VIRAL LOAD DATE"  locale="en"  locale_preferred="1"  creator="1"  date_created="2016-04-01 17:34:46"  concept_name_type="FULLY_SPECIFIED"  voided="0" uuid="50d09bfb-75d7-4f66-b982-ee3fa02af0c9"/>
+	<concept_name  concept_name_id="160494"  concept_id="165412"  name="Viral Load Test"  locale="en"  locale_preferred="1"  creator="1"  date_created="2019-11-05 14:12:44"  concept_name_type="FULLY_SPECIFIED"  voided="0"  uuid="c44ff999-0771-4707-9256-e171a17927ef"/>
+
+
+
+	<concept_answer  concept_answer_id="966"  concept_id="1305"  answer_concept="1306" creator="1"  date_created="2006-06-05 17:21:54"  sort_weight="1"  uuid="dd82efa1-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_answer  concept_answer_id="967"  concept_id="1305"  answer_concept="1304" creator="1"  date_created="2006-06-05 17:21:54"  sort_weight="2"  uuid="dd82f306-30ab-102d-86b0-7a5022ba4115"/>
+	<concept_answer  concept_answer_id="5608"  concept_id="1305"  answer_concept="1301" creator="1"  date_created="2016-06-23 15:57:28"  sort_weight="3"  uuid="3f77daf5-d990-452d-a90c-aac14a6a7ab9"/>
+
+	<concept_set  concept_set_id="2180"  concept_id="856"  concept_set="163157"  sort_weight="1"  creator="1"  date_created="2016-07-28 13:26:18"  uuid="2179AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"/>
+	<concept_set  concept_set_id="2184"  concept_id="1305"  concept_set="163157"  sort_weight="2"  creator="1"  date_created="2016-07-28 13:26:18"  uuid="2184AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"/>
+	<concept_set  concept_set_id="2404"  concept_id="163023"  concept_set="163157"  sort_weight="3"  creator="1"  date_created="2017-11-23 12:49:27"  uuid="e293fdc0-cefd-47e6-ad40-4fc0d8558535"/>
+	<concept_set  concept_set_id="2641"  concept_id="856"  concept_set="165412"  sort_weight="0"  creator="1"  date_created="2019-11-05 14:12:44"  uuid="f5b2ed58-2bce-4e07-a004-8cb5dc8b0237"/>
 
 
 	<!-- visits -->
@@ -132,6 +169,8 @@
 	<patient_program patient_program_id="44" patient_id="10002" program_id="11" date_enrolled="2008-08-01 00:00:00.0" creator="1" date_created="2008-08-18 11:40:48.0" changed_by="1" date_changed="2008-08-18 12:29:29.0" voided="false" uuid="511391c1-b57f-4564-9a7e-d3a25850675d"/>
 
 	<encounter encounter_id="3" encounter_type="2" patient_id="8" location_id="1" form_id="1" encounter_datetime="2009-08-01 00:00:00.0" creator="1" date_created="2008-08-18 14:09:05.0" voided="false" uuid="6519d653-393b-4118-9c83-a3715b82d4xz"/>
+
+	<encounter encounter_id="1000" encounter_type="2" patient_id="8" location_id="1" form_id="1" encounter_datetime="2010-08-01 00:00:00.0" creator="1" date_created="2008-08-18 14:09:05.0" voided="false" uuid="7516d653-393b-4118-9c83-a3715b82d4ca"/>
 
 	<sync_task_type  sync_task_type_id="1"  name="test1Synctask"  data_type="org.openmrs.TestOrder"  data_type_id="315124004"  url_end_point="https://google.com"  url_username="testusername"  url_password="testpassword"  url_token="testToken"  creator="1"  date_created="2019-11-08 18:34:37"  changed_by="1"  date_changed="2019-11-08 18:42:21"  voided="0" uuid="3551ca84-06c0-432b-9064-fcfeefd6f4ec"/>
 	<sync_task_type  sync_task_type_id="2"  name="test2Synctask"  data_type="org.openmrs.TestOrder"  data_type_id="315124004"  url_end_point="https://google.com"  url_username="testusername"  url_password="testpassword"  url_token="testToken"  creator="1"  date_created="2019-11-08 18:38:03" voided="0" uuid="d391ab81-4b35-4892-980a-f7691f2b5cf4"/>
