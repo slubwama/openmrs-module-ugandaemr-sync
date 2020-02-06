@@ -15,7 +15,9 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openmrs.Concept;
 import org.openmrs.Encounter;
+import org.openmrs.Obs;
 import org.openmrs.Patient;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.EncounterService;
@@ -207,6 +209,9 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         Context.getObsService().getObservations("Anet Test Oloo");
 
         Assert.assertEquals(encounter, Context.getObsService().getObservations("Anet Test Oloo").get(1).getEncounter());
-        Assert.assertEquals("1306", Context.getObsService().getObservations("Anet Test Oloo").get(1).getValueCoded().getConceptId().toString());
+        List<Obs> obs=Context.getObsService().getObservationsByPersonAndConcept(encounter.getPatient().getPerson(),Context.getConceptService().getConcept(1305));
+        Assert.assertTrue(obs.size()>0);
+        Assert.assertEquals("1306",obs.get(0).getValueCoded().getConceptId().toString());
+
     }
 }
