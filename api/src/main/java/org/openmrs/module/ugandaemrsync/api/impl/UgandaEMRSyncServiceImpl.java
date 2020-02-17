@@ -129,7 +129,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     *
      * @param query
      * @return
      */
@@ -235,8 +234,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#validateFacility(java.lang.String)
      */
     public boolean validateFacility(String facilityDHIS2UUID) {
-        String globalProperty = Context.getAdministrationService().getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID);
-        return facilityDHIS2UUID.contentEquals(globalProperty);
+        try {
+            String globalProperty = Context.getAdministrationService().getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID);
+            return facilityDHIS2UUID.contentEquals(globalProperty);
+        } catch (Exception e) {
+            log.error("Failed to validate facility uuid", e);
+            return false;
+        }
+
     }
 
     public Collection<EncounterType> getEcounterTypes(String encounterTypesUUID) {
@@ -247,6 +252,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     /**
      * Appends a time to a date
+     *
      * @param dateString the date in string which will be
      * @param time
      * @param dateFormat
@@ -300,8 +306,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     /**
      * This method is used to void any observation that is similar to what is being added
+     *
      * @param encounter the encounter for the observation that will be voided
-     * @param concept the concept for the encounter that will be voided
+     * @param concept   the concept for the encounter that will be voided
      */
     private void voidObsFound(Encounter encounter, Concept concept) {
         ObsService obsService = Context.getObsService();
@@ -314,7 +321,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     /**
+     * /**
+     *
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getHealthCenterCode()
      */
     public String getHealthCenterCode() {
