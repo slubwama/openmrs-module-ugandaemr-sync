@@ -12,11 +12,19 @@ import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,6 +39,8 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
@@ -43,6 +53,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -130,80 +143,68 @@ public class UgandaEMRHttpURLConnection {
      */
     public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password) throws Exception {
 
+
+        HttpResponse response = null;
+
+        HttpPost post = new HttpPost(url);
+
+        Map map = new HashMap();
+
+
         try {
-            URL url1 = new URL(url);
-            disableSSLCertificatesChecks();
-            URLConnection urlConnection = url1.openConnection();
+            CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
 
-            if (username != null && !username.equals("") && password != null && !password.equals("")) {
-                String encoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8)); //Java 8
-                urlConnection.setRequestProperty("Authorization", "Basic " + encoded);
-            }
+            post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
-            if (facilityId != "") {
-                urlConnection.setRequestProperty("Ugandaemr-Sync-Facility-Id", facilityId);
-            }
+            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
 
-            // specify that we will send output and accept input
-            urlConnection.setDoInput(true);
-            urlConnection.setDoOutput(true);
-            urlConnection.setConnectTimeout(60000); // long timeout, but not infinite
-            urlConnection.setReadTimeout(120000);
-            urlConnection.setUseCaches(false);
-            urlConnection.setDefaultUseCaches(false);
+            post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-            // tell the web server what we are sending
-            urlConnection.setRequestProperty("Content-Type", contentType);
-            urlConnection.setRequestProperty("User-Agent", USER_AGENT);
-            urlConnection.setRequestProperty("Accept", contentType);
-            urlConnection.setRequestProperty("method","POST");
+            HttpEntity httpEntity= new StringEntity(content,ContentType.APPLICATION_JSON);
 
-            OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream());
-            writer.write(content);
-            writer.flush();
-            writer.close();
+            post.setEntity(httpEntity);
 
-            Map map = new HashMap();
-            int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
-            String responseMessage = ((HttpURLConnection) urlConnection).getResponseMessage();
+            response = client.execute(post);
+
+            int responseCode = response.getStatusLine().getStatusCode();
+            String responseMessage = response.getStatusLine().getReasonPhrase();
             //reading the response
             if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
-                InputStream inputStreamReader = urlConnection.getInputStream();
+                InputStream inputStreamReader = response.getEntity().getContent();
                 map = getMapOfResults(inputStreamReader, responseCode);
             } else {
                 map.put("responseCode", responseCode);
                 log.info(responseMessage);
             }
             map.put("responseMessage", responseMessage);
-            return map;
-        } catch (Throwable t) {
-            log.error(t);
-
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
-        return null;
+        return map;
+
     }
 
-	/**
-	 * Send Post
-	 *
-	 * @param url
-	 * @param data
-	 * @param facilityIdRequired
-	 * @return
-	 * @throws Exception
-	 */
-	public Map sendPostBy(String url, String username, String password, String token, String data, boolean facilityIdRequired) throws Exception {
-		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-		String contentTypeJSON = SyncConstant.JSON_CONTENT_TYPE;
+    /**
+     * Send Post
+     *
+     * @param url
+     * @param data
+     * @param facilityIdRequired
+     * @return
+     * @throws Exception
+     */
+    public Map sendPostBy(String url, String username, String password, String token, String data, boolean facilityIdRequired) throws Exception {
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        String contentTypeJSON = SyncConstant.JSON_CONTENT_TYPE;
 
-		String facilitySyncId = "";
-		if (facilityIdRequired) {
-			facilitySyncId = syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
-		}
+        String facilitySyncId = "";
+        if (facilityIdRequired) {
+            facilitySyncId = syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
+        }
 
 
-		return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, url, username, password);
-	}
+        return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, url, username, password);
+    }
 
     public Map getMapOfResults(InputStream inputStreamReader, int responseCode) throws IOException {
         Map map = new HashMap();
@@ -225,18 +226,18 @@ public class UgandaEMRHttpURLConnection {
         return map;
     }
 
-	/**
-	 * Request for facility Id
-	 *
-	 * @return
-	 * @throws Exception
-	 */
-	public String requestFacilityId() throws Exception {
-		LocationService service = Context.getLocationService();
-		SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-		String serverIP = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_IP);
-		String serverProtocol = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_PROTOCOL);
-		String facilityURL = serverProtocol + serverIP + "/" + "api/facility";
+    /**
+     * Request for facility Id
+     *
+     * @return
+     * @throws Exception
+     */
+    public String requestFacilityId() throws Exception {
+        LocationService service = Context.getLocationService();
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        String serverIP = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_IP);
+        String serverProtocol = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_PROTOCOL);
+        String facilityURL = serverProtocol + serverIP + "/" + "api/facility";
 
         Location location = service.getLocation(Integer.valueOf(2));
 
@@ -259,7 +260,6 @@ public class UgandaEMRHttpURLConnection {
     }
 
 
-
     public boolean isConnectionAvailable() {
         try {
             final URL url = new URL(UgandaEMRSyncConfig.CONNECTIVITY_CHECK_URL);
@@ -268,11 +268,9 @@ public class UgandaEMRHttpURLConnection {
             conn.getInputStream().close();
             log.info(UgandaEMRSyncConfig.CONNECTIVITY_CHECK_SUCCESS);
             return true;
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             throw new RuntimeException(e);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.info(UgandaEMRSyncConfig.CONNECTIVITY_CHECK_FAILED);
             return false;
         }
@@ -286,53 +284,47 @@ public class UgandaEMRHttpURLConnection {
             conn.getInputStream().close();
             log.info(UgandaEMRSyncConfig.SERVER_CONNECTION_SUCCESS);
             return true;
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             throw new RuntimeException(e);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.info(UgandaEMRSyncConfig.SERVER_CONNECTION_FAILED);
             return false;
         }
     }
 
-    public HttpResponse httpPost(String recencyServerUrl, String bodyText)
-    {
+    public HttpResponse httpPost(String recencyServerUrl, String bodyText) {
         HttpResponse response = null;
         HttpClient client = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(recencyServerUrl);
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-        try{
+        try {
 
-		post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
+            post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
-		UsernamePasswordCredentials credentials
-				= new UsernamePasswordCredentials(syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_RECENCY_SERVER_PASSWORD));
-		post.addHeader(new BasicScheme().authenticate(credentials, post, null));
+            UsernamePasswordCredentials credentials
+                    = new UsernamePasswordCredentials(syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_RECENCY_SERVER_PASSWORD));
+            post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-		HttpEntity multipart = MultipartEntityBuilder.create()
-				.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
-				.addTextBody(UgandaEMRSyncConfig.DHIS_ORGANIZATION_UUID, syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID))
-				.addTextBody(UgandaEMRSyncConfig.HTTP_TEXT_BODY_DATA_TYPE_KEY, bodyText, ContentType.TEXT_PLAIN) // Current implementation uses plain text due to decoding challenges on the receiving server.
-				.build();
-		post.setEntity(multipart);
+            HttpEntity multipart = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE).addTextBody(UgandaEMRSyncConfig.DHIS_ORGANIZATION_UUID, syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID)).addTextBody(UgandaEMRSyncConfig.HTTP_TEXT_BODY_DATA_TYPE_KEY, bodyText, ContentType.APPLICATION_JSON)// Current implementation uses plain text due to decoding challenges on the receiving server.
+            .build();
+            post.setEntity(multipart);
 
-		response = client.execute(post);
-		} catch (IOException | AuthenticationException e) {
-			log.info("Exception sending Recency data "+ e.getMessage());
-		}
-		return response;
-	}
+            response = client.execute(post);
+        } catch (IOException | AuthenticationException e) {
+            log.info("Exception sending Recency data " + e.getMessage());
+        }
+        return response;
+    }
 
-	public void setAlertForAllUsers(String alertMessage) {
-		List<User> userList = Context.getUserService().getAllUsers();
-		Alert alert = new Alert();
-		for (User user : userList) {
-			alert.addRecipient(user);
-		}
-		alert.setText(alertMessage);
-		Context.getAlertService().saveAlert(alert);
-	}
+    public void setAlertForAllUsers(String alertMessage) {
+        List<User> userList = Context.getUserService().getAllUsers();
+        Alert alert = new Alert();
+        for (User user : userList) {
+            alert.addRecipient(user);
+        }
+        alert.setText(alertMessage);
+        Context.getAlertService().saveAlert(alert);
+    }
 
     public String getBaseURL(String serverUrl) {
         try {
@@ -363,7 +355,7 @@ public class UgandaEMRHttpURLConnection {
         return true;
     }
 
-    public void disableSSLCertificatesChecks () throws Exception {
+    public void disableSSLCertificatesChecks() throws Exception {
         Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
         final TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
@@ -383,5 +375,30 @@ public class UgandaEMRHttpURLConnection {
                     }
                 }
         };
+    }
+
+
+    public static CloseableHttpClient createAcceptSelfSignedCertificateClient()
+            throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+
+        // use the TrustSelfSignedStrategy to allow Self Signed Certificates
+        SSLContext sslContext = SSLContextBuilder
+                .create()
+                .loadTrustMaterial(new TrustSelfSignedStrategy())
+                .build();
+
+        // we can optionally disable hostname verification.
+        // if you don't want to further weaken the security, you don't have to include this.
+        HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
+
+        // create an SSL Socket Factory to use the SSLContext with the trust self signed certificate strategy
+        // and allow all hosts verifier.
+        SSLConnectionSocketFactory connectionFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
+
+        // finally create the HttpClient using HttpClient factory methods and assign the ssl socket factory
+        return HttpClients
+                .custom()
+                .setSSLSocketFactory(connectionFactory)
+                .build();
     }
 }
