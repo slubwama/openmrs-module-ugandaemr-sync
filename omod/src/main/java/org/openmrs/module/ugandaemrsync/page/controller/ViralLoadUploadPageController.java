@@ -25,7 +25,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_DATE_COLLE
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_PATIENT_ART_ID_CELL_NO;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_RESULTS_NUMERIC_CELL_NO;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_RESULTS_ALHPA_NUMERIC_CELL_NO;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_RELEASED_CELL_NO;
 
 public class ViralLoadUploadPageController {
     protected final Log log = LogFactory.getLog(ViralLoadUploadPageController.class);
@@ -95,21 +94,13 @@ public class ViralLoadUploadPageController {
                         String patientARTNo = vlResult[VL_PATIENT_ART_ID_CELL_NO].replaceAll("\"", "");
                         String vlQuantitative = vlResult[VL_RESULTS_NUMERIC_CELL_NO].replaceAll("\"", "");
                         String vlQualitative = vlResult[VL_RESULTS_ALHPA_NUMERIC_CELL_NO].replaceAll("\"", "");
-                        String vlReleaseDate = vlResult[VL_RELEASED_CELL_NO].replaceAll("\"", "");
                         String dateFormat = ugandaEMRSyncService.getDateFormat(vlDate);
 
 
                         EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(ugandaEMRSyncService.getPatientByPatientIdentifier(patientARTNo), null, ugandaEMRSyncService.convertStringToDate(vlDate, "00:00:00", dateFormat), ugandaEMRSyncService.convertStringToDate(vlDate, "23:59:59", dateFormat), null, null, encounterTypes, null, null, null, false);
                         List<Encounter> encounters = new ArrayList<>();
-
                         //Determine if patient is found
-
                         if (encounterSearchCriteria.getPatient() != null) {
-                            // Determine if results were released
-                            if (vlReleaseDate.contains("NULL")) {
-                                this.patientResultNotReleased.add(vlResult[VL_PATIENT_ART_ID_CELL_NO]);
-                                continue;
-                            }
                             encounters = Context.getEncounterService().getEncounters(encounterSearchCriteria);
 
                             if (encounters.size() > 0) {

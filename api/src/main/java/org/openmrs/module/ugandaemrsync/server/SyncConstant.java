@@ -72,27 +72,17 @@ public class SyncConstant {
 
     public static final String PATIENT_IDENTIFIER_TYPE = "e1731641-30ab-102d-86b0-7a5022ba4115";
 
-    public static final int VL_SAMPLE_ID_CELL_NO = 0;
+    public static final int VL_SAMPLE_ID_CELL_NO = 1;
 
-    public static final int VL_FORM_NUMBER_CELL_NO = 1;
+	public static final int VL_FACILITY_NAME_CELL_NO = 2;
+	public static final int VL_FACILITY_DHIS2_ID_CELL_NO = 4;
+	public static final int VL_PATIENT_ART_ID_CELL_NO = 5;
 
-    public static final int VL_DATE_COLLECTION_CELL_NO = 2;
+    public static final int VL_DATE_COLLECTION_CELL_NO = 6;
 
-    public static final int VL_DATE_RECIEVED_CELL_NO = 3;
+    public static final int VL_RESULTS_NUMERIC_CELL_NO = 8;
 
-    public static final int VL_RELEASED_CELL_NO = 4;
-
-    public static final int VL_RELEASE_TIME_CELL_NO = 5;
-
-    public static final int VL_FACILITY_NAME_CELL_NO = 6;
-
-    public static final int VL_FACILITY_DHIS2_ID_CELL_NO = 7;
-
-    public static final int VL_PATIENT_ART_ID_CELL_NO = 8;
-
-    public static final int VL_RESULTS_NUMERIC_CELL_NO = 9;
-
-    public static final int VL_RESULTS_ALHPA_NUMERIC_CELL_NO = 10;
+    public static final int VL_RESULTS_ALHPA_NUMERIC_CELL_NO = 9;
 
     public static final int VL_SUPPRESSED_CELL_NO = 11;
 
