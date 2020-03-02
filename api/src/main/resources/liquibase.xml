@@ -194,7 +194,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-09042019-1027" author="slubwama">
+    <changeSet id="ugandaemrsync-02032020-1027" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_task_type WHERE uuid = '3551ca84-06c0-432b-9064-fcfeefd6f4ec'
@@ -205,7 +205,7 @@
             <column name="name" value="Send Viral Load To CPHL" />
             <column name="data_type" value="org.openmrs.TestOrder" />
             <column name="data_type_id" value="315124004" />
-            <column name="url_end_point" value="https://ughim.cphluganda.org:5000/emrlab/send_sample?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/vl/send?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
             <column name="url_username" value="emrlabClient" />
             <column name="url_password" value="emrlabClient" />
             <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
@@ -227,7 +227,7 @@
             <column name="name" value="Request Viral Load Results form CPHL" />
             <column name="data_type" value="org.openmrs.TestOrder" />
             <column name="data_type_id" value="315124004" />
-            <column name="url_end_point" value="https://ughim.cphluganda.org:5000/emrlab/sample_result?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/vl/request?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
             <column name="url_username" value="emrlabClient" />
             <column name="url_password" value="emrlabClient" />
             <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
