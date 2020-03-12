@@ -156,11 +156,13 @@ public class UgandaEMRHttpURLConnection {
 
             post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
-            UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
+            if (username!=null && password!=null) {
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
 
-            post.addHeader(new BasicScheme().authenticate(credentials, post, null));
+                post.addHeader(new BasicScheme().authenticate(credentials, post, null));
+            }
 
-            HttpEntity httpEntity= new StringEntity(content,ContentType.APPLICATION_JSON);
+            HttpEntity httpEntity = new StringEntity(content, ContentType.APPLICATION_JSON);
 
             post.setEntity(httpEntity);
 
@@ -306,7 +308,7 @@ public class UgandaEMRHttpURLConnection {
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
             HttpEntity multipart = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE).addTextBody(UgandaEMRSyncConfig.DHIS_ORGANIZATION_UUID, syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID)).addTextBody(UgandaEMRSyncConfig.HTTP_TEXT_BODY_DATA_TYPE_KEY, bodyText, ContentType.APPLICATION_JSON)// Current implementation uses plain text due to decoding challenges on the receiving server.
-            .build();
+                    .build();
             post.setEntity(multipart);
 
             response = client.execute(post);
