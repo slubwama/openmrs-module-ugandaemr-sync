@@ -12,12 +12,16 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Arrays;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -36,7 +40,7 @@ public class SyncDataRecord {
         try {
             connectionStatus = ugandaEMRHttpURLConnection.getCheckConnection("google.com");
         } catch (Exception e) {
-            log.error("Connection failed",e);
+            log.error("Connection failed", e);
         }
         if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
             int size = 0;
@@ -51,7 +55,7 @@ public class SyncDataRecord {
                         size += 1;
                     }
                 } catch (Exception e) {
-                    log.error("Failed to Sync data",e);
+                    log.error("Failed to Sync data", e);
                 }
             }
             return size;
@@ -113,11 +117,6 @@ public class SyncDataRecord {
         return list;
     }
 
-    private List getDatabaseRecord(String query) {
-        Session session = Context.getRegisteredComponent("sessionFactory", SessionFactory.class).getCurrentSession();
-        SQLQuery sqlQuery = session.createSQLQuery(query);
-        return sqlQuery.list();
-    }
 
     public static Map<String, String> convertListOfMapsToJsonString(List list, List<String> columns) throws IOException {
         JSONArray result = new JSONArray();
@@ -149,7 +148,7 @@ public class SyncDataRecord {
             List records = getDatabaseRecord(query, String.valueOf(offset), String.valueOf(max), datesToBeReplaced, columns);
             Map<String, String> data = SyncDataRecord.convertListOfMapsToJsonString(records, columns);
             String json = data.get("json");
-            ugandaEMRHttpURLConnection.sendPostBy(facilityURL,  syncGlobalProperties.getGlobalProperty(SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(SERVER_PASSWORD), "",json, true);
+            ugandaEMRHttpURLConnection.sendPostBy(facilityURL, syncGlobalProperties.getGlobalProperty(SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(SERVER_PASSWORD), "", json, true);
             if (offset >= mySize || mySize <= max) {
                 entireListNotProcessed = false;
             } else {
@@ -218,7 +217,7 @@ public class SyncDataRecord {
 
             syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
         } catch (Exception e) {
-            log.error("Faied to process sync records central server",e);
+            log.error("Faied to process sync records central server", e);
         }
 
         return totals;

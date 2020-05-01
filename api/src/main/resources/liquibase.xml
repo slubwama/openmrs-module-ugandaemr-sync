@@ -38,9 +38,7 @@
     <changeSet id="20200304-1748" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM scheduler_task_config
-                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendAllDataCentralServerTask'
-                And name = 'UgandaEMR Sync Task'
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '90326ea2-f81e-11e6-bc64-92361f002671'
             </sqlCheck>
         </preConditions>
         <comment>Inserting  UgandaEMR Sync Task into 'schedule_task_config' table</comment>
@@ -235,6 +233,28 @@
             <column name="voided" value="0" />
             <column name="date_created" value="2019-09-26 03:07:54" />
             <column name="uuid" value="3396dcf0-2106-4e73-9b90-c63978c3a8b4" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-30042020-0333" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '3c1ce940-8ade-11ea-bc55-0242ac130003'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Sync Data to Shared Health Record" />
+            <column name="data_type" value="" />
+            <column name="data_type_id" value="315124004" />
+            <column name="url_end_point" value="http://localhost:8085/hapi-fhir-jpaserver/fhir/Bundle" />
+            <column name="url_username" value="ugandaemr001" />
+            <column name="url_password" value="Admin123" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2020-04-30 03:33:00" />
+            <column name="uuid" value="3c1ce940-8ade-11ea-bc55-0242ac130003" />
         </insert>
     </changeSet>
 
