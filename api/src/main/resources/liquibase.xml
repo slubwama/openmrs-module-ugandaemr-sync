@@ -55,10 +55,10 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemr-20200105-0917" author="slubwama">
+    <changeSet id="ugandaemr-20201205-1133" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
-                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '90326ea2-f81e-11e6-bc64-92361f002671'
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '90326ea2-f81e-11e6-bc64-92361f002671'
             </sqlCheck>
         </preConditions>
         <comment>Change schedulable_class for task Synchronises Data to given Server</comment>
