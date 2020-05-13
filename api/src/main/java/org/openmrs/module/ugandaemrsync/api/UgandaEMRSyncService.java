@@ -30,7 +30,7 @@ import java.util.List;
  * The main service of this module, which is exposed for other modules. See
  * moduleApplicationContext.xml on how it is wired up.
  */
-public interface UgandaEMRSyncService extends OpenmrsService {
+public abstract interface UgandaEMRSyncService extends OpenmrsService {
 	
 	/**
 	 * Getting all sync task types
