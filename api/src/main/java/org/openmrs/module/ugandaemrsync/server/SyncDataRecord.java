@@ -84,7 +84,7 @@ public class SyncDataRecord {
 
             facilitySyncId = uuid.toString();
 
-            return ugandaEMRHttpURLConnection.sendPostByWithBasicAuth(contentTypeXML, syncRecord, facilitySyncId, url, syncGlobalProperties.getGlobalProperty(SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(SERVER_PASSWORD));
+            return ugandaEMRHttpURLConnection.sendPostByWithBasicAuth(contentTypeXML, syncRecord, facilitySyncId, url, syncGlobalProperties.getGlobalProperty(SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(SERVER_PASSWORD), null);
 
         } catch (IllegalArgumentException exception) {
             Map<String, String> map = new HashMap<String, String>();
