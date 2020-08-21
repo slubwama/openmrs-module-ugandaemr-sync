@@ -209,7 +209,7 @@ public class UgandaEMRHttpURLConnection {
      * @return
      * @throws Exception
      */
-    public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password) throws Exception {
+    public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String token) throws Exception {
 
 
         HttpResponse response = null;
@@ -224,13 +224,21 @@ public class UgandaEMRHttpURLConnection {
 
             post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
-            if (username!=null && password!=null) {
+            if (username != null && password != null) {
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
 
                 post.addHeader(new BasicScheme().authenticate(credentials, post, null));
             }
 
+            if (token != null && !token.equals("")) {
+                post.addHeader("Authorization", token);
+            }
+
             HttpEntity httpEntity = new StringEntity(content, ContentType.APPLICATION_JSON);
+
+            if (contentType != null && contentType != "") {
+                ((StringEntity) httpEntity).setContentType(contentType);
+            }
 
             post.setEntity(httpEntity);
 
@@ -273,7 +281,7 @@ public class UgandaEMRHttpURLConnection {
         }
 
 
-        return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, url, username, password);
+        return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, url, username, password, token);
     }
 
     public Map getMapOfResults(InputStream inputStreamReader, int responseCode) throws IOException {

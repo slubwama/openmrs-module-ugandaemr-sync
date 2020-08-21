@@ -75,13 +75,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 			return;
 		}
 
-		if (!isGpAnalyticsServerPasswordSet()) {
-			return;
-		}
-		if (!isGpAnalyticsServerUsernameSet()) {
-			return;
-		}
-
 		String analyticsServerUrlEndPoint = syncGlobalProperties.getGlobalProperty(GP_ANALYTICS_SERVER_URL);
 		String analyticsBaseUrl = ugandaEMRHttpURLConnection.getBaseURL(analyticsServerUrlEndPoint);
 
@@ -150,8 +143,8 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 		}
 		log.info("Sending analytics data to central server ");
 		String bodyText = getAnalyticsDataExport();
-		HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText,syncGlobalProperties.getGlobalProperty(GP_ANALYTICS_SERVER_USERNAME),syncGlobalProperties.getGlobalProperty(GP_ANALYTICS_SERVER_PASSWORD));
-		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+		HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText,syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID),syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
 
 			ReportUtil.updateGlobalProperty(GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
 			    dateTimeFormat.format(lastSubmissionDateSet));
@@ -241,26 +234,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 			log.info("DHIS2 Organization UUID is not set");
 			ugandaEMRHttpURLConnection
 			        .setAlertForAllUsers("DHIS2 Organization UUID is not set please go to admin then Settings then Ugandaemr and set it");
-			return false;
-		}
-		return true;
-	}
-	
-	public boolean isGpAnalyticsServerPasswordSet() {
-		if (isBlank(syncGlobalProperties.getGlobalProperty(GP_ANALYTICS_SERVER_PASSWORD))) {
-			log.info("Analytics server password is not set");
-			ugandaEMRHttpURLConnection
-			        .setAlertForAllUsers("Analytics server password is not set please go to admin then Settings then Ugandaemrsync and set it");
-			return false;
-		}
-		return true;
-	}
-
-	public boolean isGpAnalyticsServerUsernameSet() {
-		if (isBlank(syncGlobalProperties.getGlobalProperty(GP_ANALYTICS_SERVER_USERNAME))) {
-			log.info("Analytics server Username is not set");
-			ugandaEMRHttpURLConnection
-					.setAlertForAllUsers("Analytics server username is not set please go to admin then Settings then Ugandaemrsync and set it");
 			return false;
 		}
 		return true;

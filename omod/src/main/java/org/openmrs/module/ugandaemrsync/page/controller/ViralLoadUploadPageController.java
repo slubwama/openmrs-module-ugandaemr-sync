@@ -77,9 +77,6 @@ public class ViralLoadUploadPageController {
 
             if (objects.length >= 1) {
                 if (ugandaEMRSyncService.validateFacility(objects[1].toString().split(cvsSplitBy)[VL_FACILITY_DHIS2_ID_CELL_NO].replaceAll("\"", ""))) {
-                    healthCenterNameValidator="Invalid Health Center DHIS2 UUID";
-
-                } else {
                     healthCenterNameValidator = objects[1].toString().split(cvsSplitBy)[VL_FACILITY_NAME_CELL_NO].replaceAll("\"", "");
 
                     for (int i = 0; i < objects.length; i++) {
@@ -117,6 +114,8 @@ public class ViralLoadUploadPageController {
                         }
                     }
 
+                } else {
+                    healthCenterNameValidator="Invalid Health Center DHIS2 UUID";
                 }
             }
 
