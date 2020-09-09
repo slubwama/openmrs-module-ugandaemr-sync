@@ -33,11 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Set;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
@@ -152,59 +154,61 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addVLToEncounter(java.lang.String, java.lang.String, java.lang.String, org.openmrs.Encounter, org.openmrs.Order)
      */
     public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter, Order order) {
+        if(!encounterHasVLDataAlreadySaved(encounter)) {
+            Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
+            Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
+            Concept viralLoadQuantitative = Context.getConceptService().getConcept("856");
+            Concept valueCoded = null;
 
-        Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
-        Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
-        Concept viralLoadQuantitative = Context.getConceptService().getConcept("856");
-        Concept valueCoded = null;
+            String dateFormat = getDateFormat(vlDate);
 
-        String dateFormat = getDateFormat(vlDate);
+            String vlQualitativeString = vlQualitative.replaceAll("\"", "");
 
-        String vlQualitativeString = vlQualitative.replaceAll("\"", "");
-
-        if (vlQualitativeString.contains("Target Not Detected") || vlQualitativeString.contains("Not detected")) {
-            valueCoded = Context.getConceptService().getConcept("1306");
-        } else if (vlQualitativeString.contains("FAILED")) {
-            valueCoded = Context.getConceptService().getConcept("1304");
-        } else {
-            valueCoded = Context.getConceptService().getConcept("1301");
-        }
-        Concept viralLOadTestGroupConcept = null;
-        if (order != null) {
-            viralLOadTestGroupConcept = order.getConcept();
-        } else {
-            viralLOadTestGroupConcept = Context.getConceptService().getConcept(165412);
-        }
-
-        Obs dateSampleTakenObs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
-        Obs viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
-        Obs viralLoadQuantitativeObs = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
-
-        Obs viralLoadTestGroupObs = createObs(encounter, order, viralLOadTestGroupConcept, null, null, null);
-        viralLoadTestGroupObs.addGroupMember(dateSampleTakenObs);
-        viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
-        viralLoadTestGroupObs.addGroupMember(viralLoadQuantitativeObs);
-
-        //Void Similar observation
-        voidObsFound(encounter, dateSampleTaken);
-        voidObsFound(encounter, viralLoadQualitative);
-        voidObsFound(encounter, viralLoadQuantitative);
-
-        encounter.addObs(dateSampleTakenObs);
-        encounter.addObs(viralLoadQualitativeObs);
-        encounter.addObs(viralLoadQuantitativeObs);
-        encounter.addObs(viralLoadTestGroupObs);
-
-        try {
-            if (order != null) {
-                Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+            if (vlQualitativeString.contains("Target Not Detected") || vlQualitativeString.contains("Not detected")) {
+                valueCoded = Context.getConceptService().getConcept("1306");
+            } else if (vlQualitativeString.contains("FAILED")) {
+                valueCoded = Context.getConceptService().getConcept("1304");
+            } else {
+                valueCoded = Context.getConceptService().getConcept("1301");
             }
-        } catch (Exception e) {
-            log.error("Failed to discontinue order", e);
+            Concept viralLOadTestGroupConcept = null;
+            if (order != null) {
+                viralLOadTestGroupConcept = order.getConcept();
+            } else {
+                viralLOadTestGroupConcept = Context.getConceptService().getConcept(165412);
+            }
+
+            Obs dateSampleTakenObs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
+            Obs viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
+            Obs viralLoadQuantitativeObs = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
+
+            Obs viralLoadTestGroupObs = createObs(encounter, order, viralLOadTestGroupConcept, null, null, null);
+            viralLoadTestGroupObs.addGroupMember(dateSampleTakenObs);
+            viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
+            viralLoadTestGroupObs.addGroupMember(viralLoadQuantitativeObs);
+
+            //Void Similar observation
+            voidObsFound(encounter, dateSampleTaken);
+            voidObsFound(encounter, viralLoadQualitative);
+            voidObsFound(encounter, viralLoadQuantitative);
+
+            encounter.addObs(dateSampleTakenObs);
+            encounter.addObs(viralLoadQualitativeObs);
+            encounter.addObs(viralLoadQuantitativeObs);
+            encounter.addObs(viralLoadTestGroupObs);
+
+            try {
+                if (order != null) {
+                    Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+                }
+            } catch (Exception e) {
+                log.error("Failed to discontinue order", e);
+            }
+
+            return Context.getEncounterService().saveEncounter(encounter);
+        }else{
+            return encounter;
         }
-
-        return Context.getEncounterService().saveEncounter(encounter);
-
     }
 
     public String getDateFormat(String date) {
@@ -350,5 +354,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             patientARTNO = list.get(0).toString().replace("[", "").replace("]", "");
         }
         return patientARTNO;
+    }
+
+    public boolean encounterHasVLDataAlreadySaved(Encounter encounter){
+        Set<Obs> obs = encounter.getAllObs(false);
+        return obs.stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(165412));
     }
 }

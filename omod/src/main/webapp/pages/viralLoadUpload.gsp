@@ -13,6 +13,25 @@
         { label: "UgandaEMR Sync", link: '/' + OPENMRS_CONTEXT_PATH + '/ugandaemrsync/ugandaemrsync.page'},
         { label: "Upload Viral Load Results"}
     ];
+
+    jq(document).ready(function () {
+
+        jq('#upload_vl').submit(function(){
+            if(!jq('input[type="file"]').val()) {
+                jq().toastmessage('showNoticeToast', "No file was uploaded");
+                return false;
+            }else{
+                return true;
+            }
+        });
+
+        var errorMessage = jq('#errorMessage').val();
+        if(errorMessage!==""){
+            jq().toastmessage('showNoticeToast', errorMessage);
+        }
+
+
+    });
 </script>
 <style>
 #browser_file_container {
@@ -52,6 +71,7 @@
 <form method="post" id="upload_vl" enctype="multipart/form-data" accept-charset="UTF-8">
     <div class="div-table">
         <div class="div-row" id="">
+            <input type="hidden" name="errorMessage" id="errorMessage" value="${errorMessage}">
             <div class="div-col2" id="browser_file_container">
                 <input type="file" name="file" accept=".csv" id="browser_file"/></div>
 
@@ -112,7 +132,7 @@
     <div class="div-row">
         <% if (noPatientFound?.size() > 0) { %>
         <div class="div-col3" id="feedback_no_patient_found">
-            <p><label><h4>No patients Found</h4></label></p>
+            <p><label><h4> Patients Not Found</h4></label></p>
             <table>
                 <thead>
                 <tr>
@@ -133,7 +153,7 @@
         <% } %>
         <% if (noEncounterFound?.size() > 0) { %>
         <div class="div-col3" style="text-align: justify" id="feedback_no_encounter_found">
-            <p><label><h4>No Encounters Found</h4></label></p>
+            <p><label><h4>Encounters Not Found</h4></label></p>
 
             <table>
                 <thead>

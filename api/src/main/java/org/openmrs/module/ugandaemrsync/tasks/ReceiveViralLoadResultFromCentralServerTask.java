@@ -45,7 +45,7 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
                 log.error("Failed to fetch results",e);
             }
 
-            if (results != null && results.size() > 0 && UgandaEMRSyncUtil.getSuccessCodeList().contains(results.get("responseCode"))) {
+            if (results != null && results.size() > 0 && UgandaEMRSyncUtil.getSuccessCodeList().contains(results.get("responseCode")) && results.get("reasonReference") != null) {
                 Map reasonReference = (Map) results.get("reasonReference");
                 ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
                 //Save Viral Load Results
