@@ -115,9 +115,6 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 		} else {
 			log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
 			        + httpResponse.getStatusLine().getReasonPhrase());
-			ugandaEMRHttpURLConnection.setAlertForAllUsers("Http request has returned a response status: "
-			        + httpResponse.getStatusLine().getStatusCode() + " " + httpResponse.getStatusLine().getReasonPhrase()
-			        + " error");
 		}
 	}
 	
@@ -189,8 +186,6 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 	public boolean isGpRecencyServerUrlSet() {
 		if (isBlank(syncGlobalProperties.getGlobalProperty(GP_RECENCY_SERVER_URL))) {
 			log.info("Recency server URL is not set");
-			ugandaEMRHttpURLConnection
-			        .setAlertForAllUsers("Recency server URL is not set please go to admin then Settings then Ugandaemrsync and set it");
 			return false;
 		}
 		return true;
@@ -199,8 +194,6 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 	public boolean isGpDhis2OrganizationUuidSet() {
 		if (isBlank(syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID))) {
 			log.info("DHIS2 Organization UUID is not set");
-			ugandaEMRHttpURLConnection
-			        .setAlertForAllUsers("DHIS2 Organization UUID is not set please go to admin then Settings then Ugandaemr and set it");
 			return false;
 		}
 		return true;
@@ -209,8 +202,6 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 	public boolean isGpRecencyServerPasswordSet() {
 		if (isBlank(syncGlobalProperties.getGlobalProperty(GP_RECENCY_SERVER_PASSWORD))) {
 			log.info("Recency server URL is not set");
-			ugandaEMRHttpURLConnection
-			        .setAlertForAllUsers("Recency server password is not set please go to admin then Settings then Ugandaemrsync and set it");
 			return false;
 		}
 		return true;

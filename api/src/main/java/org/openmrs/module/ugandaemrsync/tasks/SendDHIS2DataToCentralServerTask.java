@@ -64,8 +64,6 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
         if (isBlank(syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_URL))) {
             log.error("DHIS 2 server URL is not set");
 
-            ugandaEMRHttpURLConnection.setAlertForAllUsers("DHIS 2 server URL is not set please go to admin then Settings then Ugandaemrsync and set it");
-
             try {
                 map.put("responseCode", responseCode);
                 map.put("responseMessage", "DHIS 2 server URL is not set");
