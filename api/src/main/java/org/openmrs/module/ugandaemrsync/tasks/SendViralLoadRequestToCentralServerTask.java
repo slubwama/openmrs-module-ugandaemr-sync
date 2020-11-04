@@ -148,8 +148,12 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             String labTechContact = "None";
             String ordererContact = "None";
 
-            if (getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson()))) != null) {
-                labTechContact = getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson())));
+            try {
+                if (getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson()))) != null) {
+                    labTechContact = getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson())));
+                }
+            }catch (Exception e){
+                log.error("Could not add Lab technician telephone number",e);
             }
 
             String obsSampleType = testOrder.getSpecimenSource().getName().getName();

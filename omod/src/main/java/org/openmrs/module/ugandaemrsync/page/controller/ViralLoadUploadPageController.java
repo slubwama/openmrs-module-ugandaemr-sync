@@ -90,7 +90,7 @@ public class ViralLoadUploadPageController {
                         String vlQuantitative = vlResult[VL_RESULTS_NUMERIC_CELL_NO].replaceAll("\"", "");
                         String vlQualitative = vlResult[VL_RESULTS_ALHPA_NUMERIC_CELL_NO].replaceAll("\"", "");
                         String dateFormat = "yyyy-MM-dd HH:mm:ss";
-                        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy");
+                        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
                         SimpleDateFormat format = new SimpleDateFormat(dateFormat);
 
                         Date endDate = format.parse(new SimpleDateFormat("yyyy-MM-dd").format(formatter.parse(vlDate))+" 23:59:59");
