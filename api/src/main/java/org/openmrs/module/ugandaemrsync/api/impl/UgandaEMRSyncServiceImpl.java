@@ -154,7 +154,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addVLToEncounter(java.lang.String, java.lang.String, java.lang.String, org.openmrs.Encounter, org.openmrs.Order)
      */
     public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter, Order order) {
-        if(!encounterHasVLDataAlreadySaved(encounter)) {
+        if (!encounterHasVLDataAlreadySaved(encounter)) {
             Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
             Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
             Concept viralLoadQuantitative = Context.getConceptService().getConcept("856");
@@ -204,9 +204,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             } catch (Exception e) {
                 log.error("Failed to discontinue order", e);
             }
-
-            return Context.getEncounterService().saveEncounter(encounter);
-        }else{
+            Context.getObsService().saveObs(viralLoadTestGroupObs,"Adding Viral Load Data");
+            return encounter;
+        } else {
             return encounter;
         }
     }
@@ -263,6 +263,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @return
      */
     public Date convertStringToDate(String dateString, String time, String dateFormat) {
+
         DateFormat format = new SimpleDateFormat(dateFormat, Locale.ENGLISH);
         Date date = null;
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
