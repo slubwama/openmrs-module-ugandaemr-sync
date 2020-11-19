@@ -204,7 +204,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             } catch (Exception e) {
                 log.error("Failed to discontinue order", e);
             }
-            Context.getObsService().saveObs(viralLoadTestGroupObs,"New Uploaded Viral Load Data");
+            Context.getObsService().saveObs(viralLoadTestGroupObs,"Adding Viral Load Data");
             return encounter;
         } else {
             return encounter;
@@ -263,6 +263,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @return
      */
     public Date convertStringToDate(String dateString, String time, String dateFormat) {
+
         DateFormat format = new SimpleDateFormat(dateFormat, Locale.ENGLISH);
         Date date = null;
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -356,13 +357,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientARTNO;
     }
 
-    public boolean encounterHasVLDataAlreadySaved(Encounter encounter) {
+    public boolean encounterHasVLDataAlreadySaved(Encounter encounter){
         Set<Obs> obs = encounter.getAllObs(false);
-        for (Obs obs1 : obs) {
-            if (obs1.getConcept() == Context.getConceptService().getConcept(165412)) {
-                return true;
-            }
-        }
-        return false;
+        return obs.stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(165412));
     }
 }
