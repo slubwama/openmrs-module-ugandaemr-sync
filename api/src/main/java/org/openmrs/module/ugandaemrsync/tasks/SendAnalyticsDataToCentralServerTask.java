@@ -255,7 +255,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 newUgandaEMRSettingFile.createNewFile();
 
                 FileInputStream fileInputStream = new FileInputStream(filePath);
-                if (facilityDHIS2ID != null && !facilityDHIS2ID.equalsIgnoreCase("") && facilityDHIS2ID.length() == 11) {
+                if (facilityDHIS2ID != null && !facilityDHIS2ID.equalsIgnoreCase("")) {
                     properties.setProperty("facility.dhis2uuid", facilityDHIS2ID);
                     properties.setProperty("syncmetricsdata", "true");
                 } else {
