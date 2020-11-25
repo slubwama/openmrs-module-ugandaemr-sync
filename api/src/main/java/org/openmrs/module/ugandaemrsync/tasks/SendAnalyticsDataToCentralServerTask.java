@@ -69,7 +69,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     public void execute() {
         Date todayDate = new Date();
 
-        Properties properties=getUgandaEMRProperties();
+        Properties properties = getUgandaEMRProperties();
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
@@ -255,10 +255,10 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 newUgandaEMRSettingFile.createNewFile();
 
                 FileInputStream fileInputStream = new FileInputStream(filePath);
-                if(facilityDHIS2ID!=null && !facilityDHIS2ID.equalsIgnoreCase("")){
+                if (facilityDHIS2ID != null && !facilityDHIS2ID.equalsIgnoreCase("") && facilityDHIS2ID.length() == 11) {
                     properties.setProperty("facility.dhis2uuid", facilityDHIS2ID);
                     properties.setProperty("syncmetricsdata", "true");
-                }else {
+                } else {
                     properties.setProperty("facility.dhis2uuid", "");
                     properties.setProperty("syncmetricsdata", "false");
                 }
