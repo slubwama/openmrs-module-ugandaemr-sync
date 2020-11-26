@@ -326,8 +326,7 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
-    public HttpResponse httpPost(String serverUrl, String bodyText,String username,String password)
-    {
+    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password, String facilityName, String dhis2UUID) {
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(serverUrl);
@@ -339,6 +338,14 @@ public class UgandaEMRHttpURLConnection {
             UsernamePasswordCredentials credentials
                     = new UsernamePasswordCredentials(username, password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
+
+            if (facilityName != null && !facilityName.equals("")) {
+                post.addHeader("x-FacilityName", facilityName);
+            }
+
+            if (dhis2UUID != null && !dhis2UUID.equals("")) {
+                post.addHeader("x-DHIS2UUID", dhis2UUID);
+            }
 
             HttpEntity httpEntity= new StringEntity(bodyText,ContentType.APPLICATION_JSON);
 
