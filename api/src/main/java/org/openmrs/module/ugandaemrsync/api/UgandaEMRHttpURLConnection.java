@@ -132,7 +132,6 @@ public class UgandaEMRHttpURLConnection {
     }
 
 
-
     /**
      * HTTP Get request
      *
@@ -145,17 +144,16 @@ public class UgandaEMRHttpURLConnection {
      * @return
      * @throws Exception
      */
-    public Map getByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password,String resultType) throws Exception {
+    public Map getByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String resultType) throws Exception {
 
 
         HttpResponse response = null;
 
         HttpGet httpGet = new HttpGet(url);
 
-        httpGet.setHeader("Method","GET");
+        httpGet.setHeader("Method", "GET");
 
         Map map = new HashMap();
-
 
 
         try {
@@ -163,7 +161,7 @@ public class UgandaEMRHttpURLConnection {
 
             httpGet.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
-            if (username!=null && password!=null) {
+            if (username != null && password != null) {
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
 
                 httpGet.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
@@ -177,12 +175,12 @@ public class UgandaEMRHttpURLConnection {
             int responseCode = response.getStatusLine().getStatusCode();
             String responseMessage = response.getStatusLine().getReasonPhrase();
             //reading the response
-            map.put("responseCode",responseCode);
+            map.put("responseCode", responseCode);
             if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
                 InputStream inputStreamReader = response.getEntity().getContent();
-                if(resultType.equals("String")){
-                    map.put("result",getStringOfResults(inputStreamReader));
-                }else if(resultType.equals("Map")) {
+                if (resultType.equals("String")) {
+                    map.put("result", getStringOfResults(inputStreamReader));
+                } else if (resultType.equals("Map")) {
                     map = getMapOfResults(inputStreamReader, responseCode);
                 }
             } else {
@@ -407,13 +405,12 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
-    public HttpResponse httpPost(String serverUrl, String bodyText,String username,String password)
-    {
+    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password, String facilityName, String dhis2UUID) {
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(serverUrl);
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-        try{
+        try {
             CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
             post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
@@ -421,13 +418,21 @@ public class UgandaEMRHttpURLConnection {
                     = new UsernamePasswordCredentials(username, password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-            HttpEntity httpEntity= new StringEntity(bodyText,ContentType.APPLICATION_JSON);
+            if (facilityName != null && !facilityName.equals("")) {
+                post.addHeader("x-FacilityName", facilityName);
+            }
+
+            if (dhis2UUID != null && !dhis2UUID.equals("")) {
+                post.addHeader("x-DHIS2UUID", dhis2UUID);
+            }
+
+            HttpEntity httpEntity = new StringEntity(bodyText, ContentType.APPLICATION_JSON);
 
             post.setEntity(httpEntity);
 
             response = client.execute(post);
         } catch (Exception e) {
-            log.error("Exception sending Analytics data "+ e.getMessage());
+            log.error("Exception sending Analytics data " + e.getMessage());
         }
         return response;
     }

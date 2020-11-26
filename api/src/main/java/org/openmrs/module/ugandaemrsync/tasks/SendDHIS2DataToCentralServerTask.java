@@ -103,7 +103,7 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
         log.error("Sending DHIS2 data to central server ");
         String bodyText = new String(this.data);
         try {
-            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_URL), bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_PASSWORD));
+            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_URL), bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_PASSWORD),null ,null);
             responseCode = httpResponse.getStatusLine().getStatusCode();
             String responseMessage = httpResponse.getStatusLine().getReasonPhrase();
             if ((responseCode == 200 || responseCode == 201)) {
