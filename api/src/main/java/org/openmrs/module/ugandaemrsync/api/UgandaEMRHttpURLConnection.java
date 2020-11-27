@@ -65,6 +65,8 @@ import java.util.Map;
 import java.util.List;
 import java.util.Date;
 
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_FACILITY_NAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
 
@@ -326,12 +328,12 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
-    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password, String facilityName, String dhis2UUID) {
+    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password) {
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(serverUrl);
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-        try{
+        try {
             CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
             post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
@@ -339,21 +341,21 @@ public class UgandaEMRHttpURLConnection {
                     = new UsernamePasswordCredentials(username, password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-            if (facilityName != null && !facilityName.equals("")) {
-                post.addHeader("x-ugandaemr-facilityname", facilityName);
+            if (syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME) != null && !syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME).equals("")) {
+                post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
             }
 
-            if (dhis2UUID != null && !dhis2UUID.equals("")) {
-                post.addHeader("x-ugandaemr-dhis2uuid ", dhis2UUID);
+            if (syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID) != null && !syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID).equals("")) {
+                post.addHeader("x-ugandaemr-dhis2uuid ", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
             }
 
-            HttpEntity httpEntity= new StringEntity(bodyText,ContentType.APPLICATION_JSON);
+            HttpEntity httpEntity = new StringEntity(bodyText, ContentType.APPLICATION_JSON);
 
             post.setEntity(httpEntity);
 
             response = client.execute(post);
         } catch (Exception e) {
-            log.error("Exception sending Analytics data "+ e.getMessage());
+            log.error("Exception sending Analytics data " + e.getMessage());
         }
         return response;
     }

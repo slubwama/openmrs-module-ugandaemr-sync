@@ -151,7 +151,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         if (properties.getProperty("syncmetricsdata").equalsIgnoreCase("true") && properties.getProperty("syncmetricsdata").equalsIgnoreCase(syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID))) {
             log.info("Sending analytics data to central server ");
             String bodyText = getAnalyticsDataExport();
-            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID),syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME),syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
             if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
 
                 ReportUtil.updateGlobalProperty(GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
