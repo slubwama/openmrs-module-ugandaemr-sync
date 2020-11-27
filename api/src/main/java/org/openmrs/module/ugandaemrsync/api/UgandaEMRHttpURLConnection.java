@@ -340,11 +340,11 @@ public class UgandaEMRHttpURLConnection {
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
             if (facilityName != null && !facilityName.equals("")) {
-                post.addHeader("x-FacilityName", facilityName);
+                post.addHeader("x-ugandaemr-facilityname", facilityName);
             }
 
             if (dhis2UUID != null && !dhis2UUID.equals("")) {
-                post.addHeader("x-DHIS2UUID", dhis2UUID);
+                post.addHeader("x-ugandaemr-dhis2uuid ", dhis2UUID);
             }
 
             HttpEntity httpEntity= new StringEntity(bodyText,ContentType.APPLICATION_JSON);
