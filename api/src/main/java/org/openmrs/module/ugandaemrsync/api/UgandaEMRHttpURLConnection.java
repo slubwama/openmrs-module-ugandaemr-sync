@@ -341,13 +341,10 @@ public class UgandaEMRHttpURLConnection {
                     = new UsernamePasswordCredentials(username, password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-            if (syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME) != null && !syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME).equals("")) {
-                post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
-            }
 
-            if (syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID) != null && !syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID).equals("")) {
-                post.addHeader("x-ugandaemr-dhis2uuid ", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
-            }
+            post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
+
+            post.addHeader("x-ugandaemr-dhis2uuid ", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
 
             HttpEntity httpEntity = new StringEntity(bodyText, ContentType.APPLICATION_JSON);
 
