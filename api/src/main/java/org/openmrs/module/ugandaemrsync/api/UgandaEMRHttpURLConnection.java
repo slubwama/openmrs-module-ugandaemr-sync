@@ -347,7 +347,7 @@ public class UgandaEMRHttpURLConnection {
 
             post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
 
-            post.addHeader("x-ugandaemr-dhis2uuid ", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+            post.addHeader("x-ugandaemr-dhis2uuid", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
 
             HttpEntity httpEntity = new StringEntity(bodyText, ContentType.APPLICATION_JSON);
 
