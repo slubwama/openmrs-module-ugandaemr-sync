@@ -148,7 +148,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
             return;
         }
 
-        if (properties.getProperty("syncmetricsdata").equalsIgnoreCase("true") && properties.getProperty("syncmetricsdata").equalsIgnoreCase(syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID))) {
+        if (properties.getProperty(SYNC_METRIC_DATA).equalsIgnoreCase("true") && properties.getProperty(GP_DHIS2_ORGANIZATION_UUID).equalsIgnoreCase(syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID))) {
             log.info("Sending analytics data to central server ");
             String bodyText = getAnalyticsDataExport();
             HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
@@ -256,11 +256,11 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
                 FileInputStream fileInputStream = new FileInputStream(filePath);
                 if(facilityDHIS2ID!=null && !facilityDHIS2ID.equalsIgnoreCase("")){
-                    properties.setProperty("facility.dhis2uuid", facilityDHIS2ID);
-                    properties.setProperty("syncmetricsdata", "true");
+                    properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, facilityDHIS2ID);
+                    properties.setProperty(SYNC_METRIC_DATA, "true");
                 }else {
-                    properties.setProperty("facility.dhis2uuid", "");
-                    properties.setProperty("syncmetricsdata", "false");
+                    properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, "");
+                    properties.setProperty(SYNC_METRIC_DATA, "false");
                 }
                 properties.load(fileInputStream);
 
