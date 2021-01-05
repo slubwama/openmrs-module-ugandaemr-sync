@@ -31,11 +31,11 @@
     </a>
     <% } %>
 
-    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","initialDataGeneration")}"
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","initFHIRDataGeneration")}"
        class="button app big">
 
         <i class="icon-building"></i>
-        Generate Initial Data
+        Generate Initial FHIR Data
     </a>
 
     <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","viralLoadUpload")}"

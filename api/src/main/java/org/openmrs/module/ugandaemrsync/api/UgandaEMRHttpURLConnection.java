@@ -409,7 +409,7 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
-    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password, String facilityName, String dhis2UUID) {
+    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password) {
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(serverUrl);

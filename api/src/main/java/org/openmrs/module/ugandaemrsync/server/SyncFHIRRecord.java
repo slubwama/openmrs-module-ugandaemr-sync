@@ -59,7 +59,7 @@ public class SyncFHIRRecord {
         List<Map> maps = new ArrayList<>();
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
         for (String data : dataToProcess) {
-            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:8081/openmrs/ws/fhir2/" + dataType + "/" + data, "Admin", "Admin123", "String");
+            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:8081/openmrs/ws/fhir2/R4/" + dataType + "/" + data, "Admin", "Admin123", "String");
             if (result.get("responseCode").equals(200) || result.get("responseCode").equals(201)) {
                 String jsonData = result.get("result").toString();
                 Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
