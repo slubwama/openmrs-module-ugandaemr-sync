@@ -45,7 +45,10 @@ public class UgandaEMRSyncConfig {
 	public static final String HEADER_EMR_DATE = "x-emr-date";
 
 	public static final String GP_DHIS2_ORGANIZATION_UUID = "ugandaemr.dhis2.organizationuuid";
-	
+	public static final String SYNC_METRIC_DATA = "ugandaemr.syncmetricsdata";
+
+	public static final String GP_FACILITY_NAME = "aijar.healthCenterName";
+
 	public static final String RECENCY_CSV_FILE_NAME = "HTS_Recency_Client_Card_Data_Export_2019.csv";
 
 	public static final String ANALYTICS_JSON_FILE_NAME = "Analytics_Metric_Report";

@@ -31,6 +31,13 @@
     </a>
     <% } %>
 
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","initialDataGeneration")}"
+       class="button app big">
+
+        <i class="icon-building"></i>
+        Generate Initial Data
+    </a>
+
     <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","viralLoadUpload")}"
        class="button app big">
 

@@ -12,6 +12,7 @@ import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -65,7 +66,12 @@ import java.util.Map;
 import java.util.List;
 import java.util.Date;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_FACILITY_NAME;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_201;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
 
 public class UgandaEMRHttpURLConnection {
@@ -127,6 +133,70 @@ public class UgandaEMRHttpURLConnection {
             response.append(inputLine);
         }
         return response;
+    }
+
+
+    /**
+     * HTTP Get request
+     *
+     * @param contentType
+     * @param content
+     * @param facilityId
+     * @param url
+     * @param username
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public Map getByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String resultType) throws Exception {
+
+
+        HttpResponse response = null;
+
+        HttpGet httpGet = new HttpGet(url);
+
+        httpGet.setHeader("Method", "GET");
+
+        Map map = new HashMap();
+
+
+        try {
+            CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
+
+            httpGet.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
+
+            if (username != null && password != null) {
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
+
+                httpGet.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
+            }
+
+            HttpEntity httpEntity = new StringEntity(content, ContentType.APPLICATION_JSON);
+
+
+            response = client.execute(httpGet);
+
+            int responseCode = response.getStatusLine().getStatusCode();
+            String responseMessage = response.getStatusLine().getReasonPhrase();
+            //reading the response
+            map.put("responseCode", responseCode);
+            if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
+                InputStream inputStreamReader = response.getEntity().getContent();
+                if (resultType.equals("String")) {
+                    map.put("result", getStringOfResults(inputStreamReader));
+                } else if (resultType.equals("Map")) {
+                    map = getMapOfResults(inputStreamReader, responseCode);
+                }
+            } else {
+                map.put("responseCode", responseCode);
+                log.info(responseMessage);
+            }
+            map.put("responseMessage", responseMessage);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return map;
+
     }
 
     /**
@@ -236,6 +306,19 @@ public class UgandaEMRHttpURLConnection {
         return map;
     }
 
+    public String getStringOfResults(InputStream inputStreamReader) throws IOException {
+        InputStreamReader reader = new InputStreamReader(inputStreamReader);
+        StringBuilder buf = new StringBuilder();
+        char[] cbuf = new char[2048];
+        int num;
+        while (true) {
+            if (!(-1 != (num = reader.read(cbuf)))) break;
+            buf.append(cbuf, 0, num);
+        }
+        String result = buf.toString();
+        return result;
+    }
+
     /**
      * Request for facility Id
      *
@@ -326,13 +409,12 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
-    public HttpResponse httpPost(String serverUrl, String bodyText,String username,String password)
-    {
+    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password, String facilityName, String dhis2UUID) {
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(serverUrl);
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-        try{
+        try {
             CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
             post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
@@ -340,13 +422,18 @@ public class UgandaEMRHttpURLConnection {
                     = new UsernamePasswordCredentials(username, password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-            HttpEntity httpEntity= new StringEntity(bodyText,ContentType.APPLICATION_JSON);
+
+            post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
+
+            post.addHeader("x-ugandaemr-dhis2uuid", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+
+            HttpEntity httpEntity = new StringEntity(bodyText, ContentType.APPLICATION_JSON);
 
             post.setEntity(httpEntity);
 
             response = client.execute(post);
         } catch (Exception e) {
-            log.error("Exception sending Analytics data "+ e.getMessage());
+            log.error("Exception sending Analytics data " + e.getMessage());
         }
         return response;
     }
