@@ -1,5 +1,6 @@
 package org.openmrs.module.ugandaemrsync.server;
 
+import ca.uhn.hl7v2.model.v25.datatype.ST;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
@@ -55,13 +56,18 @@ public class SyncFHIRRecord {
     }
 
 
-    public List<Map> processFHIRData(List<String> dataToProcess, String dataType) throws Exception {
+    public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) throws Exception {
         List<Map> maps = new ArrayList<>();
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
         for (String data : dataToProcess) {
             Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:8081/openmrs/ws/fhir2/R4/" + dataType + "/" + data, "Admin", "Admin123", "String");
             if (result.get("responseCode").equals(200) || result.get("responseCode").equals(201)) {
                 String jsonData = result.get("result").toString();
+
+                if (addOrganizationToRecord) {
+                    jsonData = addOrganizationToRecord(jsonData);
+                }
+
                 Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                 map.put("DataType", dataType);
                 map.put("uuid", data);
@@ -71,6 +77,16 @@ public class SyncFHIRRecord {
         return maps;
     }
 
+    public String addOrganizationToRecord(String payload) {
+        String healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty("ugandaemr.dhis2.organizationuuid");
+        String managingOrganizationStirng = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
+        JSONObject finalPayLoadJson = new JSONObject(payload);
+        JSONObject managingOrganizationJson = new JSONObject(managingOrganizationStirng);
+
+        finalPayLoadJson.put("managingOrganization", managingOrganizationJson);
+        return finalPayLoadJson.toString();
+    }
+
 
     public List<Map> syncFHIRData() {
 
@@ -78,15 +94,15 @@ public class SyncFHIRRecord {
 
         List<Map> mapList = new ArrayList<>();
         try {
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person"));
+            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person", false));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner"));
+            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner", true));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient"));
+            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient", true));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter"));
+            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter", false));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation"));
+            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation", false));
 
             Date now = new Date();
             if (!mapList.isEmpty()) {
