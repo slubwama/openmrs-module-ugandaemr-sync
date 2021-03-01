@@ -191,7 +191,7 @@
 
 
     <globalProperty>
-        <property>ugandaemrsync.enablesyncofcbsfhirdata</property>
+        <property>ugandaemrsync.enableSyncOfCbsFhirData</property>
         <defaultValue>false</defaultValue>
         <description>
            When Enabled to true CBS FHIR Data will be synced to the central fhir server

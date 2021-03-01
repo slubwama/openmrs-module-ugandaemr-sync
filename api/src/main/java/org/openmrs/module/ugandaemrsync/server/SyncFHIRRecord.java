@@ -94,7 +94,7 @@ public class SyncFHIRRecord {
 
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 
-        if (syncGlobalProperties.getGlobalProperty(GP_ENABLE_SYNC_CBS_FHIR_DATA) == "true") {
+        if (syncGlobalProperties.getGlobalProperty(GP_ENABLE_SYNC_CBS_FHIR_DATA).equals("true")) {
 
 
             try {
