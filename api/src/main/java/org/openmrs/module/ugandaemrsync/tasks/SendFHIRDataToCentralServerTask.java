@@ -15,9 +15,9 @@ public class SendFHIRDataToCentralServerTask extends AbstractTask {
 		if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
 			return;
 		}
-		SyncFHIRRecord syncDataRecord = new SyncFHIRRecord();
+		SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 
-		syncDataRecord.syncFHIRData();
+		syncFHIRRecord.syncFHIRData();
 
 	}
 }
