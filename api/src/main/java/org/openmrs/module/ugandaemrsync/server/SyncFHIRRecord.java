@@ -59,8 +59,11 @@ public class SyncFHIRRecord {
     public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) throws Exception {
         List<Map> maps = new ArrayList<>();
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
+        String localhostServerPort=Context.getAdministrationService().getGlobalProperty(GP_CBS_LOCALHOST_PORT);
+        String localhostServerUsername=Context.getAdministrationService().getGlobalProperty(GP_CBS_LOCALHOST_PORT);
+        String localhostServerPassword=Context.getAdministrationService().getGlobalProperty(GP_CBS_LOCALHOST_PORT);
         for (String data : dataToProcess) {
-            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:8081/openmrs/ws/fhir2/R4/" + dataType + "/" + data, "Admin", "Admin123", "String");
+            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:"+localhostServerPort+"/openmrs/ws/fhir2/R4/" + dataType + "/" + data, localhostServerUsername, localhostServerPassword, "String");
             if (result.get("responseCode").equals(200) || result.get("responseCode").equals(201)) {
                 String jsonData = result.get("result").toString();
 
