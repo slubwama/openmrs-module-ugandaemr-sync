@@ -50,6 +50,7 @@ public class SyncConstant {
     public static final String JSON_CONTENT_TYPE = "application/json";
 
     public static final String LAST_SYNC_DATE = "ugandaemr.lastSyncDate";
+    public static final String GP_ENABLE_SYNC_CBS_FHIR_DATA = "ugandaemrsync.enablesyncofcbsfhirdata";
 
     public static Date MINIMUM_DATE = new Date(Long.MIN_VALUE);
 

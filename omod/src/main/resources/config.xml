@@ -188,6 +188,15 @@
             This is the password for server that the system would like to connect to
         </description>
     </globalProperty>
+
+
+    <globalProperty>
+        <property>ugandaemrsync.enablesyncofcbsfhirdata</property>
+        <defaultValue>false</defaultValue>
+        <description>
+           When Enabled to true CBS FHIR Data will be synced to the central fhir server
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
     <messages>

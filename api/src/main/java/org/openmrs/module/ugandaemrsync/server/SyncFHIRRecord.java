@@ -90,28 +90,37 @@ public class SyncFHIRRecord {
 
     public List<Map> syncFHIRData() {
 
+        List<Map> mapList = new ArrayList<>();
+
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 
-        List<Map> mapList = new ArrayList<>();
-        try {
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person", false));
+        if (syncGlobalProperties.getGlobalProperty(GP_ENABLE_SYNC_CBS_FHIR_DATA) == "true") {
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner", true));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient", true));
+            try {
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person", false));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter", false));
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner", true));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation", false));
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient", true));
 
-            Date now = new Date();
-            if (!mapList.isEmpty()) {
-                String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(now);
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter", false));
 
-                syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation", false));
+
+                Date now = new Date();
+                if (!mapList.isEmpty()) {
+                    String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(now);
+
+                    syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
+                }
+            } catch (Exception e) {
+                log.error("Failed to process sync records central server", e);
             }
-        } catch (Exception e) {
-            log.error("Failed to process sync records central server", e);
+        } else {
+            Map map = new HashMap();
+            map.put("error", "Syncing of CBS Data is not enabled. Please enable it and proceed");
+            mapList.add(map);
         }
 
         return mapList;
