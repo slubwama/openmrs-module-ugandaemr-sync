@@ -12,6 +12,7 @@ import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -134,6 +135,70 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
+
+    /**
+     * HTTP Get request
+     *
+     * @param contentType
+     * @param content
+     * @param facilityId
+     * @param url
+     * @param username
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public Map getByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String resultType) throws Exception {
+
+
+        HttpResponse response = null;
+
+        HttpGet httpGet = new HttpGet(url);
+
+        httpGet.setHeader("Method", "GET");
+
+        Map map = new HashMap();
+
+
+        try {
+            CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
+
+            httpGet.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
+
+            if (username != null && password != null) {
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(username, password);
+
+                httpGet.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
+            }
+
+            HttpEntity httpEntity = new StringEntity(content, ContentType.APPLICATION_JSON);
+
+
+            response = client.execute(httpGet);
+
+            int responseCode = response.getStatusLine().getStatusCode();
+            String responseMessage = response.getStatusLine().getReasonPhrase();
+            //reading the response
+            map.put("responseCode", responseCode);
+            if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
+                InputStream inputStreamReader = response.getEntity().getContent();
+                if (resultType.equals("String")) {
+                    map.put("result", getStringOfResults(inputStreamReader));
+                } else if (resultType.equals("Map")) {
+                    map = getMapOfResults(inputStreamReader, responseCode);
+                }
+            } else {
+                map.put("responseCode", responseCode);
+                log.info(responseMessage);
+            }
+            map.put("responseMessage", responseMessage);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return map;
+
+    }
+
     /**
      * HTTP POST request
      *
@@ -239,6 +304,19 @@ public class UgandaEMRHttpURLConnection {
 
         map.put("responseCode", responseCode);
         return map;
+    }
+
+    public String getStringOfResults(InputStream inputStreamReader) throws IOException {
+        InputStreamReader reader = new InputStreamReader(inputStreamReader);
+        StringBuilder buf = new StringBuilder();
+        char[] cbuf = new char[2048];
+        int num;
+        while (true) {
+            if (!(-1 != (num = reader.read(cbuf)))) break;
+            buf.append(cbuf, 0, num);
+        }
+        String result = buf.toString();
+        return result;
     }
 
     /**

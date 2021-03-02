@@ -188,6 +188,39 @@
             This is the password for server that the system would like to connect to
         </description>
     </globalProperty>
+
+
+    <globalProperty>
+        <property>ugandaemrsync.syncCBSFHIRData</property>
+        <defaultValue>false</defaultValue>
+        <description>
+           When Enabled to true CBS FHIR Data will be synced to the central fhir server
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.CBSLocalHostUsername</property>
+        <defaultValue>admin</defaultValue>
+        <description>
+           The Login username with permission to access FHIR web service
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.CBSLocalHostPassword</property>
+        <defaultValue>Admin123</defaultValue>
+        <description>
+            The Login password with permission to access FHIR web service
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.CBSLocalHostPort</property>
+        <defaultValue>8081</defaultValue>
+        <description>
+            The server localhost server port where the fhir messages are generated.
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
     <messages>

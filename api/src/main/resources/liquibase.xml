@@ -248,6 +248,28 @@
         </insert>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-30042020-0333" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '3c1ce940-8ade-11ea-bc55-0242ac130003'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Sync Data to Shared Health Record" />
+            <column name="data_type" value="" />
+            <column name="data_type_id" value="315124004" />
+            <column name="url_end_point" value="http://localhost:8085/hapi-fhir-jpaserver/fhir/Bundle" />
+            <column name="url_username" value="ugandaemr001" />
+            <column name="url_password" value="Admin123" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2020-04-30 03:33:00" />
+            <column name="uuid" value="3c1ce940-8ade-11ea-bc55-0242ac130003" />
+        </insert>
+    </changeSet>
+
 
     <changeSet id="20190711-1207" author="echiteri">
         <preConditions onFail="MARK_RAN">
@@ -292,6 +314,27 @@
             <column name="start_on_startup" value="1"/>
             <column name="started" value="1"/>
             <column name="uuid" value="0587c85c-aeec-4bd5-98a8-50684b160526" />
+        </insert>
+    </changeSet>
+
+
+    <changeSet id="20210220-0918" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '08a36b06-7a71-11eb-9439-0242ac130002'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  CBS Sync FHIR Records To SHR into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="CBS Sync FHIR Records To SHR" />
+            <column name="description" value="Synchronises Data to given Server" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendFHIRDataToCentralServerTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-02-20 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="uuid" value="08a36b06-7a71-11eb-9439-0242ac130002" />
         </insert>
     </changeSet>
 

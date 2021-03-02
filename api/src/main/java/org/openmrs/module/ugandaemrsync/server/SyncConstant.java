@@ -50,6 +50,10 @@ public class SyncConstant {
     public static final String JSON_CONTENT_TYPE = "application/json";
 
     public static final String LAST_SYNC_DATE = "ugandaemr.lastSyncDate";
+    public static final String GP_ENABLE_SYNC_CBS_FHIR_DATA = "ugandaemrsync.syncCBSFHIRData";
+    public static final String GP_CBS_LOCALHOST_PORT = "ugandaemrsync.CBSLocalHostPort";
+    public static final String GP_CBS_LOCALHOST_USERNAME = "ugandaemrsync.CBSLocalHostUsername";
+    public static final String GP_CBS_LOCALHOST_PASSWORD = "ugandaemrsync.CBSLocalHostPassword";
 
     public static Date MINIMUM_DATE = new Date(Long.MIN_VALUE);
 
@@ -68,6 +72,7 @@ public class SyncConstant {
     public static final String VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER = "315124004";
 
     public static final String VIRAL_LOAD_SYNC_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
+    public static final String FHIRSERVER_SYNC_TASK_TYPE_UUID = "3c1ce940-8ade-11ea-bc55-0242ac130003";
     public static final String VIRAL_LOAD_RESULT_PULL_TYPE_UUID = "3396dcf0-2106-4e73-9b90-c63978c3a8b4";
 
     public static final String PATIENT_IDENTIFIER_TYPE = "e1731641-30ab-102d-86b0-7a5022ba4115";
@@ -451,6 +456,15 @@ public class SyncConstant {
     public static final String VIRAL_LOAD_ORDERS_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) inner JOIN concept ON (orders.concept_id = concept.concept_id) inner join concept_reference_map on (concept.concept_id = concept_reference_map.concept_id) inner join concept_reference_term on (concept_reference_map.concept_reference_term_id = concept_reference_term.concept_reference_term_id) where accession_number!=\"\" AND specimen_source!=\"\" AND orders.instructions=\"REFER TO cphl\" AND code=\"" + VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER + "\"";
 
     public static final String VIRAL_LOAD_ORDER_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) where accession_number=\"%s\"";
+
+    public static final String PERSON_UUID_QUERY="select uuid from person WHERE date_created > '%s' OR date_changed > '%s' OR date_voided > '%s'";
+	public static final String PATIENT_UUID_QUERY="select uuid from patient inner join person on (person.person_id =patient.patient_id) WHERE patient.date_created > '%s' OR patient.date_changed > '%s' OR patient.voided > '%s'";
+    public static final String ENCOUNTER_UUID_QUERY="select uuid from encounter WHERE date_created > '%s' OR date_changed > '%s' OR date_voided > '%s'";
+    public static final String OBSERVATION_UUID_QUERY="select uuid from obs WHERE date_created > '%s' OR date_voided > '%s'";
+    public static final String PRACTITIONER_UUID_QUERY="select uuid from provider WHERE date_created > '%s' OR date_changed > '%s' OR date_retired > '%s'";
+
+    public static final String FHIR_BUNDLE_RESOURCE_FOR_COLLECTION="{\"resourceType\": \"Bundle\",\"type\": \"collection\",\"entry\": [%s]}";
+
 
     public static List<String> VL_SYNC_TASK_COLUMNS = Arrays.asList("sync_task_id", "sync_task_type", "sync_task", "status", "status_code", "sent_to_url", "require_action", "action_completed", "date_sent", "creator", "date_created", "changed_by", "date_changed", "voided", "date_voided", "voided_by ", "void_reason", "uuid");
 }
