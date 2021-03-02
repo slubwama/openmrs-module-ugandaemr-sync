@@ -1,5 +1,6 @@
 package org.openmrs.module.ugandaemrsync.server;
 
+import ca.uhn.hl7v2.model.v25.datatype.ST;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
@@ -55,13 +56,23 @@ public class SyncFHIRRecord {
     }
 
 
-    public List<Map> processFHIRData(List<String> dataToProcess, String dataType) throws Exception {
+    public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) throws Exception {
         List<Map> maps = new ArrayList<>();
+        Properties properties = Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
+
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
+        String localhostServerPort = properties.getProperty(GP_CBS_LOCALHOST_PORT);
+        String localhostServerUsername = properties.getProperty(GP_CBS_LOCALHOST_USERNAME);
+        String localhostServerPassword = properties.getProperty(GP_CBS_LOCALHOST_PASSWORD);
         for (String data : dataToProcess) {
-            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:8081/openmrs/ws/fhir2/" + dataType + "/" + data, "Admin", "Admin123", "String");
+            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:" + localhostServerPort + "/openmrs/ws/fhir2/R4/" + dataType + "/" + data, localhostServerUsername, localhostServerPassword, "String");
             if (result.get("responseCode").equals(200) || result.get("responseCode").equals(201)) {
                 String jsonData = result.get("result").toString();
+
+                if (addOrganizationToRecord) {
+                    jsonData = addOrganizationToRecord(jsonData);
+                }
+
                 Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                 map.put("DataType", dataType);
                 map.put("uuid", data);
@@ -71,33 +82,56 @@ public class SyncFHIRRecord {
         return maps;
     }
 
+    public String addOrganizationToRecord(String payload) {
+        String healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty("ugandaemr.dhis2.organizationuuid");
+        String managingOrganizationStirng = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
+        JSONObject finalPayLoadJson = new JSONObject(payload);
+        JSONObject managingOrganizationJson = new JSONObject(managingOrganizationStirng);
+
+        finalPayLoadJson.put("managingOrganization", managingOrganizationJson);
+        return finalPayLoadJson.toString();
+    }
+
 
     public List<Map> syncFHIRData() {
 
+        List<Map> mapList = new ArrayList<>();
+
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 
-        List<Map> mapList = new ArrayList<>();
-        try {
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person"));
+        if (syncGlobalProperties.getGlobalProperty(GP_ENABLE_SYNC_CBS_FHIR_DATA).equals("true")) {
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner"));
+            try {
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person", false));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient"));
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner", true));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter"));
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient", true));
 
-            mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation"));
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter", false));
 
-            Date now = new Date();
-            if (!mapList.isEmpty()) {
-                String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(now);
+                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation", false));
 
-                syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
+                Date now = new Date();
+                if (!mapList.isEmpty()) {
+                    String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(now);
+
+                    syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
+                }
+            } catch (Exception e) {
+                log.error("Failed to process sync records central server", e);
             }
-        } catch (Exception e) {
-            log.error("Faied to process sync records central server", e);
+        } else {
+            Map map = new HashMap();
+            map.put("error", "Syncing of CBS Data is not enabled. Please enable it and proceed");
+            mapList.add(map);
         }
 
         return mapList;
+    }
+
+
+    public void getFHIRData() {
+
     }
 }

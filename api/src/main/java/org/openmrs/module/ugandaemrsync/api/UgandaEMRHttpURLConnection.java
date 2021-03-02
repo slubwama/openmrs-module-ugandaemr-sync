@@ -6,7 +6,6 @@ package org.openmrs.module.ugandaemrsync.api;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthenticationException;
@@ -67,7 +66,12 @@ import java.util.Map;
 import java.util.List;
 import java.util.Date;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_FACILITY_NAME;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_201;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
 
 public class UgandaEMRHttpURLConnection {
@@ -405,7 +409,7 @@ public class UgandaEMRHttpURLConnection {
         return response;
     }
 
-    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password, String facilityName, String dhis2UUID) {
+    public HttpResponse httpPost(String serverUrl, String bodyText, String username, String password) {
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(serverUrl);
@@ -418,13 +422,10 @@ public class UgandaEMRHttpURLConnection {
                     = new UsernamePasswordCredentials(username, password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
-            if (facilityName != null && !facilityName.equals("")) {
-                post.addHeader("x-FacilityName", facilityName);
-            }
 
-            if (dhis2UUID != null && !dhis2UUID.equals("")) {
-                post.addHeader("x-DHIS2UUID", dhis2UUID);
-            }
+            post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
+
+            post.addHeader("x-ugandaemr-dhis2uuid", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
 
             HttpEntity httpEntity = new StringEntity(bodyText, ContentType.APPLICATION_JSON);
 

@@ -27,21 +27,19 @@ import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Set;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SYNC_METRIC_DATA;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
 
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
@@ -360,5 +358,44 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     public boolean encounterHasVLDataAlreadySaved(Encounter encounter){
         Set<Obs> obs = encounter.getAllObs(false);
         return obs.stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(165412));
+    }
+
+    public Properties getUgandaEMRProperties() {
+        Properties properties = new Properties();
+        String appDataDir = OpenmrsUtil.getApplicationDataDirectory();
+        String facilityDHIS2ID = Context.getAdministrationService().getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID);
+        if (!appDataDir.endsWith(System.getProperty("file.separator")))
+            appDataDir = appDataDir + System.getProperty("file.separator");
+        String filePath = appDataDir + "ugandaemr-setting.properties";
+
+        try {
+            File newUgandaEMRSettingFile = new File(filePath);
+            if (!newUgandaEMRSettingFile.exists()) {
+                newUgandaEMRSettingFile.createNewFile();
+
+                FileInputStream fileInputStream = new FileInputStream(filePath);
+                if(facilityDHIS2ID!=null && !facilityDHIS2ID.equalsIgnoreCase("")){
+                    properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, facilityDHIS2ID);
+                    properties.setProperty(SYNC_METRIC_DATA, "true");
+                }else {
+                    properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, "");
+                    properties.setProperty(SYNC_METRIC_DATA, "false");
+                }
+                properties.load(fileInputStream);
+
+                properties.store(new FileOutputStream(filePath), null);
+
+
+            } else {
+                FileReader reader = new FileReader(filePath);
+                properties.load(reader);
+            }
+        } catch (FileNotFoundException e) {
+            log.error("ugandaemr-setting.properties file Not found", e);
+        } catch (IOException e) {
+            log.error(e);
+        }
+        return properties;
+
     }
 }

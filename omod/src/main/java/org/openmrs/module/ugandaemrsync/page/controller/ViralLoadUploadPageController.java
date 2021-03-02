@@ -141,7 +141,6 @@ public class ViralLoadUploadPageController {
             pageModel.put("errorMessage", "Upload failed due to some errors, Contact System Administrator");
             log.error("Failed to read file", e);
         }
-
     }
 
 }

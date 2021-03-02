@@ -13,6 +13,7 @@ import org.openmrs.module.reporting.report.definition.ReportDefinition;
 import org.openmrs.module.reporting.report.definition.service.ReportDefinitionService;
 import org.openmrs.module.reporting.report.renderer.RenderingMode;
 import org.openmrs.module.reporting.report.util.ReportUtil;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
@@ -21,13 +22,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
@@ -54,9 +68,9 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
     @Override
     public void execute() {
-
-
         Date todayDate = new Date();
+
+        Properties properties=Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
@@ -134,11 +148,11 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         if (!ugandaEMRHttpURLConnection.isServerAvailable(analyticsBaseUrl)) {
             return;
         }
-        log.info("Sending analytics data to central server ");
-        String bodyText = getAnalyticsDataExport();
 
-        if (syncAnalytics()) {
-            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID),syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME),syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+        if (properties.getProperty(SYNC_METRIC_DATA).equalsIgnoreCase("true") && properties.getProperty(GP_DHIS2_ORGANIZATION_UUID).equalsIgnoreCase(syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID))) {
+            log.info("Sending analytics data to central server ");
+            String bodyText = getAnalyticsDataExport();
+            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
             if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
 
                 ReportUtil.updateGlobalProperty(GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
@@ -148,6 +162,8 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
                         + httpResponse.getStatusLine().getReasonPhrase());
             }
+        } else {
+            log.info("Analytics data has not been sent to central server. Check whether you have a ugandaemr-settings.properties file and syncmetrictsdata is set to true");
         }
     }
 
@@ -224,29 +240,5 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
             return false;
         }
         return true;
-    }
-
-    private boolean syncAnalytics() {
-        String appDataDir = OpenmrsUtil.getApplicationDataDirectory();
-        String syncMetricsData = null;
-        if (!appDataDir.endsWith(System.getProperty("file.separator")))
-            appDataDir = appDataDir + System.getProperty("file.separator");
-
-        try {
-            FileReader reader = new FileReader(appDataDir + "ugandaemr-setting.properties");
-            Properties p = new Properties();
-            p.load(reader);
-            syncMetricsData = p.getProperty("syncmetrictsdata");
-        } catch (FileNotFoundException e) {
-            log.error("ugandaemr settings file Not found", e);
-        } catch (IOException e) {
-            log.error(e);
-        }
-
-        if (syncMetricsData != null && syncMetricsData.equalsIgnoreCase("true")) {
-            return true;
-        } else {
-            return false;
-        }
     }
 }

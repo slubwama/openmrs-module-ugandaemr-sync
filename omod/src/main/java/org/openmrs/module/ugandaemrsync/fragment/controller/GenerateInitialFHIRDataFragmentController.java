@@ -22,18 +22,18 @@ import java.util.List;
  *  * Controller for a fragment that shows all users  
  */
 public class GenerateInitialFHIRDataFragmentController {
-	
+
 	SyncDataRecord syncDataRecord = new SyncDataRecord();
-	
+
 	public void controller(UiSessionContext sessionContext, FragmentModel model) {
 	}
-	
+
 	public void get(@SpringBean PageModel pageModel) throws Exception {
 		SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 		List totals = syncFHIRRecord.syncFHIRData();
 		pageModel.put("persons", totals);
 
-		
+
 	}
-	
+
 }
