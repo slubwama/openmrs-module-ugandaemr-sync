@@ -13,7 +13,6 @@ import org.openmrs.module.reporting.report.definition.ReportDefinition;
 import org.openmrs.module.reporting.report.definition.service.ReportDefinitionService;
 import org.openmrs.module.reporting.report.renderer.RenderingMode;
 import org.openmrs.module.reporting.report.util.ReportUtil;
-import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
@@ -70,7 +69,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     public void execute() {
         Date todayDate = new Date();
 
-        Properties properties=Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
+        Properties properties=getUgandaEMRProperties();
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
@@ -240,5 +239,44 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
             return false;
         }
         return true;
+    }
+
+    private Properties getUgandaEMRProperties() {
+        Properties properties = new Properties();
+        String appDataDir = OpenmrsUtil.getApplicationDataDirectory();
+        String facilityDHIS2ID = Context.getAdministrationService().getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID);
+        if (!appDataDir.endsWith(System.getProperty("file.separator")))
+            appDataDir = appDataDir + System.getProperty("file.separator");
+        String filePath = appDataDir + "ugandaemr-setting.properties";
+
+        try {
+            File newUgandaEMRSettingFile = new File(filePath);
+            if (!newUgandaEMRSettingFile.exists()) {
+                newUgandaEMRSettingFile.createNewFile();
+
+                FileInputStream fileInputStream = new FileInputStream(filePath);
+                if(facilityDHIS2ID!=null && !facilityDHIS2ID.equalsIgnoreCase("")){
+                    properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, facilityDHIS2ID);
+                    properties.setProperty(SYNC_METRIC_DATA, "true");
+                }else {
+                    properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, "");
+                    properties.setProperty(SYNC_METRIC_DATA, "false");
+                }
+                properties.load(fileInputStream);
+
+                properties.store(new FileOutputStream(filePath), null);
+
+
+            } else {
+                FileReader reader = new FileReader(filePath);
+                properties.load(reader);
+            }
+        } catch (FileNotFoundException e) {
+            log.error("ugandaemr-setting.properties file Not found", e);
+        } catch (IOException e) {
+            log.error(e);
+        }
+        return properties;
+
     }
 }

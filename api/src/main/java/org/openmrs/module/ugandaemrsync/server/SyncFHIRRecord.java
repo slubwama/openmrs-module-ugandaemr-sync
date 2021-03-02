@@ -1,6 +1,9 @@
 package org.openmrs.module.ugandaemrsync.server;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import ca.uhn.hl7v2.model.v25.datatype.ST;
+import javassist.bytecode.stackmap.BasicBlock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
@@ -9,11 +12,15 @@ import org.hibernate.SessionFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.ServiceContext;
+import org.openmrs.module.fhir2.api.*;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
@@ -58,26 +65,69 @@ public class SyncFHIRRecord {
 
     public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) throws Exception {
         List<Map> maps = new ArrayList<>();
-        Properties properties = Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
-
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
-        String localhostServerPort = properties.getProperty(GP_CBS_LOCALHOST_PORT);
-        String localhostServerUsername = properties.getProperty(GP_CBS_LOCALHOST_USERNAME);
-        String localhostServerPassword = properties.getProperty(GP_CBS_LOCALHOST_PASSWORD);
-        for (String data : dataToProcess) {
-            Map result = ugandaEMRHttpURLConnection.getByWithBasicAuth("", "", "", "http://localhost:"+localhostServerPort+"/openmrs/ws/fhir2/R4/" + dataType + "/" + data, localhostServerUsername, localhostServerPassword, "String");
-            if (result.get("responseCode").equals(200) || result.get("responseCode").equals(201)) {
-                String jsonData = result.get("result").toString();
 
-                if (addOrganizationToRecord) {
-                    jsonData = addOrganizationToRecord(jsonData);
+        FhirPersonService fhirPersonService;
+        FhirPatientService fhirPatientService;
+        FhirPractitionerService fhirPractitionerService;
+        FhirEncounterService fhirEncounterService;
+        FhirObservationService fhirObservationService;
+
+
+        try {
+            Field serviceContextField = Context.class.getDeclaredField("serviceContext");
+            serviceContextField.setAccessible(true);
+            try {
+                ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null))
+                        .getApplicationContext();
+
+                fhirPersonService = applicationContext.getBean(FhirPersonService.class);
+                fhirPatientService = applicationContext.getBean(FhirPatientService.class);
+                fhirEncounterService = applicationContext.getBean(FhirEncounterService.class);
+                fhirObservationService = applicationContext.getBean(FhirObservationService.class);
+                fhirPractitionerService = applicationContext.getBean(FhirPractitionerService.class);
+
+
+            } finally {
+                serviceContextField.setAccessible(false);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        for (String data : dataToProcess) {
+            try {
+
+                IParser parser = FhirContext.forR4().newJsonParser();
+                String jsonData = "";
+
+                if (dataType == "patient") {
+                    jsonData = parser.encodeResourceToString(fhirPatientService.get(data));
+                } else if (dataType.equals("Person")) {
+                    jsonData = parser.encodeResourceToString(fhirPersonService.get(data));
+                } else if (dataType.equals("Encounter")) {
+                    jsonData = parser.encodeResourceToString(fhirEncounterService.get(data));
+                } else if (dataType.equals("Observation")) {
+                    jsonData = parser.encodeResourceToString(fhirObservationService.get(data));
+                } else if (dataType.equals("Practitioner")) {
+                    jsonData = parser.encodeResourceToString(fhirPractitionerService.get(data));
                 }
 
-                Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
-                map.put("DataType", dataType);
-                map.put("uuid", data);
-                maps.add(map);
+                if (!jsonData.equals("")) {
+                    if (addOrganizationToRecord) {
+                        jsonData = addOrganizationToRecord(jsonData);
+                    }
+                    Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
+                    map.put("DataType", dataType);
+                    map.put("uuid", data);
+                    maps.add(map);
+                }
+
+            } catch (Exception e) {
+                log.error(e);
             }
+
+
         }
         return maps;
     }

@@ -44,6 +44,10 @@
         <require_module>
             org.openmrs.module.metadatasharing
         </require_module>
+
+        <require_module>
+            org.openmrs.module.fhir2
+        </require_module>
     </require_modules>
 
     <aware_of_modules>
@@ -188,7 +192,6 @@
             This is the password for server that the system would like to connect to
         </description>
     </globalProperty>
-
 
     <globalProperty>
         <property>ugandaemrsync.syncCBSFHIRData</property>

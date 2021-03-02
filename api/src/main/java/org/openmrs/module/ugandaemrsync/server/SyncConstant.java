@@ -51,9 +51,6 @@ public class SyncConstant {
 
     public static final String LAST_SYNC_DATE = "ugandaemr.lastSyncDate";
     public static final String GP_ENABLE_SYNC_CBS_FHIR_DATA = "ugandaemrsync.syncCBSFHIRData";
-    public static final String GP_CBS_LOCALHOST_PORT = "ugandaemrsync.CBSLocalHostPort";
-    public static final String GP_CBS_LOCALHOST_USERNAME = "ugandaemrsync.CBSLocalHostUsername";
-    public static final String GP_CBS_LOCALHOST_PASSWORD = "ugandaemrsync.CBSLocalHostPassword";
 
     public static Date MINIMUM_DATE = new Date(Long.MIN_VALUE);
 

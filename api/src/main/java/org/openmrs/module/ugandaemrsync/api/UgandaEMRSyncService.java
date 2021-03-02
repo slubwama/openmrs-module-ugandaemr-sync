@@ -25,7 +25,6 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * The main service of this module, which is exposed for other modules. See
@@ -174,10 +173,4 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 * @return the identifier that matches both the patient and the patient identifier type UUID
 	 */
 	public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID);
-
-	/**
-	 * Gets UgandaEMR Properties Set in the file.
-	 * @return
-	 */
-	public Properties getUgandaEMRProperties();
 }
