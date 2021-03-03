@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.openmrs.module</groupId>
         <artifactId>ugandaemrsync</artifactId>
-        <version>1.0.8-SNAPSHOT</version>
+        <version>1.0.9-SNAPSHOT</version>
     </parent>
 
     <artifactId>ugandaemrsync-omod</artifactId>
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.openmrs.module</groupId>
             <artifactId>ugandaemrsync-api</artifactId>
-            <version>1.0.8-SNAPSHOT</version>
+            <version>1.0.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.openmrs.web</groupId>
