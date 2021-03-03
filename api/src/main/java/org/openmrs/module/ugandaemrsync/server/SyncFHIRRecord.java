@@ -2,11 +2,14 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.api.server.IBundleProvider;
+import ca.uhn.fhir.rest.param.DateRangeParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
@@ -106,7 +109,7 @@ public class SyncFHIRRecord {
                 IParser parser = FhirContext.forR4().newJsonParser();
                 String jsonData = "";
 
-                if (dataType == "patient") {
+                if (dataType == "Patient") {
                     jsonData = parser.encodeResourceToString(fhirPatientService.get(data));
                 } else if (dataType.equals("Person")) {
                     jsonData = parser.encodeResourceToString(fhirPersonService.get(data));
