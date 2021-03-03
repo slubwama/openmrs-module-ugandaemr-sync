@@ -132,11 +132,11 @@ public class SyncFHIRRecord {
                     jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPractitionerService.get(uuid)));
                 }
 
-                log.info("Generating payload for " + dataType+ " with uuid " + uuid);
+                log.info("Generating payload for " + dataType + " with uuid " + uuid);
                 log.debug("JSON payload " + jsonData);
 
                 if (jsonData.equals("")) {
-                    log.info("Empty payload for " + dataType+ " with uuid " + uuid);
+                    log.info("Empty payload for " + dataType + " with uuid " + uuid);
                 } else {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                     map.put("DataType", dataType);
@@ -145,7 +145,7 @@ public class SyncFHIRRecord {
                 }
 
             } catch (Exception e) {
-                log.error(e);
+                log.error("Error processing " + dataType + " with uuid " + uuid, e);
             }
 
 
