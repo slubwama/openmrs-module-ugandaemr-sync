@@ -114,28 +114,35 @@ public class SyncFHIRRecord {
             throw new RuntimeException(e);
         }
 
-        for (String data : dataToProcess) {
+        for (String uuid : dataToProcess) {
             try {
 
                 IParser parser = FhirContext.forR4().newJsonParser();
                 String jsonData = "";
 
                 if (dataType.equals("Patient")) {
-                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPatientService.get(data)));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPatientService.get(uuid)));
+                    log.info("Generating payload for Patient with uuid " + uuid);
+                    log.debug("JSON payload " + jsonData);
                 } else if (dataType.equals("Person")) {
-                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPersonService.get(data)));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPersonService.get(uuid)));
                 } else if (dataType.equals("Encounter")) {
-                    jsonData = parser.encodeResourceToString(fhirEncounterService.get(data));
+                    jsonData = parser.encodeResourceToString(fhirEncounterService.get(uuid));
                 } else if (dataType.equals("Observation")) {
-                    jsonData = parser.encodeResourceToString(fhirObservationService.get(data));
+                    jsonData = parser.encodeResourceToString(fhirObservationService.get(uuid));
                 } else if (dataType.equals("Practitioner")) {
-                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPractitionerService.get(data)));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPractitionerService.get(uuid)));
                 }
 
-                if (!jsonData.equals("")) {
+                log.info("Generating payload for " + dataType+ " with uuid " + uuid);
+                log.debug("JSON payload " + jsonData);
+
+                if (jsonData.equals("")) {
+                    log.info("Empty payload for " + dataType+ " with uuid " + uuid);
+                } else {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                     map.put("DataType", dataType);
-                    map.put("uuid", data);
+                    map.put("uuid", uuid);
                     maps.add(map);
                 }
 
