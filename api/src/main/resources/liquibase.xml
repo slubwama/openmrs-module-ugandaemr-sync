@@ -324,10 +324,10 @@
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '08a36b06-7a71-11eb-9439-0242ac130002'
             </sqlCheck>
         </preConditions>
-        <comment>Inserting  CBS Sync FHIR Records To SHR into 'schedule_task_config' table</comment>
+        <comment>Inserting   Sync FHIR Records To Central Server into 'schedule_task_config' table</comment>
         <insert tableName="scheduler_task_config">
-            <column name="name" value="CBS Sync FHIR Records To SHR" />
-            <column name="description" value="Synchronises Data to given Server" />
+            <column name="name" value="Sync FHIR Records a given Server" />
+            <column name="description" value="Synchronises FHIR Data to given Server" />
             <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendFHIRDataToCentralServerTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
             <column name="start_time" valueDate="2021-02-20 23:59:59" />
