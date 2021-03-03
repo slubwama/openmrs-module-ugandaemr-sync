@@ -114,21 +114,18 @@ public class SyncFHIRRecord {
                 String jsonData = "";
 
                 if (dataType.equals("Patient")) {
-                    jsonData = parser.encodeResourceToString(fhirPatientService.get(data));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPatientService.get(data)));
                 } else if (dataType.equals("Person")) {
-                    jsonData = parser.encodeResourceToString(fhirPersonService.get(data));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPersonService.get(data)));
                 } else if (dataType.equals("Encounter")) {
                     jsonData = parser.encodeResourceToString(fhirEncounterService.get(data));
                 } else if (dataType.equals("Observation")) {
                     jsonData = parser.encodeResourceToString(fhirObservationService.get(data));
                 } else if (dataType.equals("Practitioner")) {
-                    jsonData = parser.encodeResourceToString(fhirPractitionerService.get(data));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPractitionerService.get(data)));
                 }
 
                 if (!jsonData.equals("")) {
-                    if (dataType.equals("Patient") || dataType.equals("Practitioner") || dataType.equals("Person")) {
-                        jsonData = addOrganizationToRecord(jsonData);
-                    }
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                     map.put("DataType", dataType);
                     map.put("uuid", data);
@@ -145,6 +142,9 @@ public class SyncFHIRRecord {
     }
 
     public String addOrganizationToRecord(String payload) {
+        if (payload.isEmpty()) {
+            return "";
+        }
         String healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty("ugandaemr.dhis2.organizationuuid");
         String managingOrganizationStirng = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
         JSONObject finalPayLoadJson = new JSONObject(payload);
