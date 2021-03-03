@@ -113,7 +113,7 @@ public class SyncFHIRRecord {
                 IParser parser = FhirContext.forR4().newJsonParser();
                 String jsonData = "";
 
-                if (dataType == "Patient") {
+                if (dataType.equals("Patient")) {
                     jsonData = parser.encodeResourceToString(fhirPatientService.get(data));
                 } else if (dataType.equals("Person")) {
                     jsonData = parser.encodeResourceToString(fhirPersonService.get(data));
@@ -126,7 +126,7 @@ public class SyncFHIRRecord {
                 }
 
                 if (!jsonData.equals("")) {
-                    if (dataType.equals("Patient") || dataType.equals("Practitioner")) {
+                    if (dataType.equals("Patient") || dataType.equals("Practitioner") || dataType.equals("Person")) {
                         jsonData = addOrganizationToRecord(jsonData);
                     }
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
