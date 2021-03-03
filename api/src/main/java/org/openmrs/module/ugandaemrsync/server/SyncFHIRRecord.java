@@ -36,6 +36,7 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_UUID_
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.OBSERVATION_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIRSERVER_SYNC_TASK_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -46,7 +47,13 @@ public class SyncFHIRRecord {
 
     Log log = LogFactory.getLog(SyncFHIRRecord.class);
 
+    String healthCenterIdentifier;
+    String lastSyncDate;
+
+
     public SyncFHIRRecord() {
+        healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
+        lastSyncDate = Context.getAdministrationService().getGlobalProperty(LAST_SYNC_DATE);
     }
 
     private List getDatabaseRecordWithOutFacility(String query, String from, String to, int datesToBeReplaced, List<String> columns) {
@@ -145,7 +152,7 @@ public class SyncFHIRRecord {
         if (payload.isEmpty()) {
             return "";
         }
-        String healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty("ugandaemr.dhis2.organizationuuid");
+
         String managingOrganizationStirng = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
         JSONObject finalPayLoadJson = new JSONObject(payload);
         JSONObject managingOrganizationJson = new JSONObject(managingOrganizationStirng);
