@@ -36,6 +36,7 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_UUID_
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.OBSERVATION_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIRSERVER_SYNC_TASK_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -46,7 +47,13 @@ public class SyncFHIRRecord {
 
     Log log = LogFactory.getLog(SyncFHIRRecord.class);
 
+    String healthCenterIdentifier;
+    String lastSyncDate;
+
+
     public SyncFHIRRecord() {
+        healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
+        lastSyncDate = Context.getAdministrationService().getGlobalProperty(LAST_SYNC_DATE);
     }
 
     private List getDatabaseRecordWithOutFacility(String query, String from, String to, int datesToBeReplaced, List<String> columns) {
@@ -75,7 +82,7 @@ public class SyncFHIRRecord {
     }
 
 
-    public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) throws Exception {
+    public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) {
         List<Map> maps = new ArrayList<>();
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
 
@@ -107,36 +114,38 @@ public class SyncFHIRRecord {
             throw new RuntimeException(e);
         }
 
-        for (String data : dataToProcess) {
+        for (String uuid : dataToProcess) {
             try {
 
                 IParser parser = FhirContext.forR4().newJsonParser();
                 String jsonData = "";
 
-                if (dataType == "Patient") {
-                    jsonData = parser.encodeResourceToString(fhirPatientService.get(data));
+                if (dataType.equals("Patient")) {
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPatientService.get(uuid)));
                 } else if (dataType.equals("Person")) {
-                    jsonData = parser.encodeResourceToString(fhirPersonService.get(data));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPersonService.get(uuid)));
                 } else if (dataType.equals("Encounter")) {
-                    jsonData = parser.encodeResourceToString(fhirEncounterService.get(data));
+                    jsonData = parser.encodeResourceToString(fhirEncounterService.get(uuid));
                 } else if (dataType.equals("Observation")) {
-                    jsonData = parser.encodeResourceToString(fhirObservationService.get(data));
+                    jsonData = parser.encodeResourceToString(fhirObservationService.get(uuid));
                 } else if (dataType.equals("Practitioner")) {
-                    jsonData = parser.encodeResourceToString(fhirPractitionerService.get(data));
+                    jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPractitionerService.get(uuid)));
                 }
 
-                if (!jsonData.equals("")) {
-                    if (dataType.equals("Patient") || dataType.equals("Practitioner")) {
-                        jsonData = addOrganizationToRecord(jsonData);
-                    }
+                log.info("Generating payload for " + dataType + " with uuid " + uuid);
+                log.debug("JSON payload " + jsonData);
+
+                if (jsonData.equals("")) {
+                    log.info("Empty payload for " + dataType + " with uuid " + uuid);
+                } else {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                     map.put("DataType", dataType);
-                    map.put("uuid", data);
+                    map.put("uuid", uuid);
                     maps.add(map);
                 }
 
             } catch (Exception e) {
-                log.error(e);
+                log.error("Error processing " + dataType + " with uuid " + uuid, e);
             }
 
 
@@ -145,7 +154,10 @@ public class SyncFHIRRecord {
     }
 
     public String addOrganizationToRecord(String payload) {
-        String healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty("ugandaemr.dhis2.organizationuuid");
+        if (payload.isEmpty()) {
+            return "";
+        }
+
         String managingOrganizationStirng = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
         JSONObject finalPayLoadJson = new JSONObject(payload);
         JSONObject managingOrganizationJson = new JSONObject(managingOrganizationStirng);
