@@ -326,7 +326,7 @@
         </preConditions>
         <comment>Inserting   Sync FHIR Records To Central Server into 'schedule_task_config' table</comment>
         <insert tableName="scheduler_task_config">
-            <column name="name" value="Sync FHIR Records To Central Server" />
+            <column name="name" value="Sync FHIR Records a given Server" />
             <column name="description" value="Synchronises FHIR Data to given Server" />
             <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendFHIRDataToCentralServerTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
