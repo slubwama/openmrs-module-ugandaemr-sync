@@ -122,8 +122,6 @@ public class SyncFHIRRecord {
 
                 if (dataType.equals("Patient")) {
                     jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPatientService.get(uuid)));
-                    log.info("Generating payload for Patient with uuid " + uuid);
-                    log.debug("JSON payload " + jsonData);
                 } else if (dataType.equals("Person")) {
                     jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPersonService.get(uuid)));
                 } else if (dataType.equals("Encounter")) {
