@@ -2,26 +2,31 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.hl7v2.model.v25.datatype.ST;
-import javassist.bytecode.stackmap.BasicBlock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
-import org.openmrs.module.fhir2.api.*;
+import org.openmrs.module.fhir2.api.FhirPatientService;
+import org.openmrs.module.fhir2.api.FhirEncounterService;
+import org.openmrs.module.fhir2.api.FhirPersonService;
+import org.openmrs.module.fhir2.api.FhirObservationService;
+import org.openmrs.module.fhir2.api.FhirPractitionerService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.context.ApplicationContext;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Arrays;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
