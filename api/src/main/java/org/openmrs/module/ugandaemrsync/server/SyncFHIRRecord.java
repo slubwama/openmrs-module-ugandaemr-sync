@@ -126,7 +126,7 @@ public class SyncFHIRRecord {
                 }
 
                 if (!jsonData.equals("")) {
-                    if (addOrganizationToRecord) {
+                    if (dataType.equals("Patient") || dataType.equals("Practitioner")) {
                         jsonData = addOrganizationToRecord(jsonData);
                     }
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
