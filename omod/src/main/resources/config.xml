@@ -200,6 +200,48 @@
            When Enabled to true CBS FHIR Data will be synced to the central fhir server
         </description>
     </globalProperty>
+
+
+
+    <globalProperty>
+        <property>ugandaemrsync.lastObservationSyncDate</property>
+        <defaultValue>1900-01-01 00:00:00</defaultValue>
+        <description>
+            The Last Sync Date of Observations
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.lastEncounterSyncDate</property>
+        <defaultValue>1900-01-01 00:00:00</defaultValue>
+        <description>
+            The Last Sync Date of Encounter
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.lastPractitionerSyncDate</property>
+        <defaultValue>1900-01-01 00:00:00</defaultValue>
+        <description>
+            The Last Sync Date of Practitioner
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.lastPatientSyncDate</property>
+        <defaultValue>1900-01-01 00:00:00</defaultValue>
+        <description>
+            The Last Sync Date of Patient
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.lastPersonSyncDate</property>
+        <defaultValue>1900-01-01 00:00:00</defaultValue>
+        <description>
+            The Last Sync Date of Person
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
     <messages>

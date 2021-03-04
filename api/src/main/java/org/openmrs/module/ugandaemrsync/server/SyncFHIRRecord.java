@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Arrays;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE_TO_FORMAT;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_ENABLE_SYNC_CBS_FHIR_DATA;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PERSON_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PRACTITIONER_UUID_QUERY;
@@ -50,48 +51,16 @@ public class SyncFHIRRecord {
     String healthCenterIdentifier;
     String lastSyncDate;
 
+    FhirPersonService fhirPersonService;
+    FhirPatientService fhirPatientService;
+    FhirPractitionerService fhirPractitionerService;
+    FhirEncounterService fhirEncounterService;
+    FhirObservationService fhirObservationService;
+
 
     public SyncFHIRRecord() {
         healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
         lastSyncDate = Context.getAdministrationService().getGlobalProperty(LAST_SYNC_DATE);
-    }
-
-    private List getDatabaseRecordWithOutFacility(String query, String from, String to, int datesToBeReplaced, List<String> columns) {
-        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        String lastSyncDate = syncGlobalProperties.getGlobalProperty(LAST_SYNC_DATE);
-
-        String finalQuery;
-        if (datesToBeReplaced == 1) {
-            finalQuery = String.format(query, lastSyncDate, from, to);
-        } else if (datesToBeReplaced == 2) {
-            finalQuery = String.format(query, lastSyncDate, lastSyncDate, from, to);
-        } else if (datesToBeReplaced == 3) {
-            finalQuery = String.format(query, lastSyncDate, lastSyncDate, lastSyncDate, from, to);
-        } else {
-            finalQuery = String.format(query, from, to);
-        }
-        List list = ugandaEMRSyncService.getFinalList(columns, finalQuery);
-        return list;
-    }
-
-    private List getDatabaseRecord(String query) {
-        Session session = Context.getRegisteredComponent("sessionFactory", SessionFactory.class).getCurrentSession();
-        SQLQuery sqlQuery = session.createSQLQuery(query);
-        return sqlQuery.list();
-    }
-
-
-    public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) {
-        List<Map> maps = new ArrayList<>();
-        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
-
-        FhirPersonService fhirPersonService;
-        FhirPatientService fhirPatientService;
-        FhirPractitionerService fhirPractitionerService;
-        FhirEncounterService fhirEncounterService;
-        FhirObservationService fhirObservationService;
-
 
         try {
             Field serviceContextField = Context.class.getDeclaredField("serviceContext");
@@ -113,6 +82,31 @@ public class SyncFHIRRecord {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List getDatabaseRecordWithOutFacility(String query, String from, String to, int datesToBeReplaced, List<String> columns, String dataType) {
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        String lastSyncDate = syncGlobalProperties.getGlobalProperty(LAST_SYNC_DATE);
+
+        String finalQuery;
+        if (datesToBeReplaced == 1) {
+            finalQuery = String.format(query, lastSyncDate, from, to);
+        } else if (datesToBeReplaced == 2) {
+            finalQuery = String.format(query, lastSyncDate, lastSyncDate, from, to);
+        } else if (datesToBeReplaced == 3) {
+            finalQuery = String.format(query, lastSyncDate, lastSyncDate, lastSyncDate, from, to);
+        } else {
+            finalQuery = String.format(query, from, to);
+        }
+        List list = ugandaEMRSyncService.getFinalList(columns, finalQuery);
+
+        return list;
+    }
+
+    public List<Map> processFHIRData(List<String> dataToProcess, String dataType, boolean addOrganizationToRecord) {
+        List<Map> maps = new ArrayList<>();
+        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
 
         for (String uuid : dataToProcess) {
             try {
@@ -153,6 +147,111 @@ public class SyncFHIRRecord {
         return maps;
     }
 
+    private List<String> getDatabaseRecordWithFHIR(String query, String from, String to, int datesToBeReplaced, List<String> columns, String dataType) {
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        String lastSyncDate = syncGlobalProperties.getGlobalProperty(String.format(LAST_SYNC_DATE_TO_FORMAT, dataType));
+        List<String> processedFHIRJson = new ArrayList<>();
+
+        IParser parser = FhirContext.forR4().newJsonParser();
+
+        String finalQuery;
+        if (datesToBeReplaced == 1) {
+            finalQuery = String.format(query, lastSyncDate, from, to);
+        } else if (datesToBeReplaced == 2) {
+            finalQuery = String.format(query, lastSyncDate, lastSyncDate, from, to);
+        } else if (datesToBeReplaced == 3) {
+            finalQuery = String.format(query, lastSyncDate, lastSyncDate, lastSyncDate, from, to);
+        } else {
+            finalQuery = String.format(query, from, to);
+        }
+        List list = ugandaEMRSyncService.getFinalList(columns, finalQuery);
+
+        if (list.size() > 0) {
+            for (Object uuid : list) {
+                try {
+                    String jsonData = "";
+                    if (dataType.equals("Patient")) {
+                        jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPatientService.get(uuid.toString())));
+                    } else if (dataType.equals("Person")) {
+                        jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPersonService.get(uuid.toString())));
+                    } else if (dataType.equals("Encounter")) {
+                        jsonData = parser.encodeResourceToString(fhirEncounterService.get(uuid.toString()));
+                    } else if (dataType.equals("Observation")) {
+                        jsonData = parser.encodeResourceToString(fhirObservationService.get(uuid.toString()));
+                    } else if (dataType.equals("Practitioner")) {
+                        jsonData = addOrganizationToRecord(parser.encodeResourceToString(fhirPractitionerService.get(uuid.toString())));
+                    }
+
+
+                    if (!jsonData.equals("")) {
+                        processedFHIRJson.add(jsonData);
+                    }
+
+                    log.info("Generating payload for " + dataType + " with uuid " + uuid);
+                    log.debug("JSON payload " + jsonData);
+
+                } catch (Exception e) {
+                    log.error("Error processing " + dataType + " with uuid " + uuid, e);
+                }
+
+
+            }
+        }
+        return processedFHIRJson;
+    }
+
+
+    public List<Map> sendFHIRDataToSync(List<String> fhirDataStrings, String resourceType, Integer interval) {
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        if (fhirDataStrings.isEmpty()) {
+            return null;
+        }
+
+        List<Map> maps = new ArrayList<>();
+        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
+        String bundleWrapperString = "{\"resourceType\":\"Bundle\",\"type\":\"transaction\",\"entry\":[%]}";
+        List<String> resourceBundles = new ArrayList<>();
+        StringBuilder currentBundleString = new StringBuilder();
+        Integer currentNumberOfBundlesCollected = 0;
+
+        for (String resource : fhirDataStrings) {
+            if (currentNumberOfBundlesCollected < interval) {
+                currentBundleString.append(resource);
+            } else {
+                if (currentBundleString.equals(new StringBuilder())) {
+                    resourceBundles.add(String.format(bundleWrapperString, currentBundleString.toString()));
+                }
+
+                currentNumberOfBundlesCollected = 1;
+                currentBundleString = new StringBuilder();
+                currentBundleString.append(resource);
+            }
+
+        }
+
+        if (currentBundleString != null) {
+            resourceBundles.add(String.format(bundleWrapperString, currentBundleString.toString()));
+        }
+
+        for (String bundledResources : resourceBundles) {
+
+            Map map;
+            try {
+                map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + "Bundle", syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", bundledResources, false);
+                map.put("DataType", resourceType);
+                maps.add(map);
+                String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(new Date());
+                syncGlobalProperties.setGlobalProperty(String.format(SyncConstant.LAST_SYNC_DATE, resourceType), newSyncDate);
+            } catch (Exception e) {
+                log.error("Failed to send Resources " + bundledResources + " with error", e);
+            }
+        }
+
+        return maps;
+
+    }
+
     public String addOrganizationToRecord(String payload) {
         if (payload.isEmpty()) {
             return "";
@@ -176,22 +275,12 @@ public class SyncFHIRRecord {
         if (syncGlobalProperties.getGlobalProperty(GP_ENABLE_SYNC_CBS_FHIR_DATA).equals("true")) {
 
             try {
-                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PERSON_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Person", false));
+                mapList.addAll(sendFHIRDataToSync(getDatabaseRecordWithFHIR(PERSON_UUID_QUERY, "", "", 2, Arrays.asList("uuid"), "Person"), "Person", 1000));
+                mapList.addAll(sendFHIRDataToSync(getDatabaseRecordWithFHIR(PATIENT_UUID_QUERY, "", "", 2, Arrays.asList("uuid"), "Patient"), "Patient", 1000));
+                mapList.addAll(sendFHIRDataToSync(getDatabaseRecordWithFHIR(PRACTITIONER_UUID_QUERY, "", "", 2, Arrays.asList("uuid"), "Practitioner"), "Practitioner", 1000));
+                mapList.addAll(sendFHIRDataToSync(getDatabaseRecordWithFHIR(ENCOUNTER_UUID_QUERY, "", "", 2, Arrays.asList("uuid"), "Encounter"), "Encounter", 1000));
+                mapList.addAll(sendFHIRDataToSync(getDatabaseRecordWithFHIR(OBSERVATION_UUID_QUERY, "", "", 1, Arrays.asList("uuid"), "Observation"), "Observation", 1000));
 
-                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PRACTITIONER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Practitioner", true));
-
-                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(PATIENT_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Patient", true));
-
-                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(ENCOUNTER_UUID_QUERY, "", "", 3, Arrays.asList("uuid")), "Encounter", false));
-
-                mapList.addAll(processFHIRData(getDatabaseRecordWithOutFacility(OBSERVATION_UUID_QUERY, "", "", 2, Arrays.asList("uuid")), "Observation", false));
-
-                Date now = new Date();
-                if (!mapList.isEmpty()) {
-                    String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(now);
-
-                    syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
-                }
             } catch (Exception e) {
                 log.error("Failed to process sync records central server", e);
             }
