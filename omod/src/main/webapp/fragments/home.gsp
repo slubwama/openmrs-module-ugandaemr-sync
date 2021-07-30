@@ -62,4 +62,11 @@
         <i class=" icon-upload"></i>
         Send Next Gen Reports
     </a>
+
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","syncFhirProfile")}"
+       class="button app big">
+
+        <i class="icon-list-ul"></i>
+        Sync FHIR Profile
+    </a>
 </div>

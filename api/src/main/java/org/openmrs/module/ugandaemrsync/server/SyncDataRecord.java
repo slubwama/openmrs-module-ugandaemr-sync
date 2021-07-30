@@ -19,9 +19,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DAT
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
 
-/**
- * Created by lubwamasamuel on 07/11/2016.
- */
 public class SyncDataRecord {
 
     UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();

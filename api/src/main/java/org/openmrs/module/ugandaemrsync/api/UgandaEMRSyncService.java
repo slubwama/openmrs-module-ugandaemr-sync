@@ -13,15 +13,16 @@ import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Patient;
 import org.openmrs.Order;
-import org.openmrs.annotation.Authorized;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
-import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
-import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
+import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
+import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
+import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
+import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -166,11 +167,143 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 */
 	public String getHealthCenterName();
 
-	/**
-	 * This Method gets the patient identifier that is based on patient Identifier type and the patient
-	 * @param patient the patient whose identifier is being searched
-	 * @param patientIdentifierTypeUUID the uuid of the patient identifier type that is being search
-	 * @return the identifier that matches both the patient and the patient identifier type UUID
-	 */
-	public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID);
+    /**
+     * This Method gets the patient identifier that is based on patient Identifier type and the patient
+     * @param patient the patient whose identifier is being searched
+     * @param patientIdentifierTypeUUID the uuid of the patient identifier type that is being search
+     * @return the identifier that matches both the patient and the patient identifier type UUID
+     */
+    public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID);
+
+
+    /**
+     * This Method saves a Sync FHIR Profile
+     * @param syncFhirProfile the Sync FHIR Profile to be saved
+     * @return the saved Sync FHIR Profile
+     */
+    @Transactional
+    public SyncFhirProfile saveSyncFhirProfile(SyncFhirProfile syncFhirProfile);
+
+    /**
+     * This Method returs a Sync FHIR Profile that matches the id given
+     * @param id the Id that will be used to match a sync fhir profile
+     * @return the matched Sync FHIR Profile
+     */
+    public SyncFhirProfile getSyncFhirProfileById(Integer id);
+
+
+    /**
+     * This Method returs a Sync FHIR Profile that matches the id given
+     * @param uuid the uuid that will be used to match a sync fhir profile
+     * @return the matched Sync FHIR Profile
+     */
+    public SyncFhirProfile getSyncFhirProfileByUUID(String uuid);
+
+
+    /**
+     * This Method gets a Sync FHIR Profile from a scheduled task
+     * @param scheduledTaskName
+     * @return the syncFhirProfile that is associated with a scheduled task that matches the scheduledTaskName
+     */
+
+    public SyncFhirProfile getSyncFhirProfileByScheduledTaskName(String scheduledTaskName);
+
+
+    /**
+     * This Method saves a Sync FHIR Resource
+     * @param syncFHIRResource the resource to be saved
+     * @return the saved sync fhir resource
+     */
+    @Transactional
+    public SyncFhirResource saveFHIRResource(SyncFhirResource syncFHIRResource);
+
+
+    /**
+     * This Method gets a list of sync fhir resources by the profile that generated them
+     * @param syncFhirProfile
+     * @param includeSynced the check to determine if it has been sent to the destined server
+     * @return
+     */
+    public List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, boolean includeSynced);
+
+
+    /**
+     * Gets a Sync FHIR Resource using an id
+     * @param id the id that will be used to match the resource
+     * @return the resource that matches the id
+     */
+    public SyncFhirResource getSyncFHIRResourceById(Integer id);
+
+    /**
+     * Marks resource Synced and sets expiry date based on the number of days to keep resource after sync set in profile
+     * @param syncFhirResources the resource to be marked synced
+     * @return the resource that is marked synced.
+     */
+    @Transactional
+    public SyncFhirResource markSyncFHIRResourceSynced(SyncFhirResource syncFhirResources);
+
+
+    /**
+     * gets all expired resources based on date passed
+     * @param date the date which will be used to match expired resources
+     * @return a list of expired resources
+     */
+    public List<SyncFhirResource> getExpiredSyncFHIRResources(Date date);
+
+    /**
+     * Purges all resources that have  expired
+     */
+    @Transactional
+    public void purgeExpiredFHIRResource(Date date);
+
+    /**
+     * This Saves the Sync Profile Log
+     * @param syncFhirProfileLog the log to be saved
+     * @return the SyncFhirProfileLog that has been saved
+     */
+    @Transactional
+    public SyncFhirProfileLog saveSyncFhirProfileLog(SyncFhirProfileLog syncFhirProfileLog);
+
+    /**
+     * This returns the latest sync fhir profile log
+     * @param syncFhirProfile the sync fhir profile to be used search for the syncFhirProfile
+     * @param resourceType a parameter to be used to search for the sync fhir log
+     * @return syncFhirProfileLog that has matched the search
+     */
+    public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType);
+
+    /**
+     * This returns the latest sync fhir profile log
+     * @param syncFhirProfile the sync fhir profile to be used search for the syncFhirProfile
+     * @param resourceType a parameter to be used to search for the sync fhir log
+     * @return syncFhirProfileLog that has matched the search
+     */
+    public SyncFhirProfileLog getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType);
+
+
+    /**
+     * This will get a FHIRCase which matches the parameters set
+     * @param syncFhirProfile the profile that was is used to identify the case
+     * @param patient the patient who belongs to the case
+     * @return the case that matches the parameters
+     */
+    public SyncFhirCase getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile syncFhirProfile, Patient patient, String caseIdentifier);
+
+
+
+    /**
+     * This Method saves a  FHIR Case
+     * @param syncFHIRCase the case to be saved
+     * @return the saved case
+     */
+    @Transactional
+    public SyncFhirCase saveSyncFHIRCase(SyncFhirCase syncFHIRCase);
+
+    /**
+     * This Method gets a List of all Sync Fhir Profiles
+     * @return a List of Sync Fhir Profiles
+     */
+    @Transactional
+    public List<SyncFhirProfile> getAllSyncFhirProfile();
 }
+
