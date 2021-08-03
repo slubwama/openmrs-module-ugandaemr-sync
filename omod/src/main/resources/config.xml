@@ -150,6 +150,16 @@
         <defaultValue>true</defaultValue>
         <description>Turns on and off the submission of recency data once daily or multiple time in specified interval</description>
     </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.sendNextGenReports.server.url</property>
+        <defaultValue>https://ugisl.mets.or.ug/Measure/mer-tx-indicators</defaultValue>
+        <description> </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.sendNextGenReports.server.reportuuids</property>
+        <defaultValue>214fb8ef-6219-43f3-b20b-023261c0dec6,8dafdc32-97b7-4f49-828e-475cd4f09669,65fec0844-1970-43c5-bf77-b296415daa34</defaultValue>
+        <description> </description>
+    </globalProperty>
 
     <!--
     <dwr>

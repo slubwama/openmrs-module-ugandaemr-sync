@@ -56,4 +56,10 @@
         <i class="icon-list-ul"></i>
         Sync Task Type
     </a>
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","sendReports")}"
+       class="button app big">
+
+        <i class=" icon-upload"></i>
+        Send Next Gen Reports
+    </a>
 </div>
