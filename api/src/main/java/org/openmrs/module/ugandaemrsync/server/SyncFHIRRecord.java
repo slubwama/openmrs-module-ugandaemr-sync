@@ -31,6 +31,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
+import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.parameter.EncounterSearchCriteria;
 import org.springframework.context.ApplicationContext;
 
@@ -914,7 +915,7 @@ public class SyncFHIRRecord {
                         maps.add(map);
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
-                        syncFhirResource.setExpiryDate(addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
+                        syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {
@@ -928,17 +929,6 @@ public class SyncFHIRRecord {
         }
 
         return maps;
-    }
-
-    public Date addDaysToDate(Date currentDate, int noOfDays) {
-
-        System.out.println("Current date: " + currentDate);
-
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(currentDate);
-        cal.add(Calendar.DAY_OF_MONTH, noOfDays);
-
-        return cal.getTime();
     }
 
 

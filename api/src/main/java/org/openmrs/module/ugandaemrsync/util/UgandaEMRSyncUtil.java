@@ -24,7 +24,6 @@ public class UgandaEMRSyncUtil {
 
     public static Date addDaysToDate(Date date, Integer numberOfDays) {
         Date today = new Date();
-        System.out.println(today);      //Sat Jul 14 22:25:03 IST 2018
         Calendar cal = Calendar.getInstance();
         cal.setTime(today);
         cal.add(Calendar.DATE, numberOfDays);
