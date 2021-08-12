@@ -250,6 +250,14 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      */
     public List<SyncFhirResource> getExpiredSyncFHIRResources(Date date);
 
+
+	/**
+	 * gets all expired resources based on date passed
+	 * @param syncFhirProfile the profile that generated the resources
+	 * @return a list of expired resources
+	 */
+	public List<SyncFhirResource> getUnSyncedFHirResources(SyncFhirProfile syncFhirProfile);
+
     /**
      * Purges all resources that have  expired
      */

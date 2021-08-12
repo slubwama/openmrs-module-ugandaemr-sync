@@ -354,6 +354,7 @@
             <column name="case_based_primary_resource_type" type="VARCHAR(255)"/>
             <column name="case_based_primary_resource_type_id" type="VARCHAR(255)"/>
             <column name="resource_search_parameter" type="TEXT"/>
+            <column name="concept_source" type="INT"/>
             <column name="url_end_point" type="VARCHAR(255)"/>
             <column name="url_username" type="VARCHAR(255)"/>
             <column name="url_password" type="VARCHAR(255)"/>
@@ -391,17 +392,29 @@
             <column name="voided_by"/>
         </createIndex>
     </changeSet>
+
     <changeSet author="slubwama" id="ugandaemrsync-1620114029968-6">
+        <createIndex indexName="sync_fhir_profile_concept_source_index" tableName="sync_fhir_profile">
+            <column name="concept_source"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-7">
         <addForeignKeyConstraint baseColumnNames="patient_identifier_type" baseTableName="sync_fhir_profile" constraintName="profile_patient_identifier_type_patient_identifier_type_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="patient_identifier_type_id" referencedTableName="patient_identifier_type"/>
     </changeSet>
-    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-7">
+    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-8">
         <addForeignKeyConstraint baseColumnNames="creator" baseTableName="sync_fhir_profile" constraintName="sync_fhir_profile_users_user_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-8">
+    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-9">
         <addForeignKeyConstraint baseColumnNames="changed_by" baseTableName="sync_fhir_profile" constraintName="sync_fhir_profile_users_user_id_fk_2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
     </changeSet>
-    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-9">
+
+    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-10">
         <addForeignKeyConstraint baseColumnNames="voided_by" baseTableName="sync_fhir_profile" constraintName="sync_fhir_profile_users_user_id_fk_3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="users"/>
+    </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-1620114029968-11">
+        <addForeignKeyConstraint baseColumnNames="concept_source" baseTableName="sync_fhir_profile" constraintName="sync_fhir_profile_concept_reference_source_concept_source_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="concept_source_id" referencedTableName="concept_reference_source"/>
     </changeSet>
 
     <changeSet author="slubwama" id="ugandaemrsync-1622796471833-1">

@@ -11,6 +11,7 @@ import org.openmrs.ui.framework.page.PageModel;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Date;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_FILTER_OBJECT_STRING;
@@ -41,9 +42,9 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "caseBasedPrimaryResourceUUID", required = false) String caseBasedPrimaryResourceUUID,
                      @RequestParam(value = "patientIdentifierType", required = false) String patientIdentifierType,
                      @RequestParam(value = "noOfResourcesInBundle", required = false) Integer noOfResourcesInBundle,
-                     @RequestParam(value = "encounterTypeUUIDS", required = false) String encounterTypeUUIDS,
-                     @RequestParam(value = "observationCodeUUIDs", required = false) String observationCodeUUIDs,
-                     @RequestParam(value = "episodeOfCareUUIDS", required = false) String episodeOfCareUUIDS,
+                     @RequestParam(value = "encounterTypeUUIDS", required = false) ArrayList encounterTypeUUIDS,
+                     @RequestParam(value = "observationCodeUUIDS", required = false) ArrayList observationCodeUUIDs,
+                     @RequestParam(value = "episodeOfCareUUIDS", required = false) ArrayList episodeOfCareUUIDS,
                      @RequestParam(value = "url", required = false) String url,
                      @RequestParam(value = "username", required = false) String username,
                      @RequestParam(value = "password", required = false) String password,
@@ -51,7 +52,7 @@ public class SyncFhirProfilePageController {
                      UiSessionContext uiSessionContext, UiUtils uiUtils, HttpServletRequest request) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterTypeUUIDS).replace("conceptQuestionUUID", observationCodeUUIDs).replace("episodeOfCareTypeUUID", episodeOfCareUUIDS);
+        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterTypeUUIDS.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareUUIDS.toString());
 
 
         if (profileId.equals("")) {

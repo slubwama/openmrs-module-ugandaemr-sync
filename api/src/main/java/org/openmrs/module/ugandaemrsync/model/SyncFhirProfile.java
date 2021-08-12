@@ -2,8 +2,10 @@ package org.openmrs.module.ugandaemrsync.model;
 
 import org.hibernate.annotations.Type;
 import org.openmrs.BaseOpenmrsData;
+import org.openmrs.ConceptSource;
 import org.openmrs.PatientIdentifierType;
 
+import javax.naming.Context;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Id;
@@ -54,6 +56,10 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
     @Type(type = "text")
     private String resourceSearchParameter;
 
+    @ManyToOne
+    @JoinColumn(name = "concept_source")
+    private ConceptSource conceptSource;
+
     @Column(name = "url_end_point")
     private String url;
 
@@ -70,7 +76,7 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
         return syncFhirProfileId;
     }
 
-    public void setSyncFhirProfileId(int syncFhirProfileId) {
+    public void setSyncFhirProfileId(Integer syncFhirProfileId) {
         this.syncFhirProfileId = syncFhirProfileId;
     }
 
@@ -153,6 +159,14 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     public void setCaseBasedPrimaryResourceTypeId(String caseBasedPrimaryResourceTypeId) {
         this.caseBasedPrimaryResourceTypeId = caseBasedPrimaryResourceTypeId;
+    }
+
+    public ConceptSource getConceptSource() {
+        return conceptSource;
+    }
+
+    public void setConceptSource(ConceptSource conceptSource) {
+        this.conceptSource = conceptSource;
     }
 
     public String getUrl() {

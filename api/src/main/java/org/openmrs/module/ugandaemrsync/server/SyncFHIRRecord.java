@@ -14,13 +14,7 @@ import org.hibernate.SessionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.openmrs.Concept;
-import org.openmrs.PatientProgram;
-import org.openmrs.Provider;
-import org.openmrs.EncounterRole;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.Person;
-import org.openmrs.Obs;
+import org.openmrs.*;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.fhir2.api.FhirPatientService;
@@ -44,14 +38,7 @@ import javax.validation.constraints.NotNull;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -66,6 +53,7 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIRSERVER_SY
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE_TO_FORMAT;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_TRANSACTION;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_POST;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_PUT;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_ROLE;
@@ -326,8 +314,6 @@ public class SyncFHIRRecord {
     }
 
 
-
-
     public Collection<SyncFhirResource> generateCaseBasedFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
         if (syncFhirProfile != null && (!syncFhirProfile.getCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
             return null;
@@ -367,6 +353,7 @@ public class SyncFHIRRecord {
             for (org.openmrs.Encounter encounter : encounterList) {
 
                 org.openmrs.Patient patient = encounter.getPatient();
+
                 String caseIdentifier = patient.getPatientIdentifier(syncFhirProfile.getPatientIdentifierType().getId()).getIdentifier();
                 SyncFhirResource syncFHIRResource = saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
                 if (syncFHIRResource != null)
@@ -392,6 +379,8 @@ public class SyncFHIRRecord {
         if (syncFHIRCase == null) {
             syncFHIRCase = new SyncFhirCase();
             syncFHIRCase.setCaseIdentifier(caseIdentifier);
+            syncFHIRCase.setPatient(patient);
+            syncFHIRCase.setProfile(syncFhirProfile);
 
         }
 
@@ -466,9 +455,9 @@ public class SyncFHIRRecord {
                     }
                     break;
                 case "Patient":
-                    if (encounters.size() > 0) {
-                        resources.addAll(groupInCaseBundle("Patient", getPatientResourceBundle(syncFhirProfile, getPatientIdentifierFromEncounter(encounters, syncFhirProfile.getPatientIdentifierType())), syncFhirProfile.getPatientIdentifierType().getName()));
-                    }
+                    List<PatientIdentifier> patientIdentifiers = new ArrayList<>();
+                    patientIdentifiers.add(syncFHIRCase.getPatient().getPatientIdentifier(syncFhirProfile.getPatientIdentifierType()));
+                    resources.addAll(groupInCaseBundle("Patient", getPatientResourceBundle(syncFhirProfile, patientIdentifiers), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
                     if (encounters.size() > 0) {
@@ -476,9 +465,9 @@ public class SyncFHIRRecord {
                     }
                     break;
                 case "Person":
-                    if (encounters.size() > 0) {
-                        resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, getPersonsFromEncounterList(encounters)), syncFhirProfile.getPatientIdentifierType().getName()));
-                    }
+                    List<Person> personList = new ArrayList<>();
+                    personList.add(syncFHIRCase.getPatient().getPerson());
+                    resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, getPersonsFromEncounterList(encounters)), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
             }
         }
@@ -486,7 +475,7 @@ public class SyncFHIRRecord {
         String finalCaseBundle = null;
 
         if (resources.size() > 0) {
-            finalCaseBundle = String.format(FHIR_BUNDLE_RESOURCE_TRANSACTION, resources.toString());
+            finalCaseBundle = String.format(FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION, resources.toString());
         }
 
 
@@ -895,6 +884,61 @@ public class SyncFHIRRecord {
             log.error(e);
         }
         return null;
+    }
+
+
+    private PatientIdentifier getPatientIdentifierByPatientAndType(Patient patient, PatientIdentifierType patientIdentifierType) {
+        List<PatientIdentifierType> patientIdentifierTypes = new ArrayList<>();
+        List<Patient> patients = new ArrayList<>();
+        patientIdentifierTypes.add(patientIdentifierType);
+        patients.add(patient);
+        Context.getPatientService().getPatientIdentifiers(null, patientIdentifierTypes, null, patients, false);
+        return null;
+    }
+
+    public List<Map> sendFhirResourcesTo(SyncFhirProfile syncFhirProfile) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+        List<Map> maps = new ArrayList<>();
+        List<SyncFhirResource> syncFhirResources = ugandaEMRSyncService.getUnSyncedFHirResources(syncFhirProfile);
+
+        for (SyncFhirResource syncFhirResource : syncFhirResources) {
+            Date date = new Date();
+
+            try {
+                int connectionStatus = ugandaEMRHttpURLConnection.getCheckConnection("google.com");
+
+                if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
+                    Map map = ugandaEMRHttpURLConnection.sendPostBy(syncFhirProfile.getUrl(), syncFhirProfile.getUrlUserName(), syncFhirProfile.getUrlPassword(), syncFhirProfile.getUrlToken(), syncFhirResource.getResource(), false);
+                    if (map.get("responseCode").equals(SyncConstant.CONNECTION_SUCCESS_200)) {
+                        maps.add(map);
+                        syncFhirResource.setDateSynced(date);
+                        syncFhirResource.setSynced(true);
+                        syncFhirResource.setExpiryDate(addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
+                        ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
+                    }
+                } else {
+                    log.info("Connection to internet was not Successful. Code: " + connectionStatus);
+                }
+
+            } catch (Exception e) {
+                log.error("Failed to Sync Fhir Resource: " + syncFhirResource.getUuid(), e);
+            }
+
+        }
+
+        return maps;
+    }
+
+    public Date addDaysToDate(Date currentDate, int noOfDays) {
+
+        System.out.println("Current date: " + currentDate);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(currentDate);
+        cal.add(Calendar.DAY_OF_MONTH, noOfDays);
+
+        return cal.getTime();
     }
 
 

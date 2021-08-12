@@ -261,4 +261,17 @@ public class UgandaEMRSyncDao {
     public List<SyncFhirProfile> getAllSyncFhirProfile() {
         return (List<SyncFhirProfile>) getSession().createCriteria(SyncFhirProfile.class).list();
     }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getUnSyncedFHirResources(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
+     */
+
+    public List<SyncFhirResource> getUnSyncedFHirResources(SyncFhirProfile syncFhirProfile) {
+
+        Criteria criteria = getSession().createCriteria(SyncFhirResource.class);
+        criteria.add(Restrictions.eq("generatorProfile", syncFhirProfile));
+        criteria.add(Restrictions.eq("synced", false));
+
+        return criteria.list();
+    }
 }
