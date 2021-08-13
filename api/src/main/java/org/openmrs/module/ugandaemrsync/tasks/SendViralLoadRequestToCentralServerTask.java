@@ -186,7 +186,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         if (list.size() > 0) {
             for (Object o : list) {
                 Order order = orderService.getOrder(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString()));
-                if (order.getAccessionNumber() != null && order.isActive() && order.getInstructions().equals("REFER TO cphl")) {
+                if (order.getAccessionNumber() != null && order.isActive() && order.getInstructions().equalsIgnoreCase("REFER TO cphl")) {
                     orders.add(order);
                 }
             }
