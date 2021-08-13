@@ -32,12 +32,58 @@
 
                 modal.find("#profileId").val("");
                 modal.find("#syncFhirProfileName").val("");
+
+                modal.find("#encounterTypeUUIDS").val("");
+                modal.find("#observationCodeUUIDS").val("");
+                modal.find("#episodeOfCareUUIDS").val("");
+                modal.find("#caseBasedPrimaryResourceUUID").val("");
+                modal.find("#durationToKeepSyncedResources").val("");
+                modal.find("#noOfResourcesInBundle").val("");
+
                 modal.find("#dataType select").find().val("");
-                modal.find("#dataTypeId").val("");
+                modal.find("#caseBasedPrimaryResourceType select").find().val("");
+                modal.find("#patientIdentifierType select").find().val("");
+
+                modal.find("isCaseBasedProfile").checked = false;
+                modal.find("generateBundle").checked = false;
+                modal.find("resourceTypeEncounter").checked = false;
+                modal.find("resourcePatient").checked = false;
+                modal.find("resourceTypePerson").checked = false;
+                modal.find("resourceTypeObservation").checked = false;
+                modal.find("resourceTypeEpisodeOfCare").checked = false;
+                modal.find("resourceTypeServiceRequest").checked = false;
+                modal.find("resourceTypeMedicationRequest").checked = false;
+
+
+
+
                 modal.find("#username").val("");
                 modal.find("#password").val("");
                 modal.find("#url").val("");
                 modal.find("#token").val("");
+
+
+                generateBundle
+                noOfResourcesInBundle
+                durationToKeepSyncedResources
+
+                resourceType
+                    resourceTypeEncounter
+                    resourcePatient
+                    resourceTypePerson
+                    resourceTypeObservation
+                    resourceTypeEpisodeOfCare
+                    resourceTypeServiceRequest
+                    resourceTypeMedicationRequest
+
+                isCaseBasedProfile
+                caseBasedPrimaryResourceType
+                caseBasedPrimaryResourceUUID
+                patientIdentifierType
+
+                encounterTypeUUIDS
+                observationCodeUUIDS
+                episodeOfCareUUIDS
 
                 jq.get('${ ui.actionLink("ugandaemrsync","syncFhirProfile","getSyncFhirProfile",) }', {
                     "profileId": profileId
@@ -52,6 +98,11 @@
                     modal.find("#password").val(syncFhirProfile.syncFhirProfile.urlPassword);
                     modal.find("#url").val(syncFhirProfile.syncFhirProfile.url);
                     modal.find("#token").val(syncFhirProfile.syncFhirProfile.urlToken);
+
+
+
+
+
                     if (!response) {
                         ${ ui.message("coreapps.none ") }
                     }
@@ -278,7 +329,6 @@
                                                                     </label>
                                                                 </div>
 
-
                                                                 <div class="form-check">
                                                                     <input type="checkbox" id="resourcePatient"
                                                                            name="resourceType"
@@ -351,7 +401,6 @@
                                                                         MedicationRequest (Medication Orders)
                                                                     </label>
                                                                 </div>
-
                                                             </div>
                                                         </div>
                                                     </div>
@@ -379,7 +428,6 @@
                                                         Is Profile Case Based
                                                     </label>
                                                 </div>
-
                                                 <div class="form-group">
                                                     <label>Case Based Primary Resource Type</label>
                                                     <select class="form-control" name="caseBasedPrimaryResourceType"
