@@ -52,7 +52,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_UUI
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.OBSERVATION_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIRSERVER_SYNC_TASK_TYPE_UUID;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE_TO_FORMAT;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_TRANSACTION;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_POST;
@@ -251,30 +250,6 @@ public class SyncFHIRRecord {
         }
 
         return groupInBundles(resourceType, results, interval, null);
-    }
-
-    public List<Map> sendFHIRBundleObject(String resourceType, JSONObject filterObject) {
-        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(FHIRSERVER_SYNC_TASK_TYPE_UUID);
-
-        List<Map> maps = new ArrayList<>();
-        String globalProperty = Context.getAdministrationService().getGlobalProperty(String.format(LAST_SYNC_DATE_TO_FORMAT, resourceType));
-        Collection<String> rescourceBundles = proccessBuldeFHIRResources(resourceType, globalProperty);
-
-        for (String bundle : rescourceBundles) {
-
-            try {
-                Map map = null;
-                map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", bundle, false);
-                map.put("DataType", resourceType);
-                map.put("uuid", "");
-                maps.add(map);
-            } catch (Exception e) {
-                log.error(e);
-            }
-        }
-
-
-        return maps;
     }
 
     public List<Map> syncFHIRData() {
