@@ -108,7 +108,7 @@ public class ViralLoadUploadPageController {
                                 Order viralLoadOrder = null;
                                 try{
                                 for (Order order : encounters.get(0).getOrders()) {
-                                    if (order.getConcept().getConceptId() == 165412 && order.isActive() && order.getInstructions().equals("REFER TO cphl")) {
+                                    if (order.getConcept().getConceptId() == 165412 && order.isActive() && order.getInstructions()!=null && order.getInstructions().equals("REFER TO cphl")) {
                                         viralLoadOrder = order;
                                         break;
                                     }
@@ -141,7 +141,6 @@ public class ViralLoadUploadPageController {
             pageModel.put("errorMessage", "Upload failed due to some errors, Contact System Administrator");
             log.error("Failed to read file", e);
         }
-
     }
 
 }

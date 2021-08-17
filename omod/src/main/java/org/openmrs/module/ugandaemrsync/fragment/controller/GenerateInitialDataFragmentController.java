@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.ugandaemrsync.fragment.controller;
 
+import org.openmrs.api.context.Context;
 import org.openmrs.module.appui.UiSessionContext;
 import org.openmrs.module.ugandaemrsync.server.SyncDataRecord;
 import org.openmrs.ui.framework.annotation.SpringBean;
@@ -21,17 +22,16 @@ import java.util.List;
  *  * Controller for a fragment that shows all users  
  */
 public class GenerateInitialDataFragmentController {
-	
-	SyncDataRecord syncDataRecord = new SyncDataRecord();
+
 	
 	public void controller(UiSessionContext sessionContext, FragmentModel model) {
 	}
 	
 	public void get(@SpringBean PageModel pageModel) throws Exception {
-		
+		SyncDataRecord syncDataRecord = new SyncDataRecord();
 		List totals = syncDataRecord.syncData();
-		
 		pageModel.put("persons", totals);
+
 		
 	}
 	

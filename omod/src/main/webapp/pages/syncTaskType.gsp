@@ -48,6 +48,7 @@
                 }, function (response) {
                     var syncTaskType=JSON.parse(response.replace("syncTaskType=", "\"syncTaskType\":").trim());
 
+
                     modal.find("#syncTaskTypeId").val(syncTaskTypeId);
                     modal.find("#syncTaskTypeName").val(syncTaskType.syncTaskType.name);
                     modal.find("#dataType select").find().val(syncTaskType.syncTaskType.dataType);

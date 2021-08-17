@@ -19,13 +19,14 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
-import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * The main service of this module, which is exposed for other modules. See
@@ -167,14 +168,19 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 	 */
 	public String getHealthCenterName();
 
-    /**
-     * This Method gets the patient identifier that is based on patient Identifier type and the patient
-     * @param patient the patient whose identifier is being searched
-     * @param patientIdentifierTypeUUID the uuid of the patient identifier type that is being search
-     * @return the identifier that matches both the patient and the patient identifier type UUID
-     */
-    public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID);
+	/**
+	 * This Method gets the patient identifier that is based on patient Identifier type and the patient
+	 * @param patient the patient whose identifier is being searched
+	 * @param patientIdentifierTypeUUID the uuid of the patient identifier type that is being search
+	 * @return the identifier that matches both the patient and the patient identifier type UUID
+	 */
+	public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID);
 
+	/**
+	 * Gets UgandaEMR Properties Set in the file.
+	 * @return
+	 */
+	public Properties getUgandaEMRProperties();
 
     /**
      * This Method saves a Sync FHIR Profile
@@ -251,12 +257,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public List<SyncFhirResource> getExpiredSyncFHIRResources(Date date);
 
 
-	/**
-	 * gets all expired resources based on date passed
-	 * @param syncFhirProfile the profile that generated the resources
-	 * @return a list of expired resources
-	 */
-	public List<SyncFhirResource> getUnSyncedFHirResources(SyncFhirProfile syncFhirProfile);
+    /**
+     * gets all expired resources based on date passed
+     * @param syncFhirProfile the profile that generated the resources
+     * @return a list of expired resources
+     */
+    public List<SyncFhirResource> getUnSyncedFHirResources(SyncFhirProfile syncFhirProfile);
 
     /**
      * Purges all resources that have  expired

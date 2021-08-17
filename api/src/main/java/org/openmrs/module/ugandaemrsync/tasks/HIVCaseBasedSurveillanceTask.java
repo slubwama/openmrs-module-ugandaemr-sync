@@ -10,9 +10,9 @@ public class HIVCaseBasedSurveillanceTask extends AbstractTask {
     @Override
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("CBS FHIR SYNC TEST");
+        SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("HIV CASE BASED SURVEILLANCE");
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
-
         syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
+        syncFHIRRecord.sendFhirResourcesTo(syncFhirProfile);
     }
 }
