@@ -15,15 +15,14 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.*;
+import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.FhirEncounterService;
 import org.openmrs.module.fhir2.api.FhirPersonService;
-import org.openmrs.module.fhir2.api.FhirEncounterService;
 import org.openmrs.module.fhir2.api.FhirObservationService;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
-import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
@@ -57,6 +56,7 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_C
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_POST;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_PUT;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_ROLE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_CODING_DATATYPE;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -66,6 +66,8 @@ public class SyncFHIRRecord {
     UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 
     Log log = LogFactory.getLog(SyncFHIRRecord.class);
+
+    private SyncFhirProfile syncFhirProfile;
 
     String healthCenterIdentifier;
     String lastSyncDate;
@@ -295,6 +297,8 @@ public class SyncFHIRRecord {
             return null;
         }
 
+        this.syncFhirProfile = syncFhirProfile;
+
         Collection<SyncFhirResource> syncFhirResources = new ArrayList<>();
 
         List<org.openmrs.PatientProgram> patientProgramList;
@@ -463,6 +467,8 @@ public class SyncFHIRRecord {
         Collection<String> stringCollection = new ArrayList<>();
         List<org.openmrs.Encounter> encounters = new ArrayList<>();
 
+        this.syncFhirProfile = syncFhirProfile;
+
         Date currentDate = new Date();
 
         String[] resourceTypes = syncFhirProfile.getResourceTypes().split(",");
@@ -627,6 +633,8 @@ public class SyncFHIRRecord {
                 } else resourceIdentifier = jsonObject.get("id").toString();
 
                 jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
+            } else if (resourceType.equals("Observation")) {
+                jsonString = addReferencesMappingToObservation(wrapResourceInPostRequest(jsonString));
             } else {
                 jsonString = wrapResourceInPostRequest(jsonString);
             }
@@ -904,6 +912,41 @@ public class SyncFHIRRecord {
         }
 
         return maps;
+    }
+
+
+    private String addReferencesMappingToObservation(String observation) {
+        ConceptService conceptService = Context.getConceptService();
+        JSONObject jsonObject = new JSONObject(observation);
+        JSONObject observationResource = jsonObject.getJSONObject("resource");
+        String conceptUUid = observationResource.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
+
+
+        Concept concept = conceptService.getConceptByUuid(conceptUUid);
+
+        if (concept.getConceptMappings().size() > 0) {
+
+            JSONArray newQuestionJson = observationResource.getJSONObject("code").getJSONArray("coding");
+
+            for (ConceptMap conceptQuestionMap : concept.getConceptMappings()) {
+                newQuestionJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptQuestionMap.getConceptReferenceTerm().getConceptSource().getName(), conceptQuestionMap.getConceptReferenceTerm().getCode(), conceptQuestionMap.getConceptReferenceTerm().getName())));
+            }
+
+        }
+
+        if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0"))) {
+
+            JSONArray newValueCodeableJson = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding");
+
+            Concept valueCodedConcept = conceptService.getConceptByUuid(conceptUUid);
+
+
+            for (ConceptMap conceptMap : valueCodedConcept.getConceptMappings()) {
+                newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptMap.getConceptReferenceTerm().getConceptSource().getName(), conceptMap.getConceptReferenceTerm().getCode(), conceptMap.getConceptReferenceTerm().getName())));
+            }
+        }
+
+        return jsonObject.toString();
     }
 
 

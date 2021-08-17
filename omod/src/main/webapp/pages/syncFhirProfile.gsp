@@ -55,15 +55,13 @@
                 modal.find("resourceTypeMedicationRequest").checked = false;
 
 
-
-
                 modal.find("#username").val("");
                 modal.find("#password").val("");
                 modal.find("#url").val("");
                 modal.find("#token").val("");
 
 
-                generateBundle
+  /*              generateBundle
                 noOfResourcesInBundle
                 durationToKeepSyncedResources
 
@@ -83,7 +81,7 @@
 
                 encounterTypeUUIDS
                 observationCodeUUIDS
-                episodeOfCareUUIDS
+                episodeOfCareUUIDS*/
 
                 jq.get('${ ui.actionLink("ugandaemrsync","syncFhirProfile","getSyncFhirProfile",) }', {
                     "profileId": profileId
@@ -92,8 +90,28 @@
 
                     modal.find("#profileId").val(profileId);
                     modal.find("#syncFhirProfileName").val(syncFhirProfile.syncFhirProfile.name);
-                    modal.find("#dataType select").find().val(syncFhirProfile.syncFhirProfile.dataType);
-                    modal.find("#dataTypeId").val(syncFhirProfile.syncFhirProfile.dataTypeId);
+
+                    modal.find("#encounterTypeUUIDS").val("");
+                    modal.find("#observationCodeUUIDS").val("");
+                    modal.find("#episodeOfCareUUIDS").val("");
+                    modal.find("#caseBasedPrimaryResourceUUID").val("");
+                    modal.find("#durationToKeepSyncedResources").val("");
+                    modal.find("#noOfResourcesInBundle").val("");
+
+                    modal.find("#dataType select").find().val("");
+                    modal.find("#caseBasedPrimaryResourceType select").find().val("");
+                    modal.find("#patientIdentifierType select").find().val("");
+
+                    modal.find("isCaseBasedProfile").checked = false;
+                    modal.find("generateBundle").checked = false;
+                    modal.find("resourceTypeEncounter").checked = false;
+                    modal.find("resourcePatient").checked = false;
+                    modal.find("resourceTypePerson").checked = false;
+                    modal.find("resourceTypeObservation").checked = false;
+                    modal.find("resourceTypeEpisodeOfCare").checked = false;
+                    modal.find("resourceTypeServiceRequest").checked = false;
+                    modal.find("resourceTypeMedicationRequest").checked = false;
+
                     modal.find("#username").val(syncFhirProfile.syncFhirProfile.urlUserName);
                     modal.find("#password").val(syncFhirProfile.syncFhirProfile.urlPassword);
                     modal.find("#url").val(syncFhirProfile.syncFhirProfile.url);
