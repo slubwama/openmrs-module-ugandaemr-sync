@@ -27,6 +27,7 @@
             jq('#addEditSyncFhirProfileModel').on('show.bs.modal', function (event) {
                 var button = jq(event.relatedTarget);
                 var profileId = button.data('syncfhirprofileid');
+                var duplicate = button.data('duplicate');
                 var modal = jq(this);
 
                 modal.find("#profileId").val("");
@@ -64,7 +65,10 @@
                 }, function (response) {
                     var syncFhirProfile = JSON.parse(response.replace("syncFhirProfile=", "\"syncFhirProfile\":").trim());
 
-                    modal.find("#profileId").val(profileId);
+                    if (!duplicate) {
+                        modal.find("#profileId").val(profileId);
+                    }
+
                     modal.find("#syncFhirProfileName").val(syncFhirProfile.syncFhirProfile.name);
 
 
@@ -214,7 +218,12 @@
                     <td>${it?.uuid}</td>
                     <td>
                         <i style="font-size: 25px" data-toggle="modal" data-target="#addEditSyncFhirProfileModel"
-                           data-syncfhirprofileid="${it.uuid}" class="icon-edit edit-action" title="Edit"></i>
+                           data-syncfhirprofileid="${it.uuid}" data-duplicate="false" class="icon-edit edit-action"
+                           title="Edit"></i>
+
+                        <i style="font-size: 25px" data-toggle="modal" data-target="#addEditSyncFhirProfileModel"
+                           data-syncfhirprofileid="${it.uuid}" data-duplicate="true" class="icon-copy edit-action"
+                           title="Duplicate"></i>
                     </td>
                     <% }
                     } %>

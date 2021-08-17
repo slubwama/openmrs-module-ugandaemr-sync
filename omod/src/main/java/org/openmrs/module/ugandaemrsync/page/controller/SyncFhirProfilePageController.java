@@ -66,50 +66,33 @@ public class SyncFhirProfilePageController {
         }
 
         String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterArray.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareArray.toString());
-
+        SyncFhirProfile syncFhirProfile;
 
         if (profileId.equals("")) {
-            SyncFhirProfile newSyncFhirProfile = new SyncFhirProfile();
-
-            newSyncFhirProfile.setName(syncFhirProfileName);
-            newSyncFhirProfile.setResourceTypes(resourceType);
-            newSyncFhirProfile.setCaseBasedProfile(isCaseBasedProfile);
-            newSyncFhirProfile.setDurationToKeepSyncedResources(durationToKeepSyncedResources);
-            newSyncFhirProfile.setGenerateBundle(generateBundle);
-            newSyncFhirProfile.setCaseBasedPrimaryResourceType(caseBasedPrimaryResourceType);
-            newSyncFhirProfile.setCaseBasedPrimaryResourceTypeId(caseBasedPrimaryResourceUUID);
-            newSyncFhirProfile.setPatientIdentifierType(Context.getPatientService().getPatientIdentifierTypeByUuid(patientIdentifierType));
-            newSyncFhirProfile.setNumberOfResourcesInBundle(noOfResourcesInBundle);
-            newSyncFhirProfile.setResourceSearchParameter(resourceSearchParams);
-            newSyncFhirProfile.setUrl(url);
-            newSyncFhirProfile.setUrlUserName(username);
-            newSyncFhirProfile.setUrlPassword(password);
-            newSyncFhirProfile.setUrlToken(token);
-            newSyncFhirProfile.setCreator(Context.getAuthenticatedUser());
-            newSyncFhirProfile.setDateCreated(new Date());
-            ugandaEMRSyncService.saveSyncFhirProfile(newSyncFhirProfile);
-
+            syncFhirProfile = new SyncFhirProfile();
+            syncFhirProfile.setCreator(Context.getAuthenticatedUser());
+            syncFhirProfile.setDateCreated(new Date());
         } else {
-            SyncFhirProfile syncFhirProfile = Context.getService(UgandaEMRSyncService.class).getSyncFhirProfileByUUID(profileId);
-
-            syncFhirProfile.setName(syncFhirProfileName);
-            syncFhirProfile.setResourceTypes(resourceType);
-            syncFhirProfile.setDurationToKeepSyncedResources(durationToKeepSyncedResources);
-            syncFhirProfile.setGenerateBundle(generateBundle);
-            syncFhirProfile.setCaseBasedProfile(isCaseBasedProfile);
-            syncFhirProfile.setCaseBasedPrimaryResourceType(caseBasedPrimaryResourceType);
-            syncFhirProfile.setCaseBasedPrimaryResourceTypeId(caseBasedPrimaryResourceUUID);
-            syncFhirProfile.setPatientIdentifierType(Context.getPatientService().getPatientIdentifierTypeByUuid(patientIdentifierType));
-            syncFhirProfile.setNumberOfResourcesInBundle(noOfResourcesInBundle);
-            syncFhirProfile.setResourceSearchParameter(resourceSearchParams);
-            syncFhirProfile.setUrl(url);
-            syncFhirProfile.setUrlUserName(username);
-            syncFhirProfile.setUrlPassword(password);
-            syncFhirProfile.setUrlToken(token);
+            syncFhirProfile = Context.getService(UgandaEMRSyncService.class).getSyncFhirProfileByUUID(profileId);
             syncFhirProfile.setDateChanged(new Date());
             syncFhirProfile.setChangedBy(Context.getAuthenticatedUser());
-            ugandaEMRSyncService.saveSyncFhirProfile(syncFhirProfile);
         }
+
+        syncFhirProfile.setName(syncFhirProfileName);
+        syncFhirProfile.setGenerateBundle(generateBundle);
+        syncFhirProfile.setNumberOfResourcesInBundle(noOfResourcesInBundle);
+        syncFhirProfile.setResourceTypes(resourceType);
+        syncFhirProfile.setDurationToKeepSyncedResources(durationToKeepSyncedResources);
+        syncFhirProfile.setCaseBasedProfile(isCaseBasedProfile);
+        syncFhirProfile.setCaseBasedPrimaryResourceType(caseBasedPrimaryResourceType);
+        syncFhirProfile.setCaseBasedPrimaryResourceTypeId(caseBasedPrimaryResourceUUID);
+        syncFhirProfile.setPatientIdentifierType(Context.getPatientService().getPatientIdentifierTypeByUuid(patientIdentifierType));
+        syncFhirProfile.setResourceSearchParameter(resourceSearchParams);
+        syncFhirProfile.setUrl(url);
+        syncFhirProfile.setUrlUserName(username);
+        syncFhirProfile.setUrlPassword(password);
+        syncFhirProfile.setUrlToken(token);
+        ugandaEMRSyncService.saveSyncFhirProfile(syncFhirProfile);
 
         pageModel.put("syncFhirProfiles", ugandaEMRSyncService.getAllSyncFhirProfile());
         pageModel.put("patientIdentifierType", Context.getPatientService().getAllPatientIdentifierTypes());
