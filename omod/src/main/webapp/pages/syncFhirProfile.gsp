@@ -5,7 +5,6 @@
     ui.includeJavascript("uicommons", "bootstrap-transition.js")
     ui.includeCss("uicommons", "styleguide/index.styles")
     ui.includeCss("uicommons", "datatables/dataTables_jui.styles")
-    ui.includeJavascript("ugandaemrsync", "synctasktype.js")
 %>
 <script type="text/javascript">
     var breadcrumbs = [
@@ -27,7 +26,7 @@
         jq(document).ready(function () {
             jq('#addEditSyncFhirProfileModel').on('show.bs.modal', function (event) {
                 var button = jq(event.relatedTarget);
-                var profileId = button.data('synctaskid');
+                var profileId = button.data('syncfhirprofileid');
                 var modal = jq(this);
 
                 modal.find("#profileId").val("");
@@ -60,29 +59,6 @@
                 modal.find("#url").val("");
                 modal.find("#token").val("");
 
-
-  /*              generateBundle
-                noOfResourcesInBundle
-                durationToKeepSyncedResources
-
-                resourceType
-                    resourceTypeEncounter
-                    resourcePatient
-                    resourceTypePerson
-                    resourceTypeObservation
-                    resourceTypeEpisodeOfCare
-                    resourceTypeServiceRequest
-                    resourceTypeMedicationRequest
-
-                isCaseBasedProfile
-                caseBasedPrimaryResourceType
-                caseBasedPrimaryResourceUUID
-                patientIdentifierType
-
-                encounterTypeUUIDS
-                observationCodeUUIDS
-                episodeOfCareUUIDS*/
-
                 jq.get('${ ui.actionLink("ugandaemrsync","syncFhirProfile","getSyncFhirProfile",) }', {
                     "profileId": profileId
                 }, function (response) {
@@ -91,34 +67,40 @@
                     modal.find("#profileId").val(profileId);
                     modal.find("#syncFhirProfileName").val(syncFhirProfile.syncFhirProfile.name);
 
-                    modal.find("#encounterTypeUUIDS").val("");
-                    modal.find("#observationCodeUUIDS").val("");
-                    modal.find("#episodeOfCareUUIDS").val("");
-                    modal.find("#caseBasedPrimaryResourceUUID").val("");
-                    modal.find("#durationToKeepSyncedResources").val("");
-                    modal.find("#noOfResourcesInBundle").val("");
 
-                    modal.find("#dataType select").find().val("");
-                    modal.find("#caseBasedPrimaryResourceType select").find().val("");
-                    modal.find("#patientIdentifierType select").find().val("");
+                    modal.find("#generateBundle").attr('checked', syncFhirProfile.syncFhirProfile.generateBundle);
+                    modal.find("#noOfResourcesInBundle").val(syncFhirProfile.syncFhirProfile.noOfResourcesInBundle);
 
-                    modal.find("isCaseBasedProfile").checked = false;
-                    modal.find("generateBundle").checked = false;
-                    modal.find("resourceTypeEncounter").checked = false;
-                    modal.find("resourcePatient").checked = false;
-                    modal.find("resourceTypePerson").checked = false;
-                    modal.find("resourceTypeObservation").checked = false;
-                    modal.find("resourceTypeEpisodeOfCare").checked = false;
-                    modal.find("resourceTypeServiceRequest").checked = false;
-                    modal.find("resourceTypeMedicationRequest").checked = false;
+                    modal.find("#durationToKeepSyncedResources").val(syncFhirProfile.syncFhirProfile.durationToKeepSyncedResources);
+
+                    modal.find("#isCaseBasedProfile").attr('checked', syncFhirProfile.syncFhirProfile.isCaseBasedProfile);
+                    modal.find("#caseBasedPrimaryResourceType").val(syncFhirProfile.syncFhirProfile.caseBasedPrimaryResourceType);
+                    modal.find("#caseBasedPrimaryResourceUUID").val(syncFhirProfile.syncFhirProfile.caseBasedPrimaryResourceUUID);
+
+                    modal.find("#patientIdentifierType").val(syncFhirProfile.syncFhirProfile.patientIdentifierType);
+
+                    var resourceType = syncFhirProfile.syncFhirProfile.resourceTypes.split(",");
+
+                    resourceType.forEach(function (item, index) {
+                        modal.find("#resourceType" + item).attr('checked', true);
+                    });
+
+                    var encounterFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).encounterFilter.type;
+
+                    var obervationFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).observationFilter.code;
+
+                    var episodeOfCareFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).episodeOfCareFilter.type;
+
+
+                    modal.find("#encounterTypeUUIDS").val(encounterFilters);
+                    modal.find("#observationCodeUUIDS").val(obervationFilters);
+                    modal.find("#episodeOfCareUUIDS").val(episodeOfCareFilters);
+
 
                     modal.find("#username").val(syncFhirProfile.syncFhirProfile.urlUserName);
                     modal.find("#password").val(syncFhirProfile.syncFhirProfile.urlPassword);
                     modal.find("#url").val(syncFhirProfile.syncFhirProfile.url);
                     modal.find("#token").val(syncFhirProfile.syncFhirProfile.urlToken);
-
-
-
 
 
                     if (!response) {
@@ -193,7 +175,7 @@
                     <div class="">
 
                         <button type="button" style="font-size: 25px" class="confirm icon-plus-sign" data-toggle="modal"
-                                data-target="#addEditSyncFhirProfileModel" data-whatever="@mdo"> Create </button>
+                                data-target="#addEditSyncFhirProfileModel" data-whatever="@mdo">Create</button>
                     </div>
 
                     <div class="vertical"></div>
@@ -232,7 +214,7 @@
                     <td>${it?.uuid}</td>
                     <td>
                         <i style="font-size: 25px" data-toggle="modal" data-target="#addEditSyncFhirProfileModel"
-                           data-synctaskid="${it.uuid}" class="icon-edit edit-action" title="Edit"></i>
+                           data-syncfhirprofileid="${it.uuid}" class="icon-edit edit-action" title="Edit"></i>
                     </td>
                     <% }
                     } %>
@@ -348,11 +330,11 @@
                                                                 </div>
 
                                                                 <div class="form-check">
-                                                                    <input type="checkbox" id="resourcePatient"
+                                                                    <input type="checkbox" id="resourceTypePatient"
                                                                            name="resourceType"
                                                                            value="Patient" class="resourceType">
                                                                     <label class="form-check-label "
-                                                                           for="resourcePatient">
+                                                                           for="resourceTypePatient">
                                                                         Patient
                                                                     </label>
                                                                 </div>
@@ -446,6 +428,7 @@
                                                         Is Profile Case Based
                                                     </label>
                                                 </div>
+
                                                 <div class="form-group">
                                                     <label>Case Based Primary Resource Type</label>
                                                     <select class="form-control" name="caseBasedPrimaryResourceType"
@@ -512,7 +495,7 @@
                                                     <label>Observation Concept  UUIDS</label>
                                                     <input type="text" class="form-control resourceTypeFilter"
                                                            id="observationCodeUUIDS"
-                                                           placeholder="comma separate concept  uuids"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
                                                            name="observationCodeUUIDS">
                                                 </div>
 

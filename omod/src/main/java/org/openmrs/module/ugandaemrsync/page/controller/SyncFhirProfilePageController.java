@@ -1,6 +1,7 @@
 package org.openmrs.module.ugandaemrsync.page.controller;
 
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.appui.UiSessionContext;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -12,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_FILTER_OBJECT_STRING;
 
@@ -42,9 +45,9 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "caseBasedPrimaryResourceUUID", required = false) String caseBasedPrimaryResourceUUID,
                      @RequestParam(value = "patientIdentifierType", required = false) String patientIdentifierType,
                      @RequestParam(value = "noOfResourcesInBundle", required = false) Integer noOfResourcesInBundle,
-                     @RequestParam(value = "encounterTypeUUIDS", required = false) ArrayList encounterTypeUUIDS,
+                     @RequestParam(value = "encounterTypeUUIDS", required = false) String encounterTypeUUIDS,
                      @RequestParam(value = "observationCodeUUIDS", required = false) ArrayList observationCodeUUIDs,
-                     @RequestParam(value = "episodeOfCareUUIDS", required = false) ArrayList episodeOfCareUUIDS,
+                     @RequestParam(value = "episodeOfCareUUIDS", required = false) String episodeOfCareUUIDS,
                      @RequestParam(value = "url", required = false) String url,
                      @RequestParam(value = "username", required = false) String username,
                      @RequestParam(value = "password", required = false) String password,
@@ -52,7 +55,17 @@ public class SyncFhirProfilePageController {
                      UiSessionContext uiSessionContext, UiUtils uiUtils, HttpServletRequest request) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterTypeUUIDS.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareUUIDS.toString());
+        JSONArray encounterArray = new JSONArray();
+        if (encounterTypeUUIDS.split(",").length > 0) {
+            encounterArray = new JSONArray(encounterTypeUUIDS.split(","));
+        }
+
+        JSONArray episodeOfCareArray = new JSONArray();
+        if (episodeOfCareUUIDS.split(",").length > 0) {
+            episodeOfCareArray = new JSONArray(episodeOfCareUUIDS.split(","));
+        }
+
+        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterArray.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareArray.toString());
 
 
         if (profileId.equals("")) {
@@ -98,6 +111,7 @@ public class SyncFhirProfilePageController {
             ugandaEMRSyncService.saveSyncFhirProfile(syncFhirProfile);
         }
 
-        pageModel.put("syncFhirProfile", ugandaEMRSyncService.getAllSyncFhirProfile());
+        pageModel.put("syncFhirProfiles", ugandaEMRSyncService.getAllSyncFhirProfile());
+        pageModel.put("patientIdentifierType", Context.getPatientService().getAllPatientIdentifierTypes());
     }
 }
