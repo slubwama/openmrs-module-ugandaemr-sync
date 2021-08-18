@@ -501,7 +501,7 @@
                                                 </div>
 
                                                 <div class="form-group">
-                                                    <label>Observation Concept  UUIDS</label>
+                                                    <label>Observation Concept  IDS</label>
                                                     <input type="text" class="form-control resourceTypeFilter"
                                                            id="observationCodeUUIDS"
                                                            placeholder="comma separate concept IDs eg 99046,47453"
