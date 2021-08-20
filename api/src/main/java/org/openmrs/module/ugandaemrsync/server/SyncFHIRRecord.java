@@ -15,16 +15,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import org.openmrs.Patient;
-import org.openmrs.PatientProgram;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.Person;
-import org.openmrs.EncounterRole;
-import org.openmrs.Provider;
-import org.openmrs.Concept;
-import org.openmrs.ConceptMap;
-import org.openmrs.Obs;
+import org.openmrs.*;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
@@ -309,6 +300,8 @@ public class SyncFHIRRecord {
 
 
     public Collection<SyncFhirResource> generateCaseBasedFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
+
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         if (syncFhirProfile != null && (!syncFhirProfile.getCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
             return null;
         }
@@ -317,11 +310,50 @@ public class SyncFHIRRecord {
 
         Collection<SyncFhirResource> syncFhirResources = new ArrayList<>();
 
+
+        List<Integer> savedResourcesIds = new ArrayList<>();
+
+        Date currentDate = new Date();
+
+        identifyNewCases(syncFhirProfile, currentDate);
+
+
+        List<SyncFhirCase> syncFhirCases = ugandaEMRSyncService.getSyncFhirCasesByProfile(syncFhirProfile);
+
+        for (SyncFhirCase syncFhirCase : syncFhirCases) {
+            SyncFhirResource syncFhirResource = saveCaseResources(syncFhirProfile, syncFhirCase);
+            if (syncFhirResource != null) {
+                savedResourcesIds.add(syncFhirResource.getId());
+            }
+        }
+
+        if (savedResourcesIds.size() > 0) {
+            SyncFhirProfileLog syncFhirProfileLog = new SyncFhirProfileLog();
+            syncFhirProfileLog.setNumberOfResources(syncFhirResources.size());
+            syncFhirProfileLog.setProfile(syncFhirProfile);
+            assert syncFhirProfile != null;
+            syncFhirProfileLog.setResourceType(syncFhirProfile.getCaseBasedPrimaryResourceType());
+            syncFhirProfileLog.setLastGenerationDate(currentDate);
+            ugandaEMRSyncService.saveSyncFhirProfileLog(syncFhirProfileLog);
+        }
+
+        return syncFhirResources;
+    }
+
+
+    /**
+     * Create and Identify new cases based on a given Sync Fhir Profile
+     *
+     * @param syncFhirProfile the profile for which the cases belong to
+     * @param currentDate     Date when this task is being executed,
+     */
+    public void identifyNewCases(SyncFhirProfile syncFhirProfile, Date currentDate) {
+
+        DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+
         List<org.openmrs.PatientProgram> patientProgramList;
 
         List<org.openmrs.Encounter> encounterList;
-
-        Date currentDate = new Date();
 
         if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("EpisodeOfCare")) {
             List<org.openmrs.Program> programs = new ArrayList<>();
@@ -330,77 +362,67 @@ public class SyncFHIRRecord {
             programs.add(Context.getProgramWorkflowService().getProgramByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId()));
 
             for (org.openmrs.PatientProgram patientProgram : patientProgramList) {
-
                 org.openmrs.Patient patient = patientProgram.getPatient();
                 String caseIdentifier = patientProgram.getUuid();
-                SyncFhirResource syncFHIRResource = saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
-                if (syncFHIRResource != null)
-                    syncFhirResources.add(syncFHIRResource);
+                saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
             }
         } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("Encounter")) {
             List<org.openmrs.EncounterType> encounterTypes = new ArrayList<>();
-            DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Encounter"));
 
             encounterTypes.add(Context.getEncounterService().getEncounterTypeByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId()));
 
-            EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(null, null, encounterLastUpdated.getLowerBoundAsInstant(), encounterLastUpdated.getUpperBoundAsInstant(), null, null, encounterTypes, null, null, null, false);
-            encounterList = Context.getEncounterService().getEncounters(encounterSearchCriteria);
+            EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(null, null, null, null, null, null, encounterTypes, null, null, null, false);
 
-            for (org.openmrs.Encounter encounter : encounterList) {
+            Collection<Patient> patientArrayList = Context.getEncounterService().getEncounters(encounterSearchCriteria).stream().map(Encounter::getPatient).collect(Collectors.toCollection(ArrayList::new));
 
-                org.openmrs.Patient patient = encounter.getPatient();
+            for (org.openmrs.Patient patient : patientArrayList) {
 
-                String caseIdentifier = patient.getPatientIdentifier(syncFhirProfile.getPatientIdentifierType().getId()).getIdentifier();
-                SyncFhirResource syncFHIRResource = saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
-                if (syncFHIRResource != null)
-                    syncFhirResources.add(syncFHIRResource);
+                PatientIdentifier patientIdentifier = getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType());
+
+                if (patientIdentifier != null) {
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier.getIdentifier());
+                }
+
             }
         }
-
-        if (syncFhirResources.size() > 0) {
-            SyncFhirProfileLog syncFhirProfileLog = new SyncFhirProfileLog();
-            syncFhirProfileLog.setNumberOfResources(syncFhirResources.size());
-            syncFhirProfileLog.setProfile(syncFhirProfile);
-            syncFhirProfileLog.setResourceType(syncFhirProfile.getCaseBasedPrimaryResourceType());
-            syncFhirProfileLog.setLastGenerationDate(currentDate);
-            Context.getService(UgandaEMRSyncService.class).saveSyncFhirProfileLog(syncFhirProfileLog);
-        }
-
-        return syncFhirResources;
     }
 
-    public SyncFhirResource saveSyncFHIRCase(SyncFhirProfile syncFhirProfile, Date currentDate, org.openmrs.Patient patient, String caseIdentifier) {
+    public SyncFhirCase saveSyncFHIRCase(SyncFhirProfile syncFhirProfile, Date currentDate, org.openmrs.Patient patient, String caseIdentifier) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        SyncFhirCase syncFHIRCase = ugandaEMRSyncService.getSyncFHIRCaseBySyncFhirProfileAndPatient(syncFhirProfile, patient, caseIdentifier);
-        if (syncFHIRCase == null) {
-            syncFHIRCase = new SyncFhirCase();
-            syncFHIRCase.setCaseIdentifier(caseIdentifier);
-            syncFHIRCase.setPatient(patient);
-            syncFHIRCase.setProfile(syncFhirProfile);
-
+        SyncFhirCase syncFhirCase = ugandaEMRSyncService.getSyncFHIRCaseBySyncFhirProfileAndPatient(syncFhirProfile, patient, caseIdentifier);
+        if (syncFhirCase == null) {
+            syncFhirCase = new SyncFhirCase();
+            syncFhirCase.setCaseIdentifier(caseIdentifier);
+            syncFhirCase.setPatient(patient);
+            syncFhirCase.setProfile(syncFhirProfile);
+            syncFhirCase.setDateCreated(currentDate);
+            return ugandaEMRSyncService.saveSyncFHIRCase(syncFhirCase);
         }
 
-        String resource = generateFHIRCaseResource(syncFhirProfile, syncFHIRCase);
+        return null;
+
+    }
+
+    public SyncFhirResource saveCaseResources(SyncFhirProfile syncFhirProfile, SyncFhirCase syncFhirCase) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
         if (resource != null && !resource.equals("")) {
             SyncFhirResource syncFHIRResource = new SyncFhirResource();
             syncFHIRResource.setGeneratorProfile(syncFhirProfile);
             syncFHIRResource.setResource(resource);
             syncFHIRResource.setSynced(false);
             ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
-
-            syncFHIRCase.setLastUpdateDate(currentDate);
-            ugandaEMRSyncService.saveSyncFHIRCase(syncFHIRCase);
+            syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
             return syncFHIRResource;
+        } else {
+            return null;
         }
-        return null;
-
     }
 
 
     private String generateFHIRCaseResource(SyncFhirProfile syncFhirProfile, SyncFhirCase syncFHIRCase) {
 
         Collection<String> resources = new ArrayList<>();
-        StringBuilder resourcesToBundle = new StringBuilder();
         List<org.openmrs.Encounter> encounters = new ArrayList<>();
         Date currentDate = new Date();
         Date lastUpdateDate;
@@ -452,7 +474,7 @@ public class SyncFHIRRecord {
                     break;
                 case "Patient":
                     List<PatientIdentifier> patientIdentifiers = new ArrayList<>();
-                    patientIdentifiers.add(syncFHIRCase.getPatient().getPatientIdentifier(syncFhirProfile.getPatientIdentifierType()));
+                    patientIdentifiers.add(getPatientIdentifierByType(syncFHIRCase.getPatient(), syncFhirProfile.getPatientIdentifierType()));
                     resources.addAll(groupInCaseBundle("Patient", getPatientResourceBundle(syncFhirProfile, patientIdentifiers), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
@@ -786,11 +808,11 @@ public class SyncFHIRRecord {
 
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
-        if (personList != null) {
+        if (personList.size() > 0) {
             Collection<String> personListUUID = personList.stream().map(org.openmrs.Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
             iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
 
-        } else {
+        } else if (!syncFhirProfile.getCaseBasedProfile()) {
             iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(null, null, null, null,
                     null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
         }
@@ -801,17 +823,20 @@ public class SyncFHIRRecord {
 
     private Collection<IBaseResource> getEncounterResourceBundle(List<org.openmrs.Encounter> encounters) {
 
+
         Collection<String> encounterUUIDS = new ArrayList<>();
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
         TokenAndListParam encounterReference = new TokenAndListParam();
+
         for (org.openmrs.Encounter encounter : encounters) {
             encounterUUIDS.add(encounter.getUuid());
         }
 
 
-        getApplicationContext().getBean(FhirEncounterService.class).get(encounterUUIDS);
+        if (encounterUUIDS.size() > 0) {
+            iBaseResources.addAll(getApplicationContext().getBean(FhirEncounterService.class).get(encounterUUIDS));
+        }
 
-        iBaseResources.addAll(getApplicationContext().getBean(FhirEncounterService.class).get(encounterUUIDS));
 
         return iBaseResources;
     }
@@ -844,7 +869,10 @@ public class SyncFHIRRecord {
 
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
-        iBaseResources.addAll(getApplicationContext().getBean(FhirObservationService.class).get(obsListUUID));
+
+        if (obsListUUID.size() > 0) {
+            iBaseResources.addAll(getApplicationContext().getBean(FhirObservationService.class).get(obsListUUID));
+        }
 
 
         return iBaseResources;
@@ -963,6 +991,17 @@ public class SyncFHIRRecord {
         }
 
         return jsonObject.toString();
+    }
+
+
+    private PatientIdentifier getPatientIdentifierByType(Patient patient, PatientIdentifierType patientIdentifierType) {
+        for (PatientIdentifier patientIdentifier : patient.getActiveIdentifiers()) {
+            if (patientIdentifier.getIdentifierType().equals(patientIdentifierType)) {
+                return patientIdentifier;
+            }
+
+        }
+        return null;
     }
 
 

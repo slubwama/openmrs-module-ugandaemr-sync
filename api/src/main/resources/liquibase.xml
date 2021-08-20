@@ -426,7 +426,7 @@
             <column name="date_synced" type="datetime"/>
             <column name="expiry_date" type="datetime"/>
             <column name="generator_profile" type="INT"/>
-            <column name="resource" type="TEXT"/>
+            <column name="resource" type="MEDIUMTEXT"/>
             <column name="creator" type="INT"/>
             <column name="date_created" type="datetime"/>
             <column name="changed_by" type="INT"/>

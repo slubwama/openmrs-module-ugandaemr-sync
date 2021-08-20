@@ -26,7 +26,7 @@ public class SyncFhirCase extends BaseOpenmrsData {
     @JoinColumn(name = "profile")
     private SyncFhirProfile profile;
 
-    @Column(name = "last_date_updated", nullable = false)
+    @Column(name = "last_date_updated")
     private Date lastUpdateDate;
 
     public Integer getCaseId() {

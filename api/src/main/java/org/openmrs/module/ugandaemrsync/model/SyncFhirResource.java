@@ -34,7 +34,7 @@ public class SyncFhirResource extends BaseOpenmrsData {
     @JoinColumn(name = "generator_profile")
     private SyncFhirProfile generatorProfile;
 
-    @Column(name = "resource", length = 60000)
+    @Column(name = "resource", length = 1000000)
     @Type(type="text")
     private String resource;
 

@@ -32,87 +32,90 @@ import java.util.List;
 @Repository("ugandaemrsync.UgandaEMRSyncDao")
 public class UgandaEMRSyncDao {
 
-	@Autowired
-	DbSessionFactory sessionFactory;
+    @Autowired
+    DbSessionFactory sessionFactory;
 
-	/**
-	 * @return
-	 */
-	private DbSession getSession() {
-		return sessionFactory.getCurrentSession();
-	}
+    /**
+     * @return
+     */
+    private DbSession getSession() {
+        return sessionFactory.getCurrentSession();
+    }
 
-	/**
-	 /**
-	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTaskType()
-	 */
-	public List<SyncTaskType> getAllSyncTaskType() {
-		return (List<SyncTaskType>) getSession().createCriteria(SyncTaskType.class).list();
-	}
+    /**
+     * /**
+     *
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTaskType()
+     */
+    public List<SyncTaskType> getAllSyncTaskType() {
+        return (List<SyncTaskType>) getSession().createCriteria(SyncTaskType.class).list();
+    }
 
-	/**
-	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
-	 */
-	public SyncTaskType getSyncTaskTypeByUUID(String uuid) {
-		return (SyncTaskType) getSession().createCriteria(SyncTaskType.class).add(Restrictions.eq("uuid", uuid))
-		        .uniqueResult();
-	}
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
+     */
+    public SyncTaskType getSyncTaskTypeByUUID(String uuid) {
+        return (SyncTaskType) getSession().createCriteria(SyncTaskType.class).add(Restrictions.eq("uuid", uuid))
+                .uniqueResult();
+    }
 
-	/**
-	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
-	 */
-	public SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) {
-		getSession().saveOrUpdate(syncTaskType);
-		return syncTaskType;
-	}
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
+     */
+    public SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) {
+        getSession().saveOrUpdate(syncTaskType);
+        return syncTaskType;
+    }
 
-	/**
-	 * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTaskBySyncTaskId(java.lang.String)
-	 */
-	public SyncTask getSyncTask(String syncTask) {
-		return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", syncTask))
-		        .uniqueResult();
-	}
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTaskBySyncTaskId(java.lang.String)
+     */
+    public SyncTask getSyncTask(String syncTask) {
+        return (SyncTask) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", syncTask))
+                .uniqueResult();
+    }
 
-	/**
-	 /**
-	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTask()
-	 */
-	public List<SyncTask> getAllSyncTask() {
-		return (List<SyncTask>) getSession().createCriteria(SyncTask.class).list();
-	}
+    /**
+     * /**
+     *
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTask()
+     */
+    public List<SyncTask> getAllSyncTask() {
+        return (List<SyncTask>) getSession().createCriteria(SyncTask.class).list();
+    }
 
 
-	/**
-	 /**
-	 *@see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTask(org.openmrs.module.ugandaemrsync.model.SyncTask)
-	 */
-	public SyncTask saveSyncTask(SyncTask syncTask) {
-		getSession().saveOrUpdate(syncTask);
-		return syncTask;
-	}
+    /**
+     * /**
+     *
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTask(org.openmrs.module.ugandaemrsync.model.SyncTask)
+     */
+    public SyncTask saveSyncTask(SyncTask syncTask) {
+        getSession().saveOrUpdate(syncTask);
+        return syncTask;
+    }
 
-	/**
-	 * @param query
-	 * @return
-	 */
-	public List getDatabaseRecord(String query) {
-		SQLQuery sqlQuery = getSession().createSQLQuery(query);
-		return sqlQuery.list();
-	}
-	
-	/**
-	 * @param columns
-	 * @param finalQuery
-	 * @return
-	 */
-	public List getFinalResults(List<String> columns, String finalQuery) {
-		SQLQuery sqlQuery = getSession().createSQLQuery(finalQuery);
-		for (String column : columns) {
-			sqlQuery.addScalar(column, StringType.INSTANCE);
-		}
-		return sqlQuery.list();
-	}
+    /**
+     * @param query
+     * @return
+     */
+    public List getDatabaseRecord(String query) {
+        SQLQuery sqlQuery = getSession().createSQLQuery(query);
+        return sqlQuery.list();
+    }
+
+    /**
+     * @param columns
+     * @param finalQuery
+     * @return
+     */
+    public List getFinalResults(List<String> columns, String finalQuery) {
+        SQLQuery sqlQuery = getSession().createSQLQuery(finalQuery);
+        for (String column : columns) {
+            sqlQuery.addScalar(column, StringType.INSTANCE);
+        }
+        return sqlQuery.list();
+    }
 
     /**
      * /**
@@ -219,7 +222,7 @@ public class UgandaEMRSyncDao {
     }
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile,java.lang.String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, java.lang.String)
      */
     public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType) {
         Criteria criteria = getSession().createCriteria(SyncFhirProfileLog.class);
@@ -234,7 +237,7 @@ public class UgandaEMRSyncDao {
     }
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile,org.openmrs.Patient,java.lang.String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile, org.openmrs.Patient, java.lang.String)
      */
     public SyncFhirCase getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile syncFhirProfile, Patient patient, String caseIdentifier) {
         Criteria criteria = getSession().createCriteria(SyncFhirCase.class);
@@ -272,6 +275,16 @@ public class UgandaEMRSyncDao {
         criteria.add(Restrictions.eq("generatorProfile", syncFhirProfile));
         criteria.add(Restrictions.eq("synced", false));
 
+        return criteria.list();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCasesByProfile(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
+     */
+    public List<SyncFhirCase> getSyncFhirCasesByProfile(SyncFhirProfile syncFhirProfile) {
+
+        Criteria criteria = getSession().createCriteria(SyncFhirCase.class);
+        criteria.add(Restrictions.eq("profile", syncFhirProfile));
         return criteria.list();
     }
 }
