@@ -581,4 +581,101 @@
     </changeSet>
 
 
+    <changeSet id="ugandaemrsync-20210821-0918" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '0e9fda72-877e-4b1c-a819-95e600c916de '
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  UgandaEMR Sync Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Send  Generated Fhir Resources" />
+            <column name="description" value="Sends Sync Fhir Resources to specified location" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendFhirResourceTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-08-21 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="0e9fda72-877e-4b1c-a819-95e600c916de " />
+        </insert>
+    </changeSet>
+
+    <changeSet id="20210821-1100" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '6a9b7f2e-0128-49a1-99a0-94a361b9e2ae'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  ART Access Integration Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="ART Access Integration" />
+            <column name="description" value="This task sends data to the ART Access System" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ARTAccessIntegrationTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-08-21 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="6a9b7f2e-0128-49a1-99a0-94a361b9e2ae" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="20210821-1101" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '6a9b7f2e-0128-49a1-99a0-94a361b9e2ae'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='0a7fff77-6ac7-416c-831e-4e3f1f2c853b';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting ART Access Integration syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+       <sql>
+           INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '6511be5a-72f2-4638-a60b-78e31c3e2b28', (select task_config_id from scheduler_task_config where uuid="6a9b7f2e-0128-49a1-99a0-94a361b9e2ae"));
+       </sql>
+    </changeSet>
+
+
+    <changeSet id="20210821-1103" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '56db6ac0-0e60-4ddc-8dfd-0035a4e64489'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  ART Access Integration Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="HIV CASE BASED SURVEILLANCE" />
+            <column name="description" value="The HIV Case Bases surveillance task" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.HIVCaseBasedSurveillanceTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-08-21 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="56db6ac0-0e60-4ddc-8dfd-0035a4e64489" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="20210821-1104" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '56db6ac0-0e60-4ddc-8dfd-0035a4e64489'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='6511be5a-72f2-4638-a60b-78e31c3e2b28';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting ART Access Integration syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '6511be5a-72f2-4638-a60b-78e31c3e2b28', (select task_config_id from scheduler_task_config where uuid="56db6ac0-0e60-4ddc-8dfd-0035a4e64489"));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

@@ -13,6 +13,5 @@ public class HIVCaseBasedSurveillanceTask extends AbstractTask {
         SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("HIV CASE BASED SURVEILLANCE");
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
         syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
-        syncFHIRRecord.sendFhirResourcesTo(syncFhirProfile);
     }
 }

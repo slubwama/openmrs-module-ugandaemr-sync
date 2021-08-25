@@ -1,6 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
 
+
+	<location  location_id="2"  name="Health Center Name"  description="Health Center Location" country="Uganda" creator="1"  date_created="2016-03-07 22:15:56"  retired="0"  uuid="629d78e9-93e5-43b0-ad8a-48313fd99117"  changed_by="1"  date_changed="2021-08-23 20:29:31"/>
+
+
 	<!-- Encounter Types -->
 	<encounter_type encounter_type_id="1" name="ART Card - Summary" description="Outpatient Adult Initial Visit" creator="1" date_created="2016-04-05 16:43:19.0" retired="false" uuid="8d5b27bc-c2cc-11de-8d13-0010c6dffd0f"/>
 	<encounter_type encounter_type_id="2" name="ART Card - Encounter" description="Outpatient Adult &amp; Child Return Visit" creator="1" date_created="2016-04-05 16:43:20.0" retired="false" uuid="8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"/>

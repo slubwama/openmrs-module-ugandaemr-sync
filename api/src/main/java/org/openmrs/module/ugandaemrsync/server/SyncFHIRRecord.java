@@ -77,12 +77,14 @@ public class SyncFHIRRecord {
     private SyncFhirProfile syncFhirProfile;
 
     String healthCenterIdentifier;
+    String healthCenterName;
     String lastSyncDate;
     private List<PatientProgram> patientPrograms;
 
 
     public SyncFHIRRecord() {
         healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
+        healthCenterName = Context.getLocationService().getLocationByUuid("629d78e9-93e5-43b0-ad8a-48313fd99117").getName();
         lastSyncDate = Context.getAdministrationService().getGlobalProperty(LAST_SYNC_DATE);
     }
 
@@ -164,7 +166,7 @@ public class SyncFHIRRecord {
 
                 if (!jsonData.equals("")) {
                     if (addOrganizationToRecord) {
-                        jsonData = addOrganizationToRecord(jsonData);
+                        jsonData = addOrganizationToRecord(jsonData,"managingOrganization");
                     }
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl() + dataType, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", jsonData, false);
                     map.put("DataType", dataType);
@@ -181,16 +183,32 @@ public class SyncFHIRRecord {
         return maps;
     }
 
-    public String addOrganizationToRecord(String payload) {
+    public String addOrganizationToRecord(String payload,String attributeName) {
         if (payload.isEmpty()) {
             return "";
         }
 
-        String managingOrganizationStirng = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
+        String organizationString = String.format("{\"reference\": \"Organization/%s\"}", healthCenterIdentifier);
         JSONObject finalPayLoadJson = new JSONObject(payload);
-        JSONObject managingOrganizationJson = new JSONObject(managingOrganizationStirng);
+        JSONObject organization = new JSONObject(organizationString);
 
-        finalPayLoadJson.put("managingOrganization", managingOrganizationJson);
+        finalPayLoadJson.put(attributeName, organization);
+        return finalPayLoadJson.toString();
+    }
+
+    /**
+     * Adds location to encounter Resource
+     *
+     * @param payload
+     * @return
+     */
+    public String addLocationToEncounterResource(String payload) {
+        if (payload.isEmpty()) {
+            return "";
+        }
+        JSONObject finalPayLoadJson = new JSONObject(payload);
+
+
         return finalPayLoadJson.toString();
     }
 
@@ -485,7 +503,7 @@ public class SyncFHIRRecord {
                 case "Person":
                     List<Person> personList = new ArrayList<>();
                     personList.add(syncFHIRCase.getPatient().getPerson());
-                    resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, getPersonsFromEncounterList(encounters)), syncFhirProfile.getPatientIdentifierType().getName()));
+                    resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
             }
         }
@@ -655,22 +673,17 @@ public class SyncFHIRRecord {
             jsonString = iParser.encodeResourceToString(iBaseResource);
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
-                addOrganizationToRecord(jsonString);
+               jsonString = addOrganizationToRecord(jsonString,"managingOrganization");
             }
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner") || resourceType.equals("Person")) {
                 JSONObject jsonObject = new JSONObject(jsonString);
                 String resourceIdentifier = "";
-                if (resourceType.equals("Patient") && identifierTypeName != null) {
-                    for (Object identifierObject : jsonObject.getJSONArray("identifier")) {
-                        JSONObject identifier = new JSONObject(identifierObject.toString());
-                        if (identifier.getJSONObject("type").get("text").equals(identifierTypeName)) {
-                            resourceIdentifier = identifier.get("value").toString();
-                        }
-                    }
-                } else resourceIdentifier = jsonObject.get("id").toString();
-
+                resourceIdentifier = jsonObject.get("id").toString();
                 jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
+            } else if (resourceType.equals("Encounter")) {
+                jsonString = addOrganizationToRecord(jsonString,"serviceProvider");
+                jsonString = wrapResourceInPostRequest(jsonString);
             } else if (resourceType.equals("Observation")) {
                 jsonString = addReferencesMappingToObservation(wrapResourceInPostRequest(jsonString));
             } else {
@@ -968,23 +981,20 @@ public class SyncFHIRRecord {
 
         Concept concept = conceptService.getConceptByUuid(conceptUUid);
 
+        JSONArray newQuestionJson = observationResource.getJSONObject("code").getJSONArray("coding");
+
+        newQuestionJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, "UgandaEMR", concept.getName().getName(), concept.getConceptId())));
+
         if (concept.getConceptMappings().size() > 0) {
-
-            JSONArray newQuestionJson = observationResource.getJSONObject("code").getJSONArray("coding");
-
             for (ConceptMap conceptQuestionMap : concept.getConceptMappings()) {
                 newQuestionJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptQuestionMap.getConceptReferenceTerm().getConceptSource().getName(), conceptQuestionMap.getConceptReferenceTerm().getCode(), conceptQuestionMap.getConceptReferenceTerm().getName())));
             }
-
         }
 
         if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0"))) {
-
             JSONArray newValueCodeableJson = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding");
-
             Concept valueCodedConcept = conceptService.getConceptByUuid(conceptUUid);
-
-
+            newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, "UgandaEMR", concept.getName().getName(), concept.getConceptId())));
             for (ConceptMap conceptMap : valueCodedConcept.getConceptMappings()) {
                 newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptMap.getConceptReferenceTerm().getConceptSource().getName(), conceptMap.getConceptReferenceTerm().getCode(), conceptMap.getConceptReferenceTerm().getName())));
             }
