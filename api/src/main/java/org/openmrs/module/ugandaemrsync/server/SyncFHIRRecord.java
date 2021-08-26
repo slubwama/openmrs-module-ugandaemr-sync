@@ -852,7 +852,7 @@ public class SyncFHIRRecord {
 
         if(syncFhirProfile.getCaseBasedProfile() && personList.size()>0){
             for (Person person:personList) {
-                if((person.getDateChanged()!=null && person.getDateChanged().before(lastUpdated.getLowerBoundAsInstant())) ||(person.getDateCreated()!=null && person.getDateCreated().before(lastUpdated.getLowerBoundAsInstant())) ){
+                if((person.getDateChanged()!=null && person.getDateChanged().before(lastUpdated.getLowerBoundAsInstant())) || (person.getDateCreated()!=null && person.getDateCreated().before(lastUpdated.getLowerBoundAsInstant())) ){
                     personList.remove(person);
                 }
             }
