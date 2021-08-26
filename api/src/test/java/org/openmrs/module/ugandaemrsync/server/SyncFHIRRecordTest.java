@@ -1,5 +1,6 @@
 package org.openmrs.module.ugandaemrsync.server;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,17 +27,17 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
     @Before
     public void setup() throws Exception {
         executeDataSet(UGANDAEMR_GLOBAL_PROPERTY_DATASET_XML);
-        executeDataSet(UGANDAEMR_GLOBAL_PROPERTY_DATASET_XML);
+        executeDataSet(UGANDAEMR_STANDARD_DATASET_XML);
     }
 
     @Test
     public void addOrganizationToRecord_shouldReturnJsonStringWithAManagingOrganization() {
-        SyncFHIRRecord syncFHIRRecord=new SyncFHIRRecord();
+        SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 
-        String managingOrganizationJsonString = syncFHIRRecord.addOrganizationToRecord("{}");
+        String managingOrganizationJsonString = syncFHIRRecord.addOrganizationToRecord("{}","managingOrganization");
 
-        Assert.assertNotEquals(managingOrganizationJsonString,"{}");
-        Assert.assertEquals(managingOrganizationJsonString,"{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\"}}");
+        Assert.assertNotEquals(managingOrganizationJsonString, "{}");
+        Assert.assertEquals(managingOrganizationJsonString, "{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\"}}");
     }
 
 
