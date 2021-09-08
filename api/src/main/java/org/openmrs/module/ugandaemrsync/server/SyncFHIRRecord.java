@@ -510,7 +510,7 @@ public class SyncFHIRRecord {
                 case "Patient":
                     List<PatientIdentifier> patientIdentifiers = new ArrayList<>();
                     patientIdentifiers.add(getPatientIdentifierByType(syncFHIRCase.getPatient(), syncFhirProfile.getPatientIdentifierType()));
-                    resources.addAll(groupInCaseBundle("Patient", getPatientResourceBundle(syncFhirProfile, patientIdentifiers), syncFhirProfile.getPatientIdentifierType().getName()));
+                    resources.addAll(groupInCaseBundle("Patient", getPatientResourceBundle(syncFhirProfile, patientIdentifiers, syncFHIRCase), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
                     if (encounters.size() > 0) {
@@ -519,8 +519,14 @@ public class SyncFHIRRecord {
                     break;
                 case "Person":
                     List<Person> personList = new ArrayList<>();
-                    personList.add(syncFHIRCase.getPatient().getPerson());
-                    resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList), syncFhirProfile.getPatientIdentifierType().getName()));
+                    Person person = syncFHIRCase.getPatient().getPerson();
+
+                    if (syncFHIRCase.getLastUpdateDate() == null) {
+                        personList.add(syncFHIRCase.getPatient().getPerson());
+                    } else if ((person.getDateChanged() != null && person.getDateChanged().after(syncFHIRCase.getLastUpdateDate())) || (person.getDateCreated() != null && person.getDateCreated().after(syncFHIRCase.getLastUpdateDate()))) {
+                        personList.add(syncFHIRCase.getPatient().getPerson());
+                    }
+                    resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList, syncFHIRCase), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
             }
         }
@@ -571,9 +577,9 @@ public class SyncFHIRRecord {
                     break;
                 case "Patient":
                     if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Patient", getPatientResourceBundle(syncFhirProfile, getPatientIdentifierFromEncounter(encounters, syncFhirProfile.getPatientIdentifierType())), syncFhirProfile.getNumberOfResourcesInBundle(), syncFhirProfile.getPatientIdentifierType().getName()), "Patient", syncFhirProfile, currentDate);
+                        saveSyncFHIRResources(groupInBundles("Patient", getPatientResourceBundle(syncFhirProfile, getPatientIdentifierFromEncounter(encounters, syncFhirProfile.getPatientIdentifierType()), null), syncFhirProfile.getNumberOfResourcesInBundle(), syncFhirProfile.getPatientIdentifierType().getName()), "Patient", syncFhirProfile, currentDate);
                     } else {
-                        saveSyncFHIRResources(groupInBundles("Patient", getPatientResourceBundle(syncFhirProfile, null), syncFhirProfile.getNumberOfResourcesInBundle(), syncFhirProfile.getPatientIdentifierType().getName()), "Patient", syncFhirProfile, currentDate);
+                        saveSyncFHIRResources(groupInBundles("Patient", getPatientResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), syncFhirProfile.getPatientIdentifierType().getName()), "Patient", syncFhirProfile, currentDate);
                     }
                     break;
                 case "Practitioner":
@@ -585,9 +591,9 @@ public class SyncFHIRRecord {
                     break;
                 case "Person":
                     if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Person", getPersonResourceBundle(syncFhirProfile, getPersonsFromEncounterList(encounters)), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Person", syncFhirProfile, currentDate);
+                        saveSyncFHIRResources(groupInBundles("Person", getPersonResourceBundle(syncFhirProfile, getPersonsFromEncounterList(encounters), null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Person", syncFhirProfile, currentDate);
                     } else {
-                        saveSyncFHIRResources(groupInBundles("Person", getPersonResourceBundle(syncFhirProfile, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Person", syncFhirProfile, currentDate);
+                        saveSyncFHIRResources(groupInBundles("Person", getPersonResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Person", syncFhirProfile, currentDate);
                     }
                     break;
             }
@@ -793,14 +799,19 @@ public class SyncFHIRRecord {
     }
 
 
-    private Collection<IBaseResource> getPatientResourceBundle(SyncFhirProfile syncFhirProfile, List<PatientIdentifier> patientIdentifiers) {
+    private Collection<IBaseResource> getPatientResourceBundle(SyncFhirProfile syncFhirProfile, List<PatientIdentifier> patientIdentifiers, SyncFhirCase syncFhirCase) {
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
         if (syncFhirProfile.getCaseBasedProfile()) {
-            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+            }
         } else {
             lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
+
         }
 
         TokenAndListParam patientReference = new TokenAndListParam();
@@ -838,25 +849,23 @@ public class SyncFHIRRecord {
 
     }
 
-    private Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<org.openmrs.Person> personList) {
+    private Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<org.openmrs.Person> personList, SyncFhirCase syncFhirCase) {
+
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
         if (syncFhirProfile.getCaseBasedProfile()) {
-            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+            }
         } else {
-            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Person"));
+            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
+
         }
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
-
-        if(syncFhirProfile.getCaseBasedProfile() && personList.size()>0){
-            for (Person person:personList) {
-                if((person.getDateChanged()!=null && person.getDateChanged().before(lastUpdated.getLowerBoundAsInstant())) || (person.getDateCreated()!=null && person.getDateCreated().before(lastUpdated.getLowerBoundAsInstant())) ){
-                    personList.remove(person);
-                }
-            }
-        }
 
         if (personList.size() > 0) {
             Collection<String> personListUUID = personList.stream().map(org.openmrs.Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
