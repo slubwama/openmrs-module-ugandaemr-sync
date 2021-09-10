@@ -678,4 +678,57 @@
         </sql>
     </changeSet>
 
+
+    <changeSet id="ugandaemrsync-20210821-11015" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '0a7fff77-6ac7-416c-831e-4e3f1f2c853b'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating ART ACCESS SYNC FHIR PROFILE</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="ART Access Integration"/>
+            <column name="resource_types" value="Encounter,Patient,Person,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="30"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="ProgramWorkFlowState"/>
+            <column name="case_based_primary_resource_type_id" value="a6a0ab45-b7dc-43b2-b28c-45a91f968ebf"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[99161,90315,5096,90221,163023,856,1305, 166500],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b27bc-c2cc-11de-8d13-0010c6dffd0f","8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeOfCareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="http://52.12.36.20:8070/api/importuserdata"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2021-08-12 16:21:58"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="0a7fff77-6ac7-416c-831e-4e3f1f2c853b"/>
+        </insert>
+    </changeSet>
+
+
+    <changeSet id="ugandaemrsync-20210821-11017" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6511be5a-72f2-4638-a60b-78e31c3e2b28'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating HIV CASE BASED SURVEILLANCE SYNC FHIR PROFILE</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="HIV CASE BASED SURVEILLANCE"/>
+            <column name="resource_types" value="Encounter,Patient,Person,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="30"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Encounter"/>
+            <column name="case_based_primary_resource_type_id" value="8d5b27bc-c2cc-11de-8d13-0010c6dffd0f"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[99061,99161,99071,99070,5497,163023,1305,856],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b27bc-c2cc-11de-8d13-0010c6dffd0f","8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeOfCareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="http://216.104.204.147:8000/"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2021-08-24 12:32:24"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="6511be5a-72f2-4638-a60b-78e31c3e2b28"/>
+        </insert>
+    </changeSet>
 </databaseChangeLog>
