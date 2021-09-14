@@ -636,7 +636,7 @@
         </preConditions>
         <comment>Inserting ART Access Integration syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
        <sql>
-           INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '6511be5a-72f2-4638-a60b-78e31c3e2b28', (select task_config_id from scheduler_task_config where uuid="6a9b7f2e-0128-49a1-99a0-94a361b9e2ae"));
+           INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '0a7fff77-6ac7-416c-831e-4e3f1f2c853b', (select task_config_id from scheduler_task_config where uuid="6a9b7f2e-0128-49a1-99a0-94a361b9e2ae"));
        </sql>
     </changeSet>
 

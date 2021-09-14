@@ -368,11 +368,7 @@ public class SyncFHIRRecord {
      */
     public void identifyNewCases(SyncFhirProfile syncFhirProfile, Date currentDate) {
 
-        DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
-
         List<org.openmrs.PatientProgram> patientProgramList;
-
-        List<org.openmrs.Encounter> encounterList;
 
         if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("EpisodeOfCare")) {
             List<org.openmrs.Program> programs = new ArrayList<>();
