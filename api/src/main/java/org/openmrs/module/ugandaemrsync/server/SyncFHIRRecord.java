@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import org.openmrs.*;
 import org.openmrs.api.ConceptService;
+import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
@@ -525,6 +526,13 @@ public class SyncFHIRRecord {
                     }
                     resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList, syncFHIRCase), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
+                case "ServiceRequest":
+                    if (encounters.size() > 0) {
+                        OrderService orderService= Context.getOrderService();
+                        List<Order> testOrders=orderService.getActiveOrders(syncFHIRCase.getPatient(),orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID),null,null);
+                        resources.addAll(groupInCaseBundle("Observation", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
+                    }
+                    break;
             }
         }
 
@@ -936,13 +944,12 @@ public class SyncFHIRRecord {
     }
 
 
-    private Collection<IBaseResource> getServiceRequestResourceBundle(List<org.openmrs.TestOrder> testOrders) {
-
+    private Collection<IBaseResource> getServiceRequestResourceBundle(List<org.openmrs.Order> testOrders) {
 
         Collection<String> testOrdersUUIDS = new ArrayList<>();
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
-        for (org.openmrs.TestOrder testOrder : testOrders) {
+        for (org.openmrs.Order testOrder : testOrders) {
             testOrdersUUIDS.add(testOrder.getUuid());
         }
 
