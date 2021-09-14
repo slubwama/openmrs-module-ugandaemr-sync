@@ -25,6 +25,7 @@ import org.openmrs.module.fhir2.api.FhirEncounterService;
 import org.openmrs.module.fhir2.api.FhirPersonService;
 import org.openmrs.module.fhir2.api.FhirObservationService;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
+import org.openmrs.module.fhir2.api.FhirServiceRequestService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
@@ -932,6 +933,26 @@ public class SyncFHIRRecord {
 
         return iBaseResources;
 
+    }
+
+
+    private Collection<IBaseResource> getServiceRequestResourceBundle(List<org.openmrs.TestOrder> testOrders) {
+
+
+        Collection<String> testOrdersUUIDS = new ArrayList<>();
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        for (org.openmrs.TestOrder testOrder : testOrders) {
+            testOrdersUUIDS.add(testOrder.getUuid());
+        }
+
+
+        if (testOrdersUUIDS.size() > 0) {
+            iBaseResources.addAll(getApplicationContext().getBean(FhirServiceRequestService.class).get(testOrdersUUIDS));
+        }
+
+
+        return iBaseResources;
     }
 
     private IBundleProvider getEpisodeOfCareResourceBundle(List<org.openmrs.PatientProgram> patientPrograms) {
