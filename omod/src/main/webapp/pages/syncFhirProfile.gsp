@@ -446,6 +446,7 @@
                                                         <option value="EpisodeOfCare">Episode of Care (Program)</option>
                                                         <option value="Encounter">Encounter</option>
                                                         <option value="ProgramWorkFlowState">Program Workflow State</option>
+                                                        <option value="Order">Order</option>
                                                     </select>
                                                 </div>
 

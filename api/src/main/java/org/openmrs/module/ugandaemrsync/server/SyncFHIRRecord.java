@@ -27,6 +27,7 @@ import org.openmrs.module.fhir2.api.FhirPersonService;
 import org.openmrs.module.fhir2.api.FhirObservationService;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
 import org.openmrs.module.fhir2.api.FhirServiceRequestService;
+import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
@@ -417,6 +418,24 @@ public class SyncFHIRRecord {
                 }
             }
 
+        } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("Order")){
+            OrderService orderService = Context.getOrderService();
+            OrderType orderType = orderService.getOrderTypeByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId());
+            List list=  Context.getAdministrationService().executeSQL("select Distinct patient_id from  orders where date_activated <= now()",true);
+            List<Patient> patientList=new ArrayList<>();
+
+
+
+            if (list.size() > 0) {
+                for (Object o : list) {
+                    patientList.add( Context.getPatientService().getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
+
+                }
+            }
+            for (Patient patient : patientList) {
+                    String patientIdentifier = patient.getPatientId().toString();
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
+            }
         }
     }
 
@@ -527,11 +546,9 @@ public class SyncFHIRRecord {
                     resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList, syncFHIRCase), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "ServiceRequest":
-                    if (encounters.size() > 0) {
                         OrderService orderService= Context.getOrderService();
                         List<Order> testOrders=orderService.getActiveOrders(syncFHIRCase.getPatient(),orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID),null,null);
-                        resources.addAll(groupInCaseBundle("Observation", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
-                    }
+                        resources.addAll(groupInCaseBundle("ServiceRequest", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
             }
         }

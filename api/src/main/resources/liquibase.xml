@@ -731,4 +731,28 @@
             <column name="uuid" value="6511be5a-72f2-4638-a60b-78e31c3e2b28"/>
         </insert>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-14092021-1922" author="mmwanje">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendLabRequestToALISTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sending Lab Request to ALIS Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Send Lab Request to ALIS Task" />
+            <column name="description" value="Sends a Lab Request to ALIS Task" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendLabRequestToALISTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-09-14T19:22:22" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="8cf5a732-51e4-4c7c-9b36-96eb2644a99a" />
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
