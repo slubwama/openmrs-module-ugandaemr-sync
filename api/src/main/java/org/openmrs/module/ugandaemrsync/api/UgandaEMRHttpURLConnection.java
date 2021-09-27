@@ -16,7 +16,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -41,27 +40,24 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.HostnameVerifier;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -140,16 +136,13 @@ public class UgandaEMRHttpURLConnection {
     /**
      * HTTP Get request
      *
-     * @param contentType
-     * @param content
-     * @param facilityId
      * @param url
      * @param username
      * @param password
      * @return
      * @throws Exception
      */
-    public Map getByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String resultType) throws Exception {
+    public Map getByWithBasicAuth(String url, String username, String password, String resultType) throws Exception {
 
 
         HttpResponse response = null;
@@ -162,6 +155,7 @@ public class UgandaEMRHttpURLConnection {
 
 
         try {
+            SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
             CloseableHttpClient client = createAcceptSelfSignedCertificateClient();
 
             httpGet.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
@@ -171,6 +165,8 @@ public class UgandaEMRHttpURLConnection {
 
                 httpGet.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
             }
+            httpGet.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
+            httpGet.addHeader("x-ugandaemr-dhis2uuid", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
 
 
             response = client.execute(httpGet);
@@ -515,5 +511,29 @@ public class UgandaEMRHttpURLConnection {
                 .custom()
                 .setSSLSocketFactory(connectionFactory)
                 .build();
+    }
+
+    public String getJson(String url) {
+        URLConnection request = null;
+        try {
+            URL u = new URL(url);
+            request = u.openConnection();
+            request.connect();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(request.getInputStream()));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+            br.close();
+            return sb.toString();
+
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return null;
     }
 }

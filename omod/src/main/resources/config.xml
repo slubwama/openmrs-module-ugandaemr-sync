@@ -149,6 +149,10 @@
         <property>ugandaemrsync.recency.submit.data.once.daily</property>
         <defaultValue>true</defaultValue>
         <description>Turns on and off the submission of recency data once daily or multiple time in specified interval</description>
+    </globalProperty> <globalProperty>
+        <property>ugandaemrsync.ARTAccess.last.successful.submission.date</property>
+        <defaultValue></defaultValue>
+        <description>ARTAccess last successful submission date</description>
     </globalProperty>
     <globalProperty>
         <property>ugandaemrsync.sendNextGenReports.server.url</property>

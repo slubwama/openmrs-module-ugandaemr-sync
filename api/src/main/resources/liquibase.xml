@@ -226,6 +226,28 @@
         </insert>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-07092021-1241" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '4c4e9551-d9d6-4882-93bd-e61a42e2f755'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Receive ART Access Visits Data" />
+            <column name="data_type" value="org.openmrs.Encounter" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="http://52.12.36.20:8070/api/read_visits/" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2021-07-09 12:41:27" />
+            <column name="uuid" value="4c4e9551-d9d6-4882-93bd-e61a42e2f755" />
+        </insert>
+    </changeSet>
+
     <changeSet id="ugandaemrsync-02032020-0330" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -335,6 +357,29 @@
             <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
             <column name="created_by" value="1" />
             <column name="uuid" value="08a36b06-7a71-11eb-9439-0242ac130002" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="20210709-1544" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.ReceiveVisitsDataFromARTAccessTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Send Receive Visits Data From ART Access Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Receive Visits Data From ART Access Task" />
+            <column name="description" value="Receive Visits Data From ART Access Task" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ReceiveVisitsDataFromARTAccessTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-07-08T11:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="cb3380d8-5ff4-44ba-9714-bfd2bfefafa4" />
         </insert>
     </changeSet>
 
