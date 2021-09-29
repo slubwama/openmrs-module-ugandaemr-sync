@@ -16,9 +16,10 @@ public class ARTAccessIntegrationTask extends AbstractTask {
         SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("ART Access Integration");
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 
-        log.info("Generating Resources and cases for Profile "+syncFhirProfile.getName());
-
-        syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
+        if(syncFhirProfile.getProfileEnabled()) {
+            log.info("Generating Resources and cases for Profile " + syncFhirProfile.getName());
+            syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
+        }
 
     }
 }
