@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_FILTER_OBJECT_STRING;
 
@@ -37,6 +35,7 @@ public class SyncFhirProfilePageController {
     public void post(@SpringBean PageModel pageModel, @RequestParam(value = "returnUrl", required = false) String returnUrl,
                      @RequestParam(value = "profileId", required = false) String profileId,
                      @RequestParam(value = "syncFhirProfileName", required = false) String syncFhirProfileName,
+                     @RequestParam(value = "profileEnabled", required = false) boolean profileEnabled,
                      @RequestParam(value = "resourceType", required = false) String resourceType,
                      @RequestParam(value = "durationToKeepSyncedResources", required = false) Integer durationToKeepSyncedResources,
                      @RequestParam(value = "generateBundle", required = false) boolean generateBundle,
@@ -79,6 +78,7 @@ public class SyncFhirProfilePageController {
         }
 
         syncFhirProfile.setName(syncFhirProfileName);
+        syncFhirProfile.setProfileEnabled(profileEnabled);
         syncFhirProfile.setGenerateBundle(generateBundle);
         syncFhirProfile.setNumberOfResourcesInBundle(noOfResourcesInBundle);
         syncFhirProfile.setResourceTypes(resourceType);
