@@ -32,6 +32,7 @@
 
                 modal.find("#profileId").val("");
                 modal.find("#syncFhirProfileName").val("");
+                modal.find("profileEnabled").checked = false;
 
                 modal.find("#encounterTypeUUIDS").val("");
                 modal.find("#observationCodeUUIDS").val("");
@@ -43,7 +44,6 @@
                 modal.find("#dataType select").find().val("");
                 modal.find("#caseBasedPrimaryResourceType select").find().val("");
                 modal.find("#patientIdentifierType select").find().val("");
-
                 modal.find("isCaseBasedProfile").checked = false;
                 modal.find("generateBundle").checked = false;
                 modal.find("resourceTypeEncounter").checked = false;
@@ -70,7 +70,7 @@
                     }
 
                     modal.find("#syncFhirProfileName").val(syncFhirProfile.syncFhirProfile.name);
-
+                    modal.find("#profileEnabled").attr('checked', syncFhirProfile.syncFhirProfile.profileEnabled);
 
                     modal.find("#generateBundle").attr('checked', syncFhirProfile.syncFhirProfile.generateBundle);
                     modal.find("#noOfResourcesInBundle").val(syncFhirProfile.syncFhirProfile.noOfResourcesInBundle);
@@ -288,7 +288,18 @@
                                                            name="syncFhirProfileName">
                                                 </div>
 
-                                                <div class="form-check">
+                                                <div class="form-check form-switch">
+                                                    <input type="checkbox" id="profileEnabled"
+                                                           name="profileEnabled"
+                                                           value="true">
+
+                                                    <label class="form-check-label"
+                                                           for="profileEnabled">
+                                                        Enable Profile
+                                                    </label>
+                                                </div>
+
+                                                <div class="form-check form-switch">
                                                     <input type="checkbox" id="generateBundle"
                                                            name="generateBundle"
                                                            value="true">
@@ -427,7 +438,7 @@
                                             <div class="card-header">Case Based Settings</div>
 
                                             <div class="card-body">
-                                                <div class="form-check">
+                                                <div class="form-check form-switch">
                                                     <input type="checkbox" id="isCaseBasedProfile"
                                                            name="isCaseBasedProfile"
                                                            value="true">

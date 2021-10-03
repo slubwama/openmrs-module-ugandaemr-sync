@@ -5,7 +5,6 @@ import org.openmrs.BaseOpenmrsData;
 import org.openmrs.ConceptSource;
 import org.openmrs.PatientIdentifierType;
 
-import javax.naming.Context;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Id;
@@ -29,6 +28,9 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Column(name = "resource_types", length = 255)
     private String resourceTypes;
+
+    @Column(name = "profile_enabled")
+    private Boolean profileEnabled;
 
     @ManyToOne
     @JoinColumn(name = "patient_identifier_type")
@@ -86,6 +88,14 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Boolean getProfileEnabled() {
+        return profileEnabled;
+    }
+
+    public void setProfileEnabled(Boolean profileEnabled) {
+        this.profileEnabled = profileEnabled;
     }
 
     public String getResourceTypes() {

@@ -823,4 +823,17 @@
             <column name="uuid" value="ca264acb-873e-47da-a63c-76dcbc0b83da" />
         </insert>
     </changeSet>
+
+    <changeSet  author="slubwama" id="ugandaemrsync_20210929-0503">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sync_fhir_profile"/>
+            <not><columnExists tableName="sync_fhir_profile" columnName="profile_enabled"/></not>
+        </preConditions>
+        <comment>
+            Add Column enabled to sync_fhir_profile table
+        </comment>
+        <addColumn tableName="sync_fhir_profile">
+            <column name="profile_enabled" type="TINYINT(3)" defaultValue="0"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
