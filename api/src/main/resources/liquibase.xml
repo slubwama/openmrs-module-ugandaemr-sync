@@ -777,7 +777,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-14092021-1922" author="mmwanje">
+    <changeSet id="ugandaemrsync-20210921-1616" author="mmwanje">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM scheduler_task_config
@@ -798,6 +798,48 @@
             <column name="started" value="1"/>
             <column name="uuid" value="8cf5a732-51e4-4c7c-9b36-96eb2644a99a" />
         </insert>
+    </changeSet>
+
+
+    <changeSet id="ugandaemrsync-20210922-1016" author="mmwanje">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '2f0ef683-c988-448b-b928-e3e2cf6657af'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating Lab Request to ALIS Task SYNC FHIR PROFILE</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="Send Lab Request to ALIS Task"/>
+            <column name="resource_types" value="Encounter,Patient,Person,Observation,ServiceRequest"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="30"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Order"/>
+            <column name="case_based_primary_resource_type_id" value="52a447d3-a64a-11e3-9aeb-50e549534c5e"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[160741,166421,159367,165043],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeOfCareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="http://192.168.43.53:8080/api/alisdata"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2021-09-21 16:20:58"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="2f0ef683-c988-448b-b928-e3e2cf6657af"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20210923-1916" author="mmwanje" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '8cf5a732-51e4-4c7c-9b36-96eb2644a99a'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='2f0ef683-c988-448b-b928-e3e2cf6657af';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Lab Request to ALIS Task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '2f0ef683-c988-448b-b928-e3e2cf6657af', (select task_config_id from scheduler_task_config where uuid="8cf5a732-51e4-4c7c-9b36-96eb2644a99a"));
+        </sql>
     </changeSet>
 
 

@@ -9,9 +9,12 @@ import org.openmrs.module.ugandaemrsync.server.SyncFHIRRecord;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 public class SendLabRequestToALISTask extends AbstractTask {
+
     Log log = LogFactory.getLog(SyncFHIRRecord.class);
+
     @Override
     public void execute() {
+
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("Send Lab Request to ALIS Task");
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
