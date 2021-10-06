@@ -737,6 +737,7 @@ public class SyncFHIRRecord {
                 jsonString = wrapResourceInPostRequest(jsonString);
             } else if (resourceType.equals("Observation")) {
                 jsonString = addReferencesMappingToObservation(wrapResourceInPostRequest(jsonString));
+                jsonString = wrapResourceInPostRequest(jsonString);
             } else {
                 jsonString = wrapResourceInPostRequest(jsonString);
             }
