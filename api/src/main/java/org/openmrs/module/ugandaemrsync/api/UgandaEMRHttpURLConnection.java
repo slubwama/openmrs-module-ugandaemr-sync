@@ -228,7 +228,7 @@ public class UgandaEMRHttpURLConnection {
                 post.addHeader(new BasicScheme().authenticate(credentials, post, null));
             }
 
-            if (token != null && !token.equals("")) {
+                    if (token != null && !token.equals("")) {
                 post.addHeader("Authorization", token);
             }
 
