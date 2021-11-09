@@ -47,13 +47,6 @@
             </dependency>
 
             <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>3.1.0</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>org.openmrs.api</groupId>
                 <artifactId>openmrs-api</artifactId>
                 <version>${openMRSVersion}</version>
@@ -69,18 +62,11 @@
                 <scope>test</scope>
             </dependency>
 
-            <dependency>
-                <groupId>org.openmrs.test</groupId>
-                <artifactId>openmrs-test</artifactId>
-                <version>${openMRSVersion}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
 
             <dependency>
                 <groupId>org.openmrs.test</groupId>
                 <artifactId>openmrs-test</artifactId>
-                <version>${openmrsPlatformVersion}</version>
+                <version>${openMRSVersion}</version>
                 <type>pom</type>
                 <scope>test</scope>
             </dependency>
@@ -181,29 +167,9 @@
             </dependency>
             <dependency>
                 <groupId>org.openmrs.module</groupId>
-                <artifactId>metadatadeploy-api</artifactId>
-                <version>${metadatadeployVersion}</version>
-                <type>jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.openmrs.module</groupId>
-                <artifactId>metadatasharing-api</artifactId>
-                <version>${metadatasharingVersion}</version>
-                <type>jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.openmrs.module</groupId>
                 <artifactId>metadatamapping-api</artifactId>
                 <version>${metadatamappingVersion}</version>
                 <type>jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.openmrs.web</groupId>
-                <artifactId>openmrs-web</artifactId>
-                <version>${openMRSVersion}</version>
                 <scope>test</scope>
             </dependency>
 
