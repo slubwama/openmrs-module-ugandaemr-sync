@@ -37,7 +37,7 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         String managingOrganizationJsonString = syncFHIRRecord.addOrganizationToRecord("{}","managingOrganization");
 
         Assert.assertNotEquals(managingOrganizationJsonString, "{}");
-        Assert.assertEquals(managingOrganizationJsonString, "{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\"}}");
+        Assert.assertEquals(managingOrganizationJsonString, "{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\",\"identifier\":{\"use\":\"official\",\"value\":\"7744yxP\"},\"display\":\"Health Center Name\",\"type\":\"Organization\"}}");
     }
 
 
