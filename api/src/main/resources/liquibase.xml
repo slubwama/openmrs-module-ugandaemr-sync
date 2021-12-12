@@ -226,7 +226,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-07092021-1241" author="dbaluku">
+    <changeSet id="ugandaemrsync-22112021-1241" author="dbaluku">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_task_type WHERE uuid = '4c4e9551-d9d6-4882-93bd-e61a42e2f755'
