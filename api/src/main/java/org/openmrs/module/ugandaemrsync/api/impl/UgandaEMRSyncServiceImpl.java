@@ -220,6 +220,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             Context.getObsService().saveObs(viralLoadTestGroupObs,"Adding Viral Load Data");
             return encounter;
         } else {
+            if (order != null) {
+                try {
+                    Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+                } catch (Exception e) {
+                    log.error("Failed to discontinue order", e);
+                }
+            }
             return encounter;
         }
     }
