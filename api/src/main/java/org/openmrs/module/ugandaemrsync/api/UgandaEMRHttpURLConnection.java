@@ -209,7 +209,7 @@ public class UgandaEMRHttpURLConnection {
      */
     public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String token) throws Exception {
 
-
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
         HttpResponse response = null;
 
         HttpPost post = new HttpPost(url);
@@ -231,6 +231,10 @@ public class UgandaEMRHttpURLConnection {
             if (token != null && !token.equals("")) {
                 post.addHeader("Authorization", token);
             }
+
+            post.addHeader("x-ugandaemr-facilityname", syncGlobalProperties.getGlobalProperty(GP_FACILITY_NAME));
+
+            post.addHeader("x-ugandaemr-dhis2uuid", syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
 
             HttpEntity httpEntity = new StringEntity(content, ContentType.APPLICATION_JSON);
 

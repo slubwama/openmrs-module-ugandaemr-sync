@@ -326,5 +326,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return all cases that belong to a profile.
      */
      List<SyncFhirCase> getSyncFhirCasesByProfile(SyncFhirProfile syncFhirProfile);
+
+    /**
+     * This Method Checks if a test order has results entered on it either through an encounter or on the order it self
+     * @param order the order which is being checked
+     * @return true is the order has results and false if it doesnt have results
+     */
+     public boolean testOrderHasResults(Order order);
 }
 
