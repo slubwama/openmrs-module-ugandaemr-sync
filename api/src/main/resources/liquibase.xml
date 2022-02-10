@@ -878,4 +878,20 @@
             <column name="profile_enabled" type="TINYINT(3)" defaultValue="0"/>
         </addColumn>
     </changeSet>
+
+    <changeSet  author="slubwama" id="ugandaemrsync_20220210-1247">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="fhir_concept_source"/>
+            <sqlCheck expectedResult="0">
+                select count(*) from fhir_concept_source where concept_source_id=1 and name="SNOMED CT";
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                select count(*) from concept_reference_source where name="SNOMED CT";
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting SNOMED CT row into 'fhir_concept_source' table</comment>
+        <sql>
+            INSERT INTO fhir_concept_source (concept_source_id, url, name, description, creator, date_created,retired, uuid) VALUES (1, 'http://snomed.info/sct', 'SNOMED CT', null, 1, '2022-02-10 12:47:05', 0,'a665f90c-8a52-11ec-91f9-ad26b3113bf4');
+        </sql>
+    </changeSet>
 </databaseChangeLog>
