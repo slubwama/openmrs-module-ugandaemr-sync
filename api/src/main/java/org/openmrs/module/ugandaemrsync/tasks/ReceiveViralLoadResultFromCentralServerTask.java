@@ -33,7 +33,7 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
 
             Order order = getOrder(syncTask.getSyncTask());
 
-            String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, ugandaEMRSyncService.getHealthCenterCode(), ugandaEMRSyncService.getPatientIdentifier(order.getEncounter().getPatient(),PATIENT_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask())).get("json");
+            String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, ugandaEMRSyncService.getHealthCenterCode(), ugandaEMRSyncService.getPatientIdentifier(order.getEncounter().getPatient(), PATIENT_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask())).get("json");
 
             Map results = new HashMap();
 
@@ -42,10 +42,10 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
             try {
                 results = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", dataOutput, false);
             } catch (Exception e) {
-                log.error("Failed to fetch results",e);
+                log.error("Failed to fetch results", e);
             }
 
-            if (results != null && results.size() > 0  && !results.get("status").equals("pending")) {
+            if (results != null && results.size() > 0 && results.get("status") != null && !results.get("status").equals("pending")) {
                 Map reasonReference = (Map) results.get("reasonReference");
                 ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
                 //Save Viral Load Results
@@ -56,7 +56,7 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
                     try {
                         Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
                     } catch (Exception e) {
-                        log.error("Failed to discontinue order",e);
+                        log.error("Failed to discontinue order", e);
                     }
                 }
             }
