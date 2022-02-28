@@ -167,7 +167,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addVLToEncounter(java.lang.String, java.lang.String, java.lang.String, org.openmrs.Encounter, org.openmrs.Order)
      */
     public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter, Order order) {
-        if (!encounterHasVLDataAlreadySaved(encounter)) {
+        if (!encounterHasVLDataAlreadySaved(encounter, order)) {
             Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
             Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
             Concept viralLoadQuantitative = Context.getConceptService().getConcept("856");
@@ -217,9 +217,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             } catch (Exception e) {
                 log.error("Failed to discontinue order", e);
             }
-            Context.getObsService().saveObs(viralLoadTestGroupObs,"Adding Viral Load Data");
+            Context.getObsService().saveObs(viralLoadTestGroupObs, "Adding Viral Load Data");
             return encounter;
         } else {
+            if (order != null) {
+                try {
+                    Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+                } catch (Exception e) {
+                    log.error("Failed to discontinue order", e);
+                }
+            }
             return encounter;
         }
     }
@@ -370,9 +377,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientARTNO;
     }
 
-    public boolean encounterHasVLDataAlreadySaved(Encounter encounter){
-        Set<Obs> obs = encounter.getAllObs(false);
-        return obs.stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(165412));
+    public boolean encounterHasVLDataAlreadySaved(Encounter encounter, Order order) {
+
+        if (encounter != null && order == null) {
+            Set<Obs> obs = encounter.getAllObs(false);
+            return obs.stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(165412));
+        } else {
+            return testOrderHasResults(order);
+        }
     }
 
     public Properties getUgandaEMRProperties() {
@@ -389,10 +401,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 newUgandaEMRSettingFile.createNewFile();
 
                 FileInputStream fileInputStream = new FileInputStream(filePath);
-                if(facilityDHIS2ID!=null && !facilityDHIS2ID.equalsIgnoreCase("")){
+                if (facilityDHIS2ID != null && !facilityDHIS2ID.equalsIgnoreCase("")) {
                     properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, facilityDHIS2ID);
                     properties.setProperty(SYNC_METRIC_DATA, "true");
-                }else {
+                } else {
                     properties.setProperty(GP_DHIS2_ORGANIZATION_UUID, "");
                     properties.setProperty(SYNC_METRIC_DATA, "false");
                 }
@@ -535,16 +547,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile,java.lang.String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, java.lang.String)
      */
     @Override
     public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType) {
-        return dao.getSyncFhirProfileLogByProfileAndResourceName(syncFhirProfile,resourceType);
+        return dao.getSyncFhirProfileLogByProfileAndResourceName(syncFhirProfile, resourceType);
     }
 
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile,java.lang.String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, java.lang.String)
      */
     @Override
     public SyncFhirProfileLog getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType) {
@@ -559,11 +571,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile,org.openmrs.Patient,java.lang.String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile, org.openmrs.Patient, java.lang.String)
      */
     @Override
     public SyncFhirCase getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile syncFhirProfile, Patient patient, String caseIdentifier) {
-        return dao.getSyncFHIRCaseBySyncFhirProfileAndPatient(syncFhirProfile,patient,caseIdentifier);
+        return dao.getSyncFHIRCaseBySyncFhirProfileAndPatient(syncFhirProfile, patient, caseIdentifier);
     }
 
     /**
@@ -575,7 +587,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     *
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirProfile()
      */
     @Override
@@ -585,12 +596,63 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     *
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCasesByProfile(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
      */
     @Override
     public List<SyncFhirCase> getSyncFhirCasesByProfile(SyncFhirProfile syncFhirProfile) {
         return dao.getSyncFhirCasesByProfile(syncFhirProfile);
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#testOrderHasResults(org.openmrs.Order)
+     */
+    public boolean testOrderHasResults(Order order) {
+        boolean hasOrder = false;
+
+        List list = Context.getAdministrationService().executeSQL("select obs_id from obs where order_id=" + order.getOrderId() + "", true);
+
+        if (!list.isEmpty()) {
+            hasOrder = true;
+        } else if (resultsEnteredOnEncounter(order)) {
+
+            hasOrder = true;
+        }
+        return hasOrder;
+    }
+
+
+    /**
+     * Checks if the test ordered already has detached results entered on separately on the encounter the encounter
+     *
+     * @param order order to be checked.
+     * @return true when results have already been entered or false when results have not yet been entered
+     */
+    private boolean resultsEnteredOnEncounter(Order order) {
+
+        boolean resultsEnteredOnEncounter = false;
+
+        Set<Obs> allObs = order.getEncounter().getAllObs(false);
+        for (Obs obs1 : allObs) {
+            if (obs1.getConcept().getConceptId().equals(order.getConcept().getConceptId()) && (!obs1.getValueAsString(Locale.ENGLISH).equals("") || obs1.getValueAsString(Locale.ENGLISH) != null)) {
+                resultsEnteredOnEncounter = true;
+                return true;
+            }
+        }
+
+        Set<Concept> conceptSet = allObs.stream().map(Obs::getConcept).collect(Collectors.toSet());
+        List<Concept> members = order.getConcept().getSetMembers();
+
+        if (members.size() > 0) {
+            for (Concept concept : members) {
+                if (conceptSet.contains(concept)) {
+                    resultsEnteredOnEncounter = true;
+                    return true;
+                }
+            }
+        }
+
+        return resultsEnteredOnEncounter;
     }
 
 }
