@@ -9,12 +9,14 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 import org.openmrs.Encounter;
 import org.openmrs.Obs;
+import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
@@ -29,6 +31,7 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_FILTER_OBJECT_STRING;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
@@ -40,6 +43,9 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SY
 public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     protected static final String UGANDAEMRSYNC_GLOBALPROPERTY_DATASET_XML = "org/openmrs/module/ugandaemrsync/include/globalPropertiesDataSet.xml";
     protected static final String UGANDAEMRSYNC_STANDARDTESTDATA = "org/openmrs/module/ugandaemrsync/include/standardTestDataset.xml";
+
+    private static final String sampleResultsForCd4Test = "{\"resourceType\":\"Bundle\",\"type\":\"transaction-response\",\"entry\":[{\"fullUrl\":\"urn:uuid:158aba56-c34a-4df8-8c00-b7b496575553\",\"resource\":{\"resourceType\":\"DiagnosticReport\",\"basedOn\":[{\"reference\":\"ServiceRequest/123455\"}],\"subject\":{\"reference\":\"urn:uuid:da3c5276-a48e-48b0-9f37-53d4c2d496f2\"},\"status\":\"final\",\"category\":[{\"coding\":[{\"system\":\"http://SSTRM.org\",\"code\":\"CD41003\",\"display\":\"CD4 COunt\"}],\"text\":\"CD4 COunt\"}],\"code\":{\"coding\":[{\"system\":\"http://SSTRM.org\",\"code\":\"CD41003\",\"display\":\"CD4 COunt\"}],\"text\":\"CD4 COunt\"},\"effectivePeriod\":{\"start\":\"2021-06-23T11:45:33+11:00\",\"end\":\"2021-06-23T11:45:33+11:00\"},\"issued\":\"2021-06-23T11:45:33+11:00\",\"performer\":[{\"reference\":\"urn:uuid:652d2dad-ae63-4d52-9984-1abdae5f3959\",\"type\":\"Practitioner\",\"display\":\"performed_by\"},{\"reference\":\"urn:uuid:fac46899-329d-42b1-9d30-238bf5a53f6a\",\"type\":\"Practitioner\",\"display\":\"reviewed_by\"},{\"reference\":\"urn:uuid:016477c1-3fe5-4c90-9482-3b745fde744d\",\"type\":\"Practitioner\",\"display\":\"authorised_by\"}],\"specimen\":[{\"reference\":\"urn:uuid:63510ef5-2e99-430b-8fee-1cfe9ea86496\"}],\"result\":[{\"reference\":\"observation-24\"}]}},{\"fullUrl\":\"urn:uuid:ac13f104-648f-45a7-8c88-9ae6e713b8d4\",\"resource\":{\"resourceType\":\"Observation\",\"id\":\"observation-24\",\"basedOn\":[{\"reference\":\"ServiceRequest/123455\"}],\"status\":\"final\",\"code\":{\"coding\":[{\"system\":\"http://SSTRM.org\",\"code\":\"CD41003\",\"display\":\"CD4 COunt\"}],\"text\":\"CD4 COunt\"},\"valueQuantity\":{\"value\":400.0,\"unit\":\"%\",\"system\":\"http://unitsofmeasure.org\"},\"referenceRange\":[{\"low\":{\"value\":7.0,\"unit\":\"ml\",\"system\":\"http://unitsofmeasure.org\"},\"high\":{\"value\":1000,\"unit\":\"ml\",\"system\":\"http://unitsofmeasure.org\"}}],\"device\":{\"reference\":\"#device-1\"}}}]}";
+    private static final Integer cd4Concept = 5497;
 
     @Before
     public void initialize() throws Exception {
@@ -378,6 +384,35 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
         Assert.assertNotNull(syncFhirCase1.getCaseId());
         Assert.assertNotNull(syncFhirCase1.getCaseIdentifier());
         Assert.assertNotNull("ART-MALE-1", syncFhirCase1.getCaseIdentifier());
+    }
+
+    @Test
+    public void addTestResultsToEncounter_shouldSaveCD4ResultsToEncounter() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        Order order = Context.getOrderService().getOrder(6);
+
+        Integer numberOfObs = order.getEncounter().getObs().size();
+
+        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCd4Test), order.getEncounter(), order);
+
+        Assert.assertTrue(Context.getOrderService().getOrder(6).getEncounter().getObs().size() > numberOfObs);
+        Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(cd4Concept)));
+        Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getValueNumeric).collect(Collectors.toSet()).contains(400.0));
+    }
+
+
+    @Test
+    public void addTestResultsToEncounter_shouldSaveCBCResultsToEncounter() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        Order order = Context.getOrderService().getOrder(6);
+
+        Integer numberOfObs = order.getEncounter().getObs().size();
+
+        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCd4Test), order.getEncounter(), order);
+
+        Assert.assertTrue(Context.getOrderService().getOrder(6).getEncounter().getObs().size() > numberOfObs);
+        Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(cd4Concept)));
+        Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getValueNumeric).collect(Collectors.toSet()).contains(400.0));
     }
 
 
