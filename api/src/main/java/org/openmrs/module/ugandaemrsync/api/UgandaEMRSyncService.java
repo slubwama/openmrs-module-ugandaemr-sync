@@ -339,10 +339,9 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     /**
      * This method adds the test results to an encounter from a fhir object
      * @param bundleResults The results that have returned for test(s) ordered
-     * @param encounter the encounter where the test results will be written to
      * @param order the order which was used to order the test. this can be null.
      * @return Encounter the encounter where the test results have been added.
      */
-    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Encounter encounter, Order order);
+    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order);
 }
 

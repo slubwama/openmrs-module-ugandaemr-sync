@@ -666,9 +666,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addTestResultsToEncounter(org.json.JSONObject, org.openmrs.Encounter, org.openmrs.Order)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addTestResultsToEncounter(org.json.JSONObject, org.openmrs.Order)
      */
-    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Encounter encounter, Order order) {
+    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order) {
+        Encounter encounter = order.getEncounter();
         if (!resultsEnteredOnEncounter(order)) {
             JSONArray jsonArray = bundleResults.getJSONArray("entry");
 
@@ -723,7 +724,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return obj;
     }
 
-    private Obs processTestResults(JSONObject jsonObject, Encounter encounter, JSONArray observationArray, Order order) {
+    private Encounter processTestResults(JSONObject jsonObject, Encounter encounter, JSONArray observationArray, Order order) {
         JSONObject diagnosticReport = jsonObject.getJSONObject("resource");
 
         String orderCode = diagnosticReport.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
@@ -755,40 +756,39 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             }
 
 
-                Obs obs;
+            Obs obs;
 
-                if (orderConceptIsaSet) {
-                    obs = createObs(order.getEncounter(), order, concept, null, null, null);
-                    groupingObservation.addGroupMember(obs);
+            if (orderConceptIsaSet) {
+                obs = createObs(order.getEncounter(), order, concept, null, null, null);
+                groupingObservation.addGroupMember(obs);
 
-                } else {
-                    obs = groupingObservation;
-                }
+            } else {
+                obs = groupingObservation;
+            }
 
-                assert obs != null;
-                switch (concept.getDatatype().getUuid()) {
-                    case ConceptDatatype.CODED_UUID:
-                        String valueCodedCode = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
-                        String valueCodedSystemURL = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("system");
-                        Concept valueCodedConcept = Context.getConceptService().getConceptByMapping(valueCodedCode, getConceptSourceBySystemURL(valueCodedSystemURL).getName());
-                        obs.setValueCoded(valueCodedConcept);
-                        break;
-                    case ConceptDatatype.NUMERIC_UUID:
-                        obs.setValueNumeric(observation.getJSONObject("valueQuantity").getDouble("value"));
+            assert obs != null;
+            switch (concept.getDatatype().getUuid()) {
+                case ConceptDatatype.CODED_UUID:
+                    String valueCodedCode = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
+                    String valueCodedSystemURL = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("system");
+                    Concept valueCodedConcept = Context.getConceptService().getConceptByMapping(valueCodedCode, getConceptSourceBySystemURL(valueCodedSystemURL).getName());
+                    obs.setValueCoded(valueCodedConcept);
+                    break;
+                case ConceptDatatype.NUMERIC_UUID:
+                    obs.setValueNumeric(observation.getJSONObject("valueQuantity").getDouble("value"));
 
-                        break;
-                    case ConceptDatatype.BOOLEAN_UUID:
-                        obs.setValueBoolean(observation.getBoolean("valueBoolean"));
+                    break;
+                case ConceptDatatype.BOOLEAN_UUID:
+                    obs.setValueBoolean(observation.getBoolean("valueBoolean"));
 
-                        break;
-                    case ConceptDatatype.TEXT_UUID:
-                        obs.setValueText(observation.getString("valueString"));
-                        break;
-                }
+                    break;
+                case ConceptDatatype.TEXT_UUID:
+                    obs.setValueText(observation.getString("valueString"));
+                    break;
+            }
 
 
-                encounter.addObs(obs);
-
+            encounter.addObs(obs);
 
 
         }
@@ -797,7 +797,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         Context.getEncounterService().saveEncounter(encounter);
 
 
-        return groupingObservation;
+        return encounter;
     }
 
 

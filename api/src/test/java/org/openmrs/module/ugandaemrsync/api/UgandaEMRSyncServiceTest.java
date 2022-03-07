@@ -393,27 +393,10 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         Integer numberOfObs = order.getEncounter().getObs().size();
 
-        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCd4Test), order.getEncounter(), order);
+        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCd4Test), order);
 
         Assert.assertTrue(Context.getOrderService().getOrder(6).getEncounter().getObs().size() > numberOfObs);
         Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(cd4Concept)));
         Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getValueNumeric).collect(Collectors.toSet()).contains(400.0));
     }
-
-
-    @Test
-    public void addTestResultsToEncounter_shouldSaveCBCResultsToEncounter() {
-        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        Order order = Context.getOrderService().getOrder(6);
-
-        Integer numberOfObs = order.getEncounter().getObs().size();
-
-        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCd4Test), order.getEncounter(), order);
-
-        Assert.assertTrue(Context.getOrderService().getOrder(6).getEncounter().getObs().size() > numberOfObs);
-        Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(cd4Concept)));
-        Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getValueNumeric).collect(Collectors.toSet()).contains(400.0));
-    }
-
-
 }
