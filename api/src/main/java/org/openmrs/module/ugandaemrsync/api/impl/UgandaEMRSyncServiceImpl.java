@@ -670,6 +670,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      */
     public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order) {
         Encounter encounter = order.getEncounter();
+        Encounter returningEncounter = null;
         if (!resultsEnteredOnEncounter(order)) {
             JSONArray jsonArray = bundleResults.getJSONArray("entry");
 
@@ -680,12 +681,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             for (Object jsonObject : filteredDiagnosticReportArray) {
                 JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
 
-                processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
+                returningEncounter = processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
             }
 
         }
 
-        return encounter;
+        return returningEncounter;
     }
 
 
@@ -737,7 +738,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         Obs groupingObservation = createObs(order.getEncounter(), order, orderConcept, null, null, null);
 
-
         JSONArray jsonArray = diagnosticReport.getJSONArray("result");
         for (Object resultReferenceObject : jsonArray) {
             JSONObject resultReference = new JSONObject(resultReferenceObject.toString());
@@ -755,13 +755,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 concept = Context.getConceptService().getConceptByMapping(code, conceptSource.getName());
             }
 
+            if (concept == null) {
+                continue;
+            }
+
 
             Obs obs;
 
             if (orderConceptIsaSet) {
                 obs = createObs(order.getEncounter(), order, concept, null, null, null);
                 groupingObservation.addGroupMember(obs);
-
             } else {
                 obs = groupingObservation;
             }
@@ -787,12 +790,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     break;
             }
 
+            if (!obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
+                continue;
+            }
 
             encounter.addObs(obs);
 
-
         }
-        encounter.addObs(groupingObservation);
+        if (orderConceptIsaSet) {
+            encounter.addObs(groupingObservation);
+        }
 
         Context.getEncounterService().saveEncounter(encounter);
 
