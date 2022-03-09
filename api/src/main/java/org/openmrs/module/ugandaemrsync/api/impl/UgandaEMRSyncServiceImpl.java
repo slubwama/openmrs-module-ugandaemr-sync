@@ -790,7 +790,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     break;
             }
 
-            if (!obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
+            if (obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
                 continue;
             }
 
