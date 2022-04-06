@@ -38,6 +38,7 @@
                 modal.find("#observationCodeUUIDS").val("");
                 modal.find("#episodeOfCareUUIDS").val("");
                 modal.find("#caseBasedPrimaryResourceUUID").val("");
+                modal.find("#dataToSyncStartDate").val("");
                 modal.find("#durationToKeepSyncedResources").val("");
                 modal.find("#noOfResourcesInBundle").val("");
 
@@ -46,13 +47,17 @@
                 modal.find("#patientIdentifierType select").find().val("");
                 modal.find("isCaseBasedProfile").checked = false;
                 modal.find("generateBundle").checked = false;
+                modal.find("syncDataEverSince").checked = false;
                 modal.find("resourceTypeEncounter").checked = false;
                 modal.find("resourcePatient").checked = false;
                 modal.find("resourceTypePerson").checked = false;
                 modal.find("resourceTypeObservation").checked = false;
                 modal.find("resourceTypeEpisodeOfCare").checked = false;
+                modal.find("resourceTypePractitioner").checked = false;
                 modal.find("resourceTypeServiceRequest").checked = false;
                 modal.find("resourceTypeMedicationRequest").checked = false;
+                modal.find("#identifier_source_id").hide();
+                modal.find("#identifier_type").hide();
 
 
                 modal.find("#username").val("");
@@ -73,11 +78,16 @@
                     modal.find("#profileEnabled").attr('checked', syncFhirProfile.syncFhirProfile.profileEnabled);
 
                     modal.find("#generateBundle").attr('checked', syncFhirProfile.syncFhirProfile.generateBundle);
+                    modal.find("#syncDataEverSince").attr('checked', syncFhirProfile.syncFhirProfile.syncDataEverSince);
                     modal.find("#noOfResourcesInBundle").val(syncFhirProfile.syncFhirProfile.noOfResourcesInBundle);
 
                     modal.find("#durationToKeepSyncedResources").val(syncFhirProfile.syncFhirProfile.durationToKeepSyncedResources);
 
                     modal.find("#isCaseBasedProfile").attr('checked', syncFhirProfile.syncFhirProfile.isCaseBasedProfile);
+                    if (syncFhirProfile.syncFhirProfile.dataToSyncStartDate !== "") {
+                        modal.find("#dataToSyncStartDate").val(formatDateForDisplay(new Date(syncFhirProfile.syncFhirProfile.dataToSyncStartDate)));
+                    }
+
                     modal.find("#caseBasedPrimaryResourceType").val(syncFhirProfile.syncFhirProfile.caseBasedPrimaryResourceType);
                     modal.find("#caseBasedPrimaryResourceUUID").val(syncFhirProfile.syncFhirProfile.caseBasedPrimaryResourceUUID);
 
@@ -93,7 +103,7 @@
 
                     var obervationFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).observationFilter.code;
 
-                    var episodeOfCareFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).episodeOfCareFilter.type;
+                    var episodeOfCareFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
 
 
                     modal.find("#encounterTypeUUIDS").val(encounterFilters);
@@ -288,27 +298,53 @@
                                                            name="syncFhirProfileName">
                                                 </div>
 
-                                                <div class="form-check form-switch">
-                                                    <input type="checkbox" id="profileEnabled"
-                                                           name="profileEnabled"
-                                                           value="true">
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <div class="form-check form-switch">
+                                                            <input type="checkbox" id="profileEnabled"
+                                                                   name="profileEnabled"
+                                                                   value="true">
 
-                                                    <label class="form-check-label"
-                                                           for="profileEnabled">
-                                                        Enable Profile
-                                                    </label>
+                                                            <label class="form-check-label"
+                                                                   for="profileEnabled">
+                                                                Enable Profile
+                                                            </label>
+                                                        </div>
+
+                                                        <div class="form-check form-switch">
+                                                            <input type="checkbox" id="generateBundle"
+                                                                   name="generateBundle"
+                                                                   value="true">
+
+                                                            <label class="form-check-label"
+                                                                   for="generateBundle">
+                                                                Generate Bundle
+                                                            </label>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="col-sm-6">
+                                                        <div class="form-check form-switch">
+                                                            <input type="checkbox" id="syncDataEverSince"
+                                                                   name="syncDataEverSince"
+                                                                   value="true">
+
+                                                            <label class="form-check-label"
+                                                                   for="syncDataEverSince">
+                                                                Sync Historical Data
+                                                            </label>
+                                                        </div>
+
+                                                        <div>
+                                                            <input type="date" class="form-control"
+                                                                   id="dataToSyncStartDate"
+                                                                   placeholder="Data To Sync Since"
+                                                                   name="dataToSyncStartDate">
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                <div class="form-check form-switch">
-                                                    <input type="checkbox" id="generateBundle"
-                                                           name="generateBundle"
-                                                           value="true">
-
-                                                    <label class="form-check-label"
-                                                           for="generateBundle">
-                                                        Generate Bundle
-                                                    </label>
-                                                </div>
 
                                                 <div class="form-group">
                                                     <label>No of Resources in Bundle</label>
@@ -337,17 +373,6 @@
                                                     <div class="row">
                                                         <div class="col-sm-6">
                                                             <div class="form-group">
-                                                                <div class="form-check">
-                                                                    <input type="checkbox"
-                                                                           id="resourceTypeEncounter"
-                                                                           name="resourceType"
-                                                                           class="resourceType"
-                                                                           value="Encounter">
-                                                                    <label class="form-check-label"
-                                                                           for="resourceTypeEncounter">
-                                                                        Encounter
-                                                                    </label>
-                                                                </div>
 
                                                                 <div class="form-check">
                                                                     <input type="checkbox" id="resourceTypePatient"
@@ -372,22 +397,6 @@
 
                                                                 <div class="form-check">
                                                                     <input type="checkbox"
-                                                                           id="resourceTypeObservation"
-                                                                           name="resourceType"
-                                                                           class="resourceType"
-                                                                           value="Observation">
-                                                                    <label class="form-check-label"
-                                                                           for="resourceTypeObservation">
-                                                                        Observation
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-sm-6">
-                                                            <div class="form-group">
-                                                                <div class="form-check">
-                                                                    <input type="checkbox"
                                                                            id="resourceTypeEpisodeOfCare"
                                                                            name="resourceType"
                                                                            class="resourceType"
@@ -395,6 +404,35 @@
                                                                     <label class="form-check-label"
                                                                            for="resourceTypeEpisodeOfCare">
                                                                         EpisodeOfCare (Program)
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeEncounter"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="Encounter">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeEncounter">
+                                                                        Encounter
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-sm-6">
+
+                                                            <div class="form-group">
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeObservation"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="Observation">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeObservation">
+                                                                        Observation
                                                                     </label>
                                                                 </div>
 
@@ -419,6 +457,18 @@
                                                                     <label class="form-check-label"
                                                                            for="resourceTypeMedicationRequest">
                                                                         MedicationRequest (Medication Orders)
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypePractitioner"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="Practitioner">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypePractitioner">
+                                                                        Practitioner (Provider)
                                                                     </label>
                                                                 </div>
                                                             </div>
@@ -481,9 +531,8 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="card">
-                                            <div class="card-header">General Filters</div>
 
-                                            <div class="card-body">
+                                            <div class="card-body" id="identifier_type">
                                                 <div class="form-group">
                                                     <label>Patient Identifier Type</label>
                                                     <select class="form-control" name="patientIdentifierType"
@@ -493,6 +542,16 @@
                                                         <option value="${it.uuid}">${it.name}</option>
                                                         <% } %>
                                                     </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="card-body" id="identifier_source_id">
+                                                <div class="form-group">
+                                                    <label>Patient Identifier Source Id</label>
+                                                    <input type="text" class="form-control"
+                                                           id="identifierSourceId"
+                                                           placeholder="eg concept UUID, program attribute type"
+                                                           name="identifierSourceId">
                                                 </div>
                                             </div>
                                         </div>

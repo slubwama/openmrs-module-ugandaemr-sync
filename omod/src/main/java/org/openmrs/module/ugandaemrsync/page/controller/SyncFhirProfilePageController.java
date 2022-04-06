@@ -35,11 +35,13 @@ public class SyncFhirProfilePageController {
     public void post(@SpringBean PageModel pageModel, @RequestParam(value = "returnUrl", required = false) String returnUrl,
                      @RequestParam(value = "profileId", required = false) String profileId,
                      @RequestParam(value = "syncFhirProfileName", required = false) String syncFhirProfileName,
-                     @RequestParam(value = "profileEnabled", required = false) boolean profileEnabled,
+                     @RequestParam(value = "profileEnabled", required = false, defaultValue = "false") String profileEnabled,
                      @RequestParam(value = "resourceType", required = false) String resourceType,
+                     @RequestParam(value = "dataToSyncStartDate", required = false) Date dataToSyncStartDate,
                      @RequestParam(value = "durationToKeepSyncedResources", required = false) Integer durationToKeepSyncedResources,
-                     @RequestParam(value = "generateBundle", required = false) boolean generateBundle,
-                     @RequestParam(value = "isCaseBasedProfile", required = false) boolean isCaseBasedProfile,
+                     @RequestParam(value = "generateBundle", required = false, defaultValue = "false") String generateBundle,
+                     @RequestParam(value = "syncDataEverSince", required = false, defaultValue = "false") String syncDataEverSince,
+                     @RequestParam(value = "isCaseBasedProfile", required = false, defaultValue = "false") String isCaseBasedProfile,
                      @RequestParam(value = "caseBasedPrimaryResourceType", required = false) String caseBasedPrimaryResourceType,
                      @RequestParam(value = "caseBasedPrimaryResourceUUID", required = false) String caseBasedPrimaryResourceUUID,
                      @RequestParam(value = "patientIdentifierType", required = false) String patientIdentifierType,
@@ -78,12 +80,14 @@ public class SyncFhirProfilePageController {
         }
 
         syncFhirProfile.setName(syncFhirProfileName);
-        syncFhirProfile.setProfileEnabled(profileEnabled);
-        syncFhirProfile.setGenerateBundle(generateBundle);
+        syncFhirProfile.setProfileEnabled(Boolean.parseBoolean(profileEnabled));
+        syncFhirProfile.setGenerateBundle(Boolean.parseBoolean(generateBundle));
+        syncFhirProfile.setSyncDataEverSince(Boolean.parseBoolean(syncDataEverSince));
+        syncFhirProfile.setDataToSyncStartDate(dataToSyncStartDate);
         syncFhirProfile.setNumberOfResourcesInBundle(noOfResourcesInBundle);
         syncFhirProfile.setResourceTypes(resourceType);
         syncFhirProfile.setDurationToKeepSyncedResources(durationToKeepSyncedResources);
-        syncFhirProfile.setCaseBasedProfile(isCaseBasedProfile);
+        syncFhirProfile.setCaseBasedProfile(Boolean.parseBoolean(isCaseBasedProfile));
         syncFhirProfile.setCaseBasedPrimaryResourceType(caseBasedPrimaryResourceType);
         syncFhirProfile.setCaseBasedPrimaryResourceTypeId(caseBasedPrimaryResourceUUID);
         syncFhirProfile.setPatientIdentifierType(Context.getPatientService().getPatientIdentifierTypeByUuid(patientIdentifierType));
