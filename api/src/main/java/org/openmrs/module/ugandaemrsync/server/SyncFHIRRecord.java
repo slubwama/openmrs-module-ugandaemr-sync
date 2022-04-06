@@ -1021,9 +1021,10 @@ public class SyncFHIRRecord {
 
         if (syncFhirProfileLog != null) {
             date = syncFhirProfileLog.getLastGenerationDate();
+        } else if (syncFhirProfile.getDataToSyncStartDate() != null) {
+            date = syncFhirProfile.getDataToSyncStartDate();
         } else {
             date = getDefaultLastSyncDate();
-
         }
         return date;
     }
@@ -1128,7 +1129,7 @@ public class SyncFHIRRecord {
         List<PatientProgram> patientPrograms = (List<PatientProgram>) episodeOfcare;
 
         for (PatientProgram patientProgram : patientPrograms) {
-            if ((encounterDate.equals(patientProgram.getDateEnrolled()) || encounterDate.after(patientProgram.getDateEnrolled())) && (patientProgram.getDateCompleted()==null || (patientProgram.getDateCompleted()!=null && (encounterDate.equals(patientProgram.getDateCompleted()) || encounterDate.before(patientProgram.getDateCompleted()))))) {
+            if ((encounterDate.equals(patientProgram.getDateEnrolled()) || encounterDate.after(patientProgram.getDateEnrolled())) && (patientProgram.getDateCompleted() == null || (patientProgram.getDateCompleted() != null && (encounterDate.equals(patientProgram.getDateCompleted()) || encounterDate.before(patientProgram.getDateCompleted()))))) {
                 jsonObject.put("episodeOfCare", new JSONObject(String.format(episodeOfCareReference, patientProgram.getUuid())));
             }
         }
