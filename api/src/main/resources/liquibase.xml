@@ -981,7 +981,9 @@
             Add Column data_to_sync_start_date to sync_fhir_profile table
         </comment>
         <addColumn tableName="sync_fhir_profile">
-            <column name="data_to_sync_start_date" type="datetime"/>
+            <column  name="data_to_sync_start_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
