@@ -8,11 +8,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Column;
 import javax.persistence.ManyToOne;
 import javax.persistence.JoinColumn;
+import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "ugandaemrsync.SyncFhirProfileLog")
 @Table(name = "sync_fhir_profile_log")
-public class SyncFhirProfileLog extends BaseOpenmrsData {
+public class SyncFhirProfileLog extends BaseOpenmrsData implements Serializable {
 
     @Id
     @GeneratedValue

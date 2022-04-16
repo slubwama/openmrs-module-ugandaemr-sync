@@ -287,4 +287,91 @@ public class UgandaEMRSyncDao {
         criteria.add(Restrictions.eq("profile", syncFhirProfile));
         return criteria.list();
     }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileByName(java.lang.String)
+     */
+    public List<SyncFhirProfile> getSyncFhirProfileByName(String name) {
+        Criteria criteria = getSession().createCriteria(SyncFhirProfile.class);
+        criteria.add(Restrictions.eq("name", name));
+        return criteria.list();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirProfileLog()
+     */
+    public List<SyncFhirProfileLog> getAllSyncFhirProfileLog() {
+        return (List<SyncFhirProfileLog>) getSession().createCriteria(SyncFhirProfileLog.class).list();
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirCase()
+     */
+    public List<SyncFhirCase> getAllSyncFhirCase() {
+        return (List<SyncFhirCase>) getSession().createCriteria(SyncFhirCase.class).list();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCaseByUUDI(java.lang.String)
+     */
+    public SyncFhirCase getSyncFhirCaseByUUDI(String uuid) {
+        Criteria criteria = getSession().createCriteria(SyncFhirProfile.class);
+        criteria.add(Restrictions.eq("uuid", uuid));
+        return (SyncFhirCase) criteria.uniqueResult();
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllFHirResources()
+     */
+    public List<SyncFhirResource> getAllFHirResources() {
+        return (List<SyncFhirResource>) getSession().createCriteria(SyncFhirResource.class).list();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirResourceByUUID(java.lang.String)
+     */
+    public SyncFhirResource getSyncFhirResourceByUUID(String uuid) {
+        Criteria criteria = getSession().createCriteria(SyncFhirResource.class);
+        criteria.add(Restrictions.eq("uuid", uuid));
+        return (SyncFhirResource) criteria.uniqueResult();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfile(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
+     */
+    public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfile(SyncFhirProfile syncFhirProfile) {
+        Criteria criteria = getSession().createCriteria(SyncFhirProfileLog.class);
+        criteria.add(Restrictions.eq("profile", syncFhirProfile));
+        return criteria.list();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByUUID(java.lang.String)
+     */
+    public SyncFhirProfileLog getSyncFhirProfileLogByUUID(String uuid) {
+        Criteria criteria = getSession().createCriteria(SyncFhirProfileLog.class);
+        criteria.add(Restrictions.eq("uuid", uuid));
+        return (SyncFhirProfileLog) criteria.uniqueResult();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogById(java.lang.Integer)
+     */
+    public SyncFhirProfileLog getSyncFhirProfileLogById(Integer id) {
+
+        Criteria criteria = getSession().createCriteria(SyncFhirProfileLog.class);
+        criteria.add(Restrictions.eq("profileLogId", id));
+        return (SyncFhirProfileLog) criteria.uniqueResult();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCaseById(java.lang.Integer)
+     */
+    public SyncFhirCase getSyncFhirCaseById(Integer id) {
+        Criteria criteria = getSession().createCriteria(SyncFhirCase.class);
+        criteria.add(Restrictions.eq("profileLogId", id));
+        return (SyncFhirCase) criteria.uniqueResult();
+    }
 }

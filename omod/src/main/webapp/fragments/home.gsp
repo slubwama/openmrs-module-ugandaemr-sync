@@ -69,4 +69,10 @@
         <i class="icon-list-ul"></i>
         Sync FHIR Profile
     </a>
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","syncFhirProfileStatistics")}"
+       class="button app big">
+
+        <i class="icon-bar-chart"></i>
+        Sync FHIR Profile Statistics
+    </a>
 </div>
