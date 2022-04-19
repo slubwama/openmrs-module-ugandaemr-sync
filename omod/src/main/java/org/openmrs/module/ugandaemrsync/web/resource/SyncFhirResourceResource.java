@@ -153,12 +153,13 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             generatorProfile = ugandaEMRSyncService.getSyncFhirProfileByUUID(generatorProfileUUID);
         }
 
-        List<SyncFhirResource> SyncFhirProfilesByQuery;
-
-        SyncFhirProfilesByQuery = ugandaEMRSyncService.getSyncFHIRResourceBySyncFhirProfile(generatorProfile, Boolean.parseBoolean(synced));
+        List<SyncFhirResource> syncFhirResources;
 
 
-        return new NeedsPaging<SyncFhirResource>(SyncFhirProfilesByQuery, context);
+        syncFhirResources = ugandaEMRSyncService.getSyncFHIRResourceBySyncFhirProfile(generatorProfile, Boolean.parseBoolean(synced));
+
+
+        return new NeedsPaging<SyncFhirResource>(syncFhirResources, context);
     }
 
     @Override

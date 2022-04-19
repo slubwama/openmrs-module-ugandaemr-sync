@@ -28,6 +28,17 @@
     if (jQuery) {
 
         jq(document).ready(function () {
+
+            jq.ajax({
+                type: "GET",
+                url: '/' + OPENMRS_CONTEXT_PATH + "/ws/rest/v1/syncfhirprofile?v=full",
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    populateSelectProfileList(data)
+                }
+            });
+
             jq("#syncProfile").change(function () {
                 var profile = jq("#syncProfile :selected").val();
                 jq.ajax({
@@ -62,6 +73,22 @@
                 });
             });
         });
+    }
+
+    function populateSelectProfileList(response) {
+        jq("#syncProfile").html("");
+        var selectOptions = "<option value=\"\">Select Primary Resource Type</option>";
+
+        jq.each(response.results, function (index, element) {
+
+                selectOptions += "<option value='" + element.uuid + "'>" + element.name + "</option>";
+                ;
+            }
+        );
+
+        jq("#syncProfile").html("");
+        jq("#syncProfile").append(selectOptions);
+
     }
 
 
@@ -177,15 +204,7 @@
         <div class="row">
             <div class="col-3">
                 <label>Sync FHIR Profile</label>
-                <select class="form-control" name="syncProfile"
-                        id="syncProfile">
-                    <option value="">Select Primary Resource Type</option>
-                    <% if (syncFhirProfiles?.size() > 0) {
-                        syncFhirProfiles?.each { %>
-                    <option value="${it.uuid}">${it.name}</option>
-                    <% }
-                    } %>
-                </select>
+                <select class="form-control" name="syncProfile" id="syncProfile"></select>
             </div>
         </div>
 
