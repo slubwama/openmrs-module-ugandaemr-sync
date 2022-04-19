@@ -209,8 +209,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <% if (syncFhirProfiles?.size() > 0) {
-                    syncFhirProfiles?.each { %>
+                <% if (syncFhirProfiles?.size() > 0) {syncFhirProfiles?.each { %>
                 <tr>
                     <td>${it?.syncFhirProfileId}</td>
                     <td>${it?.name}</td>

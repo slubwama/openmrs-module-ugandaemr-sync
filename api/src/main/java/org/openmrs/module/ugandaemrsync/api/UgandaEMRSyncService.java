@@ -332,6 +332,87 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param order the order which is being checked
      * @return true is the order has results and false if it doesnt have results
      */
-     public boolean testOrderHasResults(Order order);
+    public boolean testOrderHasResults(Order order);
+
+
+    /**
+     * Gets Profile By name of Profile
+     * @param name the name to be matched to the profile
+     * @return List<SyncFhirProfile> that match the name provided
+     */
+    public List<SyncFhirProfile> getSyncFhirProfileByName(String name);
+
+
+    /**
+     * Gets Sync Fhir Case by uuid
+     * @param uuid the uuid to be matched to a case
+     * @return a unique case that matches the uuid
+     */
+    public SyncFhirCase getSyncFhirCaseByUUDI(String uuid);
+
+
+    /**
+     * Get all Sync Fhir Cases.
+     * @return a List of SyncFhirCase
+     */
+    public List<SyncFhirCase> getAllSyncFhirCase();
+
+
+    /**
+     * Gets Sync Fhir Case by id
+     * @param id the uuid to be matched to a case
+     * @return a unique case that matches the id
+     */
+    public SyncFhirCase getSyncFhirCaseById(Integer id);
+
+
+    /**
+     * Get all SyncFhirProfileLog.
+     * @return a List of SyncFhirProfileLog
+     */
+    public List<SyncFhirProfileLog> getAllSyncFhirProfileLog();
+
+
+
+    /**
+     * Gets SyncFhirProfileLog by uuid
+     * @param uuid the uuid to be matched to a profileLog
+     * @return a unique Profile Log that matches the uuid
+     */
+    public SyncFhirProfileLog getSyncFhirProfileLogByUUID(String uuid);
+
+
+    /**
+     * Gets SyncFhirProfileLog by id
+     * @param id the uuid to be matched to a profileLog
+     * @return a unique Profile Log that matches the id
+     */
+    public SyncFhirProfileLog getSyncFhirProfileLogById(Integer id);
+
+
+
+    /**
+     * Get all SyncFhirResource.
+     * @return a List of SyncFhirResource
+     */
+    public List<SyncFhirResource> getAllFHirResources();
+
+
+
+    /**
+     * Gets SyncFhirResource by uuid
+     * @param uuid the uuid to be matched to a SyncFhirResource
+     * @return a unique SyncFhirResource  that matches the uuid
+     */
+    public SyncFhirResource getSyncFhirResourceByUUID(String uuid);
+
+
+    /**
+     * This returns the latest sync fhir profile log
+     *
+     * @param syncFhirProfile the sync fhir profile to be used search for the syncFhirProfile
+     * @return syncFhirProfileLog that has matched the search
+     */
+    public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfile(SyncFhirProfile syncFhirProfile);
 }
 
