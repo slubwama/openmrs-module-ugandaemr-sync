@@ -146,7 +146,7 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
         String synced = context.getParameter("synced");
-        String generatorProfileUUID = context.getParameter("generatorProfile");
+        String generatorProfileUUID = context.getParameter("profile");
         SyncFhirProfile generatorProfile = null;
 
         if (generatorProfileUUID != "" || generatorProfileUUID != null) {
