@@ -21,58 +21,38 @@
     });
 </script>
 
-
-
 <script>
 
     if (jQuery) {
 
         jq(document).ready(function () {
 
-            jq.ajax({
-                type: "GET",
-                url: '/' + OPENMRS_CONTEXT_PATH + "/ws/rest/v1/syncfhirprofile?v=full",
-                dataType: "json",
-                async: false,
-                success: function (data) {
-                    populateSelectProfileList(data)
-                }
-            });
+            populateSelectProfileList(queryRestData("/ws/rest/v1/syncfhirprofile?v=full"))
 
             jq("#syncProfile").change(function () {
                 var profile = jq("#syncProfile :selected").val();
-                jq.ajax({
-                    type: "GET",
-                    url: '/' + OPENMRS_CONTEXT_PATH + "/ws/rest/v1/syncfhircase?profile=" + profile + "&v=full",
-                    dataType: "json",
-                    async: false,
-                    success: function (data) {
-                        displayCaseData(data)
-                    }
-                });
+                displayCaseData(queryRestData("/ws/rest/v1/syncfhircase?profile=" + profile + "&v=full"));
 
+                displayProfileLogData(queryRestData("/ws/rest/v1/syncfhirprofilelog?profile=" + profile + "&v=full"));
 
-                jq.ajax({
-                    type: "GET",
-                    url: '/' + OPENMRS_CONTEXT_PATH + "/ws/rest/v1/syncfhirprofilelog?profile=" + profile + "&v=full",
-                    dataType: "json",
-                    async: false,
-                    success: function (data) {
-                        displayProfileLogData(data)
-                    }
-                });
-
-                jq.ajax({
-                    type: "GET",
-                    url: '/' + OPENMRS_CONTEXT_PATH + "/ws/rest/v1/syncfhirresource?profile=" + profile + "&v=full",
-                    dataType: "json",
-                    async: false,
-                    success: function (data) {
-                        displayResourcesData(data)
-                    }
-                });
+                displayResourcesData(queryRestData("/ws/rest/v1/syncfhirresource?profile=" + profile + "&v=full"))
             });
         });
+    }
+
+
+    function queryRestData(url) {
+        var responseDate = null;
+        jq.ajax({
+            type: "GET",
+            url: '/' + OPENMRS_CONTEXT_PATH + url,
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                responseDate = data;
+            }
+        });
+        return responseDate;
     }
 
     function populateSelectProfileList(response) {
