@@ -940,6 +940,29 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-11032022-1221" author="mmwanje">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.ReceiveLabResultFromALISTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Receive Lab Results from ALIS Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Receive Lab Results" />
+            <column name="description" value="Receive lab results from ALIS" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ReceiveLabResultFromALISTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-03-11T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="730ff003-4020-4aba-b47b-a347eef27a5e" />
+        </insert>
+    </changeSet>
+
     <changeSet id="ugandaemrsync-20211116-2301" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -1031,4 +1054,5 @@
             </column>
         </addColumn>
     </changeSet>
+
 </databaseChangeLog>
