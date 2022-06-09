@@ -11,17 +11,25 @@ package org.openmrs.module.ugandaemrsync.api.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openmrs.Obs;
 import org.openmrs.Order;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Concept;
 import org.openmrs.Patient;
+import org.openmrs.ConceptDatatype;
+import org.openmrs.ConceptSource;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ObsService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
+import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
+import org.openmrs.module.fhir2.api.FhirConceptSourceService;
+import org.openmrs.module.fhir2.api.FhirObservationService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -35,6 +43,7 @@ import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.scheduler.TaskDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -42,6 +51,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -740,6 +750,171 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     @Override
     public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfile(SyncFhirProfile syncFhirProfile) {
         return dao.getSyncFhirProfileLogByProfile(syncFhirProfile);
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addTestResultsToEncounter(org.json.JSONObject, org.openmrs.Order)
+     */
+    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order) {
+        Encounter encounter = order.getEncounter();
+        Encounter returningEncounter = null;
+        if (!resultsEnteredOnEncounter(order)) {
+            JSONArray jsonArray = bundleResults.getJSONArray("entry");
+
+            JSONArray filteredDiagnosticReportArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "DiagnosticReport");
+
+            JSONArray filteredObservationArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "Observation");
+
+            for (Object jsonObject : filteredDiagnosticReportArray) {
+                JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
+
+                returningEncounter = processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
+            }
+
+        }
+
+        return returningEncounter;
+    }
+
+
+    private JSONArray searchForJSONOBJECTSByKey(JSONArray array, String key, String searchValue) {
+        JSONArray filtedArray = new JSONArray();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject obj = null;
+            try {
+                obj = array.getJSONObject(i);
+                if (obj.getJSONObject("resource").getString(key).equals(searchValue)) {
+                    filtedArray.put(obj);
+                }
+            } catch (JSONException e) {
+                log.error(e);
+            }
+        }
+
+        return filtedArray;
+    }
+
+    private JSONObject searchForJSONOBJECTByKey(JSONArray array, String key, String searchValue) {
+
+        JSONObject obj = null;
+        for (int i = 0; i < array.length(); i++) {
+
+            try {
+                obj = array.getJSONObject(i);
+                if (obj.getJSONObject("resource").getString(key).equals(searchValue)) {
+                    return obj;
+                }
+            } catch (JSONException e) {
+                log.error(e);
+            }
+        }
+
+        return obj;
+    }
+
+    private Encounter processTestResults(JSONObject jsonObject, Encounter encounter, JSONArray observationArray, Order order) {
+        JSONObject diagnosticReport = jsonObject.getJSONObject("resource");
+
+        String orderCode = diagnosticReport.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
+        String orderCodeSystem = diagnosticReport.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("system");
+
+        Concept orderConcept = Context.getConceptService().getConceptByMapping(orderCode, getConceptSourceBySystemURL(orderCodeSystem).getName());
+
+
+        boolean orderConceptIsaSet = (orderConcept.getSetMembers().size() > 0);
+
+        Obs groupingObservation = createObs(order.getEncounter(), order, orderConcept, null, null, null);
+
+        JSONArray jsonArray = diagnosticReport.getJSONArray("result");
+        for (Object resultReferenceObject : jsonArray) {
+            JSONObject resultReference = new JSONObject(resultReferenceObject.toString());
+            Concept concept = null;
+
+            String reference = resultReference.getString("reference");
+
+            JSONObject observation = searchForJSONOBJECTByKey(observationArray, "id", reference).getJSONObject("resource");
+
+            String code = observation.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
+            String system = observation.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("system");
+            ConceptSource conceptSource = getConceptSourceBySystemURL(system);
+
+            if (conceptSource != null) {
+                concept = Context.getConceptService().getConceptByMapping(code, conceptSource.getName());
+            }
+
+            if (concept == null) {
+                continue;
+            }
+
+
+            Obs obs;
+
+            if (orderConceptIsaSet) {
+                obs = createObs(order.getEncounter(), order, concept, null, null, null);
+                groupingObservation.addGroupMember(obs);
+            } else {
+                obs = groupingObservation;
+            }
+
+            assert obs != null;
+            switch (concept.getDatatype().getUuid()) {
+                case ConceptDatatype.CODED_UUID:
+                    String valueCodedCode = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
+                    String valueCodedSystemURL = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("system");
+                    Concept valueCodedConcept = Context.getConceptService().getConceptByMapping(valueCodedCode, getConceptSourceBySystemURL(valueCodedSystemURL).getName());
+                    obs.setValueCoded(valueCodedConcept);
+                    break;
+                case ConceptDatatype.NUMERIC_UUID:
+                    obs.setValueNumeric(observation.getJSONObject("valueQuantity").getDouble("value"));
+
+                    break;
+                case ConceptDatatype.BOOLEAN_UUID:
+                    obs.setValueBoolean(observation.getBoolean("valueBoolean"));
+
+                    break;
+                case ConceptDatatype.TEXT_UUID:
+                    obs.setValueText(observation.getString("valueString"));
+                    break;
+            }
+
+            if (obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
+                continue;
+            }
+
+            encounter.addObs(obs);
+
+        }
+        if (orderConceptIsaSet) {
+            encounter.addObs(groupingObservation);
+        }
+
+        Context.getEncounterService().saveEncounter(encounter);
+
+
+        return encounter;
+    }
+
+
+    private ConceptSource getConceptSourceBySystemURL(String systemURL) {
+        FhirConceptSourceService fhirConceptSourceService = null;
+        ConceptSource conceptSource = null;
+        try {
+            Field serviceContextField = Context.class.getDeclaredField("serviceContext");
+            serviceContextField.setAccessible(true);
+
+            ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null))
+                    .getApplicationContext();
+            fhirConceptSourceService = applicationContext.getBean(FhirConceptSourceService.class);
+
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            log.error(e);
+        }
+        assert fhirConceptSourceService != null;
+        if (fhirConceptSourceService.getFhirConceptSourceByUrl(systemURL).isPresent()) {
+            conceptSource = fhirConceptSourceService.getFhirConceptSourceByUrl(systemURL).get().getConceptSource();
+        }
+
+        return conceptSource;
     }
 
 }

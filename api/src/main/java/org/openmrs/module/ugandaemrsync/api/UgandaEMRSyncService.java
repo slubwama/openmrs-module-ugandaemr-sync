@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
+import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Patient;
@@ -333,6 +334,15 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return true is the order has results and false if it doesnt have results
      */
     public boolean testOrderHasResults(Order order);
+
+
+    /**
+     * This method adds the test results to an encounter from a fhir object
+     * @param bundleResults The results that have returned for test(s) ordered
+     * @param order the order which was used to order the test. this can be null.
+     * @return Encounter the encounter where the test results have been added.
+     */
+    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order);
 
 
     /**
