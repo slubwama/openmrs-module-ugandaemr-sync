@@ -30,11 +30,7 @@ import org.openmrs.module.fhir2.api.FhirServiceRequestService;
 import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
-import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
-import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
-import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
-import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
-import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
+import org.openmrs.module.ugandaemrsync.model.*;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.parameter.EncounterSearchCriteria;
 import org.openmrs.util.OpenmrsDateFormat;
@@ -1109,5 +1105,42 @@ public class SyncFHIRRecord {
         return null;
     }
 
+    public void CollectTestOrdersFromSyncFHIRResource(SyncFhirProfile syncFhirProfile) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
+        List<SyncFhirResource> syncFhirResources = ugandaEMRSyncService.getSyncedFHirResources(syncFhirProfile);
+        List<Order> orders = new ArrayList<>();
+        SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID("f947128e-93d7-46d5-aa32-645e38a125fe");
+        for (SyncFhirResource syncFhirResource : syncFhirResources) {
+            JSONObject jsonObject = new JSONObject(syncFhirResource.getResource());
+
+            JSONArray jsonArray = jsonObject.getJSONArray("entry");
+
+            for (Object o : jsonArray) {
+                JSONObject jsonObject1 = new JSONObject(o.toString());
+
+                if (jsonObject1.getJSONObject("resource").get("resourceType").equals("ServiceRequest")) {
+                    Order order = Context.getOrderService().getOrderByUuid(jsonObject1.getJSONObject("resource").getString("id"));
+
+                    if(!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)){
+                        continue;
+                    }
+
+                    SyncTask newSyncTask = new SyncTask();
+                    newSyncTask.setDateSent(new Date());
+                    newSyncTask.setCreator(Context.getUserService().getUser(1));
+                    newSyncTask.setSentToUrl(syncTaskType.getUrl());
+                    newSyncTask.setRequireAction(true);
+                    newSyncTask.setActionCompleted(false);
+                    newSyncTask.setSyncTask(order.getUuid());
+                    newSyncTask.setStatusCode(200);
+                    newSyncTask.setStatus("SUCCESS");
+                    newSyncTask.setSyncTaskType(syncTaskType);
+                    ugandaEMRSyncService.saveSyncTask(newSyncTask);
+                }
+            }
+
+
+        }
+    }
 }

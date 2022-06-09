@@ -917,5 +917,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return conceptSource;
     }
 
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncedFHirResources(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
+     */
+    @Override
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile) {
+        return dao.getSyncedFHirResources(syncFhirProfile);
+    }
 }
 

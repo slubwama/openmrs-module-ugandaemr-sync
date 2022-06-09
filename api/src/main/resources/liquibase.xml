@@ -963,4 +963,27 @@
         </insert>
     </changeSet>
 
+
+    <changeSet id="ugandaemrsync-17022022-1633" author="mmwanje">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.CollectTestOrdersFromSyncFHIRResourceTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Collect Lab Test Orders From Sync FHIR Resource Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="LAB TEST ORDERS FROM SYNC FHIR" />
+            <column name="description" value="Collect Lab Test Orders From Sync FHIR" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.CollectTestOrdersFromSyncFHIRResourceTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-02-17T13:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="51f8fa8f-a6fc-46b7-8f0a-afa28f7d4f40" />
+        </insert>
+    </changeSet>
 </databaseChangeLog>
