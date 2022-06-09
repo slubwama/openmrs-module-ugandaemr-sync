@@ -7,6 +7,7 @@ import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.lucene.store.Lock;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -743,6 +744,8 @@ public class SyncFHIRRecord {
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
+                jsonString = addCodingToIdentifier(jsonString, "identifier");
+                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty");
             }
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner") || resourceType.equals("Person")) {
@@ -766,6 +769,19 @@ public class SyncFHIRRecord {
             log.error(e);
         }
         return jsonString;
+    }
+
+    public String addCodingToIdentifier(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+        int identifierCount = 0;
+        for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
+            JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
+            PatientIdentifierType patientIdentifierType = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString()).getIdentifierType();
+            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifierType.getUuid())));
+            identifierCount++;
+        }
+        return jsonObject.toString();
+
     }
 
     public String wrapResourceInPostRequest(String payload) {
@@ -856,15 +872,13 @@ public class SyncFHIRRecord {
         if (syncFhirProfile.getCaseBasedProfile()) {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
-            } else if(syncFhirCase != null){
+            } else if (syncFhirCase != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
             }
         } else {
             lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
 
         }
-
-
 
 
         TokenAndListParam patientReference = new TokenAndListParam();
