@@ -54,6 +54,10 @@
         <aware_of_module>org.openmrs.module.legacyui</aware_of_module>
     </aware_of_modules>
 
+    <require_module version="${webservices.restModuleVersion}">
+        org.openmrs.module.webservices
+    </require_module>
+
 
     <!-- AOP
     <advice>
@@ -164,6 +168,13 @@
         <defaultValue>214fb8ef-6219-43f3-b20b-023261c0dec6,8dafdc32-97b7-4f49-828e-475cd4f09669,65fec0844-1970-43c5-bf77-b296415daa34</defaultValue>
         <description> </description>
     </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.smsAppointmentReminder.last.successful.submission.date</property>
+        <defaultValue></defaultValue>
+        <description>SMS Appointment Reminder last successful submission date</description>
+    </globalProperty>
+
+
 
     <!--
     <dwr>

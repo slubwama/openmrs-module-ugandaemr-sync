@@ -9,7 +9,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncFHIRRecord;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 public class ECBSSIntegrationTask extends AbstractTask {
-    Log log = LogFactory.getLog(SyncFHIRRecord.class);
+    Log log = LogFactory.getLog(ECBSSIntegrationTask.class);
     @Override
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
