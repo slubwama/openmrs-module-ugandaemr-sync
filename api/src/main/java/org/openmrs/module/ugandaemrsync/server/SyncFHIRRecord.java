@@ -360,7 +360,7 @@ public class SyncFHIRRecord {
 
         if (savedResourcesIds.size() > 0) {
             SyncFhirProfileLog syncFhirProfileLog = new SyncFhirProfileLog();
-            syncFhirProfileLog.setNumberOfResources(syncFhirResources.size());
+            syncFhirProfileLog.setNumberOfResources(savedResourcesIds.size());
             syncFhirProfileLog.setProfile(syncFhirProfile);
             assert syncFhirProfile != null;
             syncFhirProfileLog.setResourceType(syncFhirProfile.getCaseBasedPrimaryResourceType());
@@ -752,7 +752,11 @@ public class SyncFHIRRecord {
                 jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
             } else if (resourceType.equals("Encounter")) {
                 jsonString = addOrganizationToRecord(jsonString, "serviceProvider");
+                if (anyOtherObject.get("episodeOfCare") != null) {
+                    jsonString = addEpisodeOfCareToEncounter(jsonString, anyOtherObject.get("episodeOfCare"));
+                }
                 jsonString = wrapResourceInPostRequest(jsonString);
+
             } else if (resourceType.equals("Observation")) {
                 jsonString = addReferencesMappingToObservation(wrapResourceInPostRequest(jsonString));
             } else {
@@ -852,17 +856,22 @@ public class SyncFHIRRecord {
         if (syncFhirProfile.getCaseBasedProfile()) {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
-            } else {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+            } else if(syncFhirCase != null){
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
             }
         } else {
             lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
 
         }
 
+
+
+
         TokenAndListParam patientReference = new TokenAndListParam();
-        for (org.openmrs.PatientIdentifier patientIdentifier : patientIdentifiers) {
-            patientReference.addAnd(new TokenParam(patientIdentifier.getIdentifier()));
+        if (patientIdentifiers != null) {
+            for (org.openmrs.PatientIdentifier patientIdentifier : patientIdentifiers) {
+                patientReference.addAnd(new TokenParam(patientIdentifier.getIdentifier()));
+            }
         }
 
 
@@ -904,7 +913,7 @@ public class SyncFHIRRecord {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
             } else {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, syncFhirProfile.getCaseBasedPrimaryResourceType()));
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
             }
         } else {
             lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
@@ -1102,10 +1111,11 @@ public class SyncFHIRRecord {
             }
         }
 
-        if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0"))) {
+        if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0f"))) {
             JSONArray newValueCodeableJson = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding");
-            Concept valueCodedConcept = conceptService.getConceptByUuid(conceptUUid);
-            newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, "UgandaEMR", concept.getConceptId(), concept.getName().getName())));
+            String valueCodedConceptUUid = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
+            Concept valueCodedConcept = conceptService.getConceptByUuid(valueCodedConceptUUid);
+            newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, "UgandaEMR", valueCodedConcept.getConceptId(), valueCodedConcept.getName().getName())));
             for (ConceptMap conceptMap : valueCodedConcept.getConceptMappings()) {
                 newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptMap.getConceptReferenceTerm().getConceptSource().getName(), conceptMap.getConceptReferenceTerm().getCode(), conceptMap.getConceptReferenceTerm().getName())));
             }

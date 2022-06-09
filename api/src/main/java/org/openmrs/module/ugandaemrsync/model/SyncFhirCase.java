@@ -4,11 +4,12 @@ import org.openmrs.BaseOpenmrsData;
 import org.openmrs.Patient;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "ugandaemrsync.SyncFHIRCase")
 @Table(name = "sync_fhir_case")
-public class SyncFhirCase extends BaseOpenmrsData {
+public class SyncFhirCase extends BaseOpenmrsData implements Serializable {
 
     @Id
     @GeneratedValue

@@ -10,7 +10,7 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 
 public class SendLabRequestToALISTask extends AbstractTask {
 
-    Log log = LogFactory.getLog(SyncFHIRRecord.class);
+    Log log = LogFactory.getLog(SendLabRequestToALISTask.class);
 
     @Override
     public void execute() {

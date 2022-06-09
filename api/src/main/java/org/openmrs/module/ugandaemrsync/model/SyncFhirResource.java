@@ -10,11 +10,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Column;
 import javax.persistence.ManyToOne;
 import javax.persistence.JoinColumn;
+import java.io.Serializable;
 import java.util.Date;
 
 @Entity(name = "ugandaemrsync.SyncFHIRResources")
 @Table(name = "sync_fhir_resource")
-public class SyncFhirResource extends BaseOpenmrsData {
+public class SyncFhirResource extends BaseOpenmrsData implements Serializable {
 
     @Id
     @GeneratedValue

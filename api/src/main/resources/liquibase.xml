@@ -959,7 +959,7 @@
         </sql>
     </changeSet>
 
-    <changeSet  author="slubwama" id="ugandaemrsync_20220404-0903">
+    <changeSet  author="slubwama" id="ugandaemrsync_20220523-0903">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="sync_fhir_profile"/>
             <not><columnExists tableName="sync_fhir_profile" columnName="sync_data_ever_since"/></not>
@@ -972,7 +972,7 @@
         </addColumn>
     </changeSet>
 
-    <changeSet  author="slubwama" id="ugandaemrsync_20220404-0904">
+    <changeSet  author="slubwama" id="ugandaemrsync_20220523-0904">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="sync_fhir_profile"/>
             <not><columnExists tableName="sync_fhir_profile" columnName="data_to_sync_start_date"/></not>

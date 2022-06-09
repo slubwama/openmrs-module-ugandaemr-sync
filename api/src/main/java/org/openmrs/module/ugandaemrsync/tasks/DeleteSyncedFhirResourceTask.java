@@ -11,7 +11,7 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 import java.util.Date;
 
 public class DeleteSyncedFhirResourceTask extends AbstractTask {
-    Log log = LogFactory.getLog(SyncFHIRRecord.class);
+    Log log = LogFactory.getLog(DeleteSyncedFhirResourceTask.class);
     @Override
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
