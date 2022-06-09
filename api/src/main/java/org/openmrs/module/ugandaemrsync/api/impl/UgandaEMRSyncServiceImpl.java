@@ -632,6 +632,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
 
+
     /**
      * Checks if the test ordered already has detached results entered on separately on the encounter the encounter
      *
@@ -663,6 +664,92 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
 
         return resultsEnteredOnEncounter;
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileByName(java.lang.String)
+     */
+    public List<SyncFhirProfile> getSyncFhirProfileByName(String name) {
+        return dao.getSyncFhirProfileByName(name);
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCaseByUUDI(java.lang.String)
+     */
+    @Override
+    public SyncFhirCase getSyncFhirCaseByUUDI(String uuid) {
+        return dao.getSyncFhirCaseByUUDI(uuid);
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirCase()
+     */
+    @Override
+    public List<SyncFhirCase> getAllSyncFhirCase() {
+        return dao.getAllSyncFhirCase();
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCaseById(java.lang.Integer)
+     */
+    @Override
+    public SyncFhirCase getSyncFhirCaseById(Integer id) {
+        return dao.getSyncFhirCaseById(id);
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirProfileLog()
+     */
+    @Override
+    public List<SyncFhirProfileLog> getAllSyncFhirProfileLog() {
+        return dao.getAllSyncFhirProfileLog();
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByUUID(java.lang.String)
+     */
+    @Override
+    public SyncFhirProfileLog getSyncFhirProfileLogByUUID(String uuid) {
+        return dao.getSyncFhirProfileLogByUUID(uuid);
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogById(java.lang.Integer)
+     */
+    @Override
+    public SyncFhirProfileLog getSyncFhirProfileLogById(Integer id) {
+        return dao.getSyncFhirProfileLogById(id);
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllFHirResources()
+     */
+    @Override
+    public List<SyncFhirResource> getAllFHirResources() {
+        return dao.getAllFHirResources();
+    }
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirResourceByUUID(java.lang.String)
+     */
+    @Override
+    public SyncFhirResource getSyncFhirResourceByUUID(String uuid) {
+        return dao.getSyncFhirResourceByUUID(uuid);
+    }
+
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfile(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
+     */
+    @Override
+    public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfile(SyncFhirProfile syncFhirProfile) {
+        return dao.getSyncFhirProfileLogByProfile(syncFhirProfile);
     }
 
     /**
