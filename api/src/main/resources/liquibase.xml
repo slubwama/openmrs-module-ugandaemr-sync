@@ -879,6 +879,51 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="ugandaemrsync_20220405-1425" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendSMSAppointmentTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting SMS Appointment Reminder data to a central server Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="SMS Appointment Reminder data to a central server" />
+            <column name="description" value="SMS Appointment Reminder data to a central server" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendSMSAppointmentTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-02-16T11:59:59" />
+            <column name="repeat_interval" value="1000" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="e78bfd7e-1198-46c0-b896-938e10d931b6" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220401-1253" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '08c5be38-1b79-4e27-b9ca-5da709aef5fe'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Send AppointmentReminder Reports" />
+            <column name="data_type" value="org.openmrs.Encounter" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="http://localhost:8000/api/sms/save" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2022-03-31 12:41:27" />
+            <column name="uuid" value="08c5be38-1b79-4e27-b9ca-5da709aef5fe" />
+        </insert>
+    </changeSet>
+
     <changeSet  author="slubwama" id="ugandaemrsync_20220210-1247">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="fhir_concept_source"/>
