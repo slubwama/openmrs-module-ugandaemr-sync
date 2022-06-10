@@ -963,7 +963,6 @@
         </insert>
     </changeSet>
 
-
     <changeSet id="ugandaemrsync-17022022-1633" author="mmwanje">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -986,4 +985,97 @@
             <column name="uuid" value="51f8fa8f-a6fc-46b7-8f0a-afa28f7d4f40" />
         </insert>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-20211116-2301" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '99c4d715-4fcf-4d95-a946-257c6de05cf7'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating eCBSS Integration</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="eCBSS Integration"/>
+            <column name="resource_types" value="Encounter,Patient,Person,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="EpisodeOfCare"/>
+            <column name="case_based_primary_resource_type_id" value="9dc21a72-0971-11e7-8037-507b9dc4c741"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["334bf97e-28e2-4a27-8727-a5ce31c7cd66","455bad1f-5e97-4ee9-9558-ff1df8808732"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://services.fhir.hispuganda.org/fhir"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2021-11-16 16:20:58"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="99c4d715-4fcf-4d95-a946-257c6de05cf7"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20211116-2302" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.prisonemr.task.ECBSSIntegrationTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating eCBSS Integration Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="eCBSS Integration" />
+            <column name="description" value="Sends TB data to eCBSS server" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ECBSSIntegrationTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2021-11-05T19:22:22" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="3f3ab685-ffa4-46ef-957b-9f4669714dc9" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20211116-2303" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '3f3ab685-ffa4-46ef-957b-9f4669714dc9'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='99c4d715-4fcf-4d95-a946-257c6de05cf7';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting eCBSS Integration Task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '99c4d715-4fcf-4d95-a946-257c6de05cf7', (select task_config_id from scheduler_task_config where uuid="3f3ab685-ffa4-46ef-957b-9f4669714dc9"));
+        </sql>
+    </changeSet>
+
+    <changeSet  author="slubwama" id="ugandaemrsync_20220523-0903">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sync_fhir_profile"/>
+            <not><columnExists tableName="sync_fhir_profile" columnName="sync_data_ever_since"/></not>
+        </preConditions>
+        <comment>
+            Add Column sync_data_ever_since to sync_fhir_profile table
+        </comment>
+        <addColumn tableName="sync_fhir_profile">
+            <column name="sync_data_ever_since" type="TINYINT(3)" defaultValue="0"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet  author="slubwama" id="ugandaemrsync_20220523-0904">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sync_fhir_profile"/>
+            <not><columnExists tableName="sync_fhir_profile" columnName="data_to_sync_start_date"/></not>
+        </preConditions>
+        <comment>
+            Add Column data_to_sync_start_date to sync_fhir_profile table
+        </comment>
+        <addColumn tableName="sync_fhir_profile">
+            <column  name="data_to_sync_start_date" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -13,6 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.ManyToOne;
 import javax.persistence.JoinColumn;
 import java.io.Serializable;
+import java.util.Date;
 
 @Entity(name = "ugandaemrsync.SyncFhirProfile")
 @Table(name = "sync_fhir_profile")
@@ -31,6 +32,12 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Column(name = "profile_enabled")
     private Boolean profileEnabled;
+
+    @Column(name = "sync_data_ever_since")
+    private Boolean syncDataEverSince;
+
+    @Column(name = "data_to_sync_start_date")
+    private Date dataToSyncStartDate;
 
     @ManyToOne
     @JoinColumn(name = "patient_identifier_type")
@@ -96,6 +103,22 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     public void setProfileEnabled(Boolean profileEnabled) {
         this.profileEnabled = profileEnabled;
+    }
+
+    public Boolean getSyncDataEverSince() {
+        return syncDataEverSince;
+    }
+
+    public void setSyncDataEverSince(Boolean syncDataEverSince) {
+        this.syncDataEverSince = syncDataEverSince;
+    }
+
+    public Date getDataToSyncStartDate() {
+        return dataToSyncStartDate;
+    }
+
+    public void setDataToSyncStartDate(Date dataToSyncStartDate) {
+        this.dataToSyncStartDate = dataToSyncStartDate;
     }
 
     public String getResourceTypes() {

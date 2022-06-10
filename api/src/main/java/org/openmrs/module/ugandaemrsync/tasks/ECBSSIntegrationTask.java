@@ -8,19 +8,18 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.server.SyncFHIRRecord;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
-import java.util.List;
-
-public class SendFhirResourceTask extends AbstractTask {
-    Log log = LogFactory.getLog(SendFhirResourceTask.class);
+public class ECBSSIntegrationTask extends AbstractTask {
+    Log log = LogFactory.getLog(ECBSSIntegrationTask.class);
     @Override
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("eCBSS Integration");
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
-        List<SyncFhirProfile> syncFhirProfiles = ugandaEMRSyncService.getAllSyncFhirProfile();
 
-        for (SyncFhirProfile syncFhirProfile : syncFhirProfiles) {
-            log.info("Sending Fhir Resources for Profile "+syncFhirProfile.getName());
-            syncFHIRRecord.sendFhirResourcesTo(syncFhirProfile);
+        if(syncFhirProfile.getProfileEnabled()) {
+            log.info("Generating Resources and cases for Profile " + syncFhirProfile.getName());
+            syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
         }
+
     }
 }

@@ -10,7 +10,7 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 
 public class HIVCaseBasedSurveillanceTask extends AbstractTask {
 
-    Log log = LogFactory.getLog(SyncFHIRRecord.class);
+    Log log = LogFactory.getLog(HIVCaseBasedSurveillanceTask.class);
     @Override
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
