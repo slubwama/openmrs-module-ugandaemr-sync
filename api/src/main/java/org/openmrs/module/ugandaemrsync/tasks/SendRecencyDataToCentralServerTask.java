@@ -15,6 +15,7 @@ import org.openmrs.module.reporting.report.util.ReportUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
@@ -115,7 +116,7 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 		}
 		log.info("Sending recency data to central server ");
 		String bodyText = getRecencyDataExport();
-		HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(recencyServerUrlEndPoint, bodyText);
+		HttpResponse httpResponse = ugandaEMRHttpURLConnection.post(recencyServerUrlEndPoint, bodyText,syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID),syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_RECENCY_SERVER_PASSWORD));
 		if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 			ReportUtil.updateGlobalProperty(GP_RECENCY_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
 			    dateTimeFormat.format(todayDate));
