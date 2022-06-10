@@ -378,17 +378,17 @@ public class UgandaEMRHttpURLConnection {
         }
     }
 
-    public HttpResponse httpPost(String recencyServerUrl, String bodyText) {
+    public HttpResponse post(String url, String bodyText,String username,String password) {
         HttpResponse response = null;
         HttpClient client = HttpClientBuilder.create().build();
-        HttpPost post = new HttpPost(recencyServerUrl);
+        HttpPost post = new HttpPost(url);
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
         try {
 
             post.addHeader(UgandaEMRSyncConfig.HEADER_EMR_DATE, new Date().toString());
 
             UsernamePasswordCredentials credentials
-                    = new UsernamePasswordCredentials(syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_RECENCY_SERVER_PASSWORD));
+                    = new UsernamePasswordCredentials(username,password);
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
 
             HttpEntity multipart = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE).addTextBody(UgandaEMRSyncConfig.DHIS_ORGANIZATION_UUID, syncGlobalProperties.getGlobalProperty(UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID)).addTextBody(UgandaEMRSyncConfig.HTTP_TEXT_BODY_DATA_TYPE_KEY, bodyText, ContentType.APPLICATION_JSON)// Current implementation uses plain text due to decoding challenges on the receiving server.

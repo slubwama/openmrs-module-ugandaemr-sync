@@ -9,6 +9,7 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
+import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Patient;
@@ -336,6 +337,15 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
 
     /**
+     * This method adds the test results to an encounter from a fhir object
+     * @param bundleResults The results that have returned for test(s) ordered
+     * @param order the order which was used to order the test. this can be null.
+     * @return Encounter the encounter where the test results have been added.
+     */
+    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order);
+
+
+    /**
      * Gets Profile By name of Profile
      * @param name the name to be matched to the profile
      * @return List<SyncFhirProfile> that match the name provided
@@ -414,5 +424,13 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return syncFhirProfileLog that has matched the search
      */
     public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfile(SyncFhirProfile syncFhirProfile);
+
+
+    /**
+     * gets all expired resources based on date passed
+     * @param syncFhirProfile the profile that generated the resources
+     * @return a list of expired resources
+     */
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile);
 }
 
