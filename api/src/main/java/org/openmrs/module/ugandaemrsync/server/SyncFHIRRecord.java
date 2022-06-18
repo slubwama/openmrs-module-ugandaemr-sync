@@ -25,6 +25,7 @@ import org.openmrs.Program;
 import org.openmrs.Provider;
 import org.openmrs.Person;
 import org.openmrs.ProgramWorkflowState;
+import org.openmrs. PersonAttribute;
 import org.openmrs.OrderType;
 import org.openmrs.Order;
 import org.openmrs.Concept;
@@ -41,6 +42,7 @@ import org.openmrs.module.fhir2.api.FhirPractitionerService;
 import org.openmrs.module.fhir2.api.FhirObservationService;
 import org.openmrs.module.fhir2.api.FhirEncounterService;
 import org.openmrs.module.fhir2.api.FhirServiceRequestService;
+import org.openmrs.module.fhir2.api.translators.ConceptTranslator;
 import org.openmrs.module.ugandaemrsync.api.FhirEpisodeOfCareService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -52,6 +54,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.parameter.EncounterSearchCriteria;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
@@ -94,6 +97,8 @@ public class SyncFHIRRecord {
     Log log = LogFactory.getLog(SyncFHIRRecord.class);
 
     private SyncFhirProfile syncFhirProfile;
+    @Autowired
+    ConceptTranslator conceptTranslator;
 
     String healthCenterIdentifier;
     String healthCenterName;
@@ -741,7 +746,6 @@ public class SyncFHIRRecord {
 
         return resourceBundles;
     }
-
     private String encodeResourceToString(String resourceType, String identifierTypeName, IBaseResource iBaseResource) {
         IParser iParser = FhirContext.forR4().newJsonParser();
 
@@ -751,6 +755,7 @@ public class SyncFHIRRecord {
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
+                jsonString = addMaritalStatus(jsonString);
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty");
             }
@@ -789,6 +794,15 @@ public class SyncFHIRRecord {
         }
         return jsonObject.toString();
 
+    }
+
+    public String addMaritalStatus(String payload) {
+        JSONObject jsonObject = new JSONObject(payload);
+        PersonAttribute maritalStatusAttribute = Context.getPatientService().getPatientByUuid(jsonObject.getString("id")).getPerson().getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid("8d871f2a-c2cc-11de-8d13-0010c6dffd0f"));
+        if (maritalStatusAttribute != null) {
+            jsonObject.put("maritalStatus", new JSONObject().put("text",maritalStatusAttribute.toString()).put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", maritalStatusAttribute.getValue()).put("display", maritalStatusAttribute.toString()))));
+        }
+        return jsonObject.toString();
     }
 
     public String wrapResourceInPostRequest(String payload) {
