@@ -391,6 +391,6 @@
         <uiframeworkModuleVersion>3.6</uiframeworkModuleVersion>
         <fhir2ModuleVersion>1.2.2</fhir2ModuleVersion>
         <webservices.restModuleVersion>2.28.0</webservices.restModuleVersion>
-        <lombokVersion>1.18.16</lombokVersion>
+        <lombokVersion>1.18.20</lombokVersion>
     </properties>
 </project>

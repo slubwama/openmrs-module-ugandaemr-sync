@@ -40,8 +40,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.HostnameVerifier;
 import java.io.BufferedReader;
@@ -55,9 +54,6 @@ import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -469,29 +465,6 @@ public class UgandaEMRHttpURLConnection {
         }
         return true;
     }
-
-    public void disableSSLCertificatesChecks() throws Exception {
-        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-        final TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                }
-        };
-    }
-
 
     public static CloseableHttpClient createAcceptSelfSignedCertificateClient()
             throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {

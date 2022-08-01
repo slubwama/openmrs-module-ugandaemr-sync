@@ -1078,4 +1078,264 @@
         </addColumn>
     </changeSet>
 
+    <!-- HTS Data -->
+    <changeSet id="ugandaemrsync-20220715-2304" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'e060d3ed-9cf4-4421-94f9-6b9b3b3fe6f0'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating HTS Data</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="HTS Data"/>
+            <column name="resource_types" value="Patient,Person,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Encounter"/>
+            <column name="case_based_primary_resource_type_id" value="264daIZd-f80e-48fe-nba9-P37f2W1905Pv"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["264daIZd-f80e-48fe-nba9-P37f2W1905Pv"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/central-server"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2022-07-15 11:19:09"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="e060d3ed-9cf4-4421-94f9-6b9b3b3fe6f0"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220715-2303" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.HTSDataTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating HTS Data Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="HTS Data" />
+            <column name="description" value="Sends HTS data to Central database" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.HTSDataTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-07-15T11:19:09" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="527e1372-ff30-41e9-b139-d61b8a9ff197" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220726-2301" author="iakileng" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '527e1372-ff30-41e9-b139-d61b8a9ff197'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='e060d3ed-9cf4-4421-94f9-6b9b3b3fe6f0';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting HTS Data Task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', 'e060d3ed-9cf4-4421-94f9-6b9b3b3fe6f0', (select task_config_id from scheduler_task_config where uuid="527e1372-ff30-41e9-b139-d61b8a9ff197"));
+        </sql>
+    </changeSet>
+
+    <!-- ART Regimen Change -->
+    <changeSet id="ugandaemrsync-20220715-2310" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '4e0d3ff6-82ac-45a8-bcf3-7367a9098d65'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating ART Regimen Change</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="ART Regimen Change"/>
+            <column name="resource_types" value="Patient,Person,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Encounter"/>
+            <column name="case_based_primary_resource_type_id" value="c11774c1-3b4a-4bdb-a847-6060895e006d"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["c11774c1-3b4a-4bdb-a847-6060895e006d"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/central-server"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2022-07-15 11:44:15"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="4e0d3ff6-82ac-45a8-bcf3-7367a9098d65"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220715-2309" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.ARTRegimenChangeTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating ART Regimen Change Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="ART Regimen Change" />
+            <column name="description" value="Sends ART Regimen Change/Switch data to Central database" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ARTRegimenChangeTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-07-15T11:44:15" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="156f629d-ff53-4e23-93d5-de79be0f0feb" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220726-2302" author="iakileng" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '156f629d-ff53-4e23-93d5-de79be0f0feb'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='4e0d3ff6-82ac-45a8-bcf3-7367a9098d65';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting ART Regimen Change Task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '4e0d3ff6-82ac-45a8-bcf3-7367a9098d65', (select task_config_id from scheduler_task_config where uuid="156f629d-ff53-4e23-93d5-de79be0f0feb"));
+        </sql>
+    </changeSet>
+
+    <!-- TB Data -->
+    <changeSet id="ugandaemrsync-20220715-2306" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '8adee026-d795-4f2a-aa29-6bafaf56b90e'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating TB Data</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="TB Data"/>
+            <column name="resource_types" value="Patient,Person,EpisodeOfCare,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="EpisodeOfCare"/>
+            <column name="case_based_primary_resource_type_id" value="9dc21a72-0971-11e7-8037-507b9dc4c741"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["334bf97e-28e2-4a27-8727-a5ce31c7cd66","455bad1f-5e97-4ee9-9558-ff1df8808732"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/central-server"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2022-07-15 11:56:50"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="8adee026-d795-4f2a-aa29-6bafaf56b90e"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220715-2308" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.TBDataTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating TB Data Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="TB Data" />
+            <column name="description" value="Sends TB data to Central database" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.TBDataTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-07-15T11:56:50" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="8963510e-404a-4363-a033-effc682fdacc" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220726-2303" author="iakileng" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '8963510e-404a-4363-a033-effc682fdacc'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='8adee026-d795-4f2a-aa29-6bafaf56b90e';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting TB Data Task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '8adee026-d795-4f2a-aa29-6bafaf56b90e', (select task_config_id from scheduler_task_config where uuid="8963510e-404a-4363-a033-effc682fdacc"));
+        </sql>
+    </changeSet>
+
+    <!-- HIV Exposed Infant Data -->
+    <changeSet id="ugandaemrsync-20220715-2307" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'e8a37e2f-6c78-476e-93a5-14aec653c406'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating TB Data</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="HIV Exposed Infant Data"/>
+            <column name="resource_types" value="Patient,Person,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Encounter"/>
+            <column name="case_based_primary_resource_type_id" value="4345dacb-909d-429c-99aa-045f2db77e2b"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["4345dacb-909d-429c-99aa-045f2db77e2b","9fcfcc91-ad60-4d84-9710-11cc25258719"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/central-server"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2022-07-15 12:05:38"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="e8a37e2f-6c78-476e-93a5-14aec653c406"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220715-2305" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.HIVExposedInfantDataTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating HIV Exposed Infant Data Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="HIV Exposed Infant Data" />
+            <column name="description" value="Sends HIV Exposed Infant data to Central database" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.HIVExposedInfantDataTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2022-07-15T12:05:38" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="7f5d2fc4-43f4-4de2-845e-9490925e71c3" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20220726-2304" author="iakileng" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '7f5d2fc4-43f4-4de2-845e-9490925e71c3'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='e8a37e2f-6c78-476e-93a5-14aec653c406';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting HIV Exposed Infant Data Task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', 'e8a37e2f-6c78-476e-93a5-14aec653c406', (select task_config_id from scheduler_task_config where uuid="7f5d2fc4-43f4-4de2-845e-9490925e71c3"));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
