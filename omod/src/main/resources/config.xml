@@ -175,6 +175,16 @@
     </globalProperty>
 
 
+    <globalProperty>
+        <property>ugandaemrsync.sendHMISReports.server.reportuuids</property>
+        <defaultValue>27f4804f-ec6f-466e-b4ea-21f9ca584880</defaultValue>
+        <description> </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.sendHMISReports.server.url</property>
+        <defaultValue>https://ugisl.mets.or.ug/ehmis</defaultValue>
+        <description> </description>
+    </globalProperty>
 
     <!--
     <dwr>

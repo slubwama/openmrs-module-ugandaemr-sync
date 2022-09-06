@@ -60,7 +60,7 @@
        class="button app big">
 
         <i class=" icon-upload"></i>
-        Send Next Gen Reports
+        Send Aggregate Reports
     </a>
 
     <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","syncFhirProfile")}"

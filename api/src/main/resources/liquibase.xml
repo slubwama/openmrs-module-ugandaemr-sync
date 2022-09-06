@@ -800,6 +800,48 @@
         </insert>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-13122022-0203" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '6ebd85c8-127b-4c88-8a40-27defef367a9'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Send MER Reports" />
+            <column name="data_type" value="org.openmrs.Encounter" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="http://ugisl.mets.or.ug/adx-mer" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2022-01-06 16:25:58" />
+            <column name="uuid" value="6ebd85c8-127b-4c88-8a40-27defef367a9" />
+        </insert>
+    </changeSet>
+    <changeSet id="ugandaemrsync-13162022-0203" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = 'c5f00f18-c0f6-4917-b973-2b7c1d2d4a81'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Send HMIS Reports" />
+            <column name="data_type" value="org.openmrs.Encounter" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="http://ugisl.mets.or.ug/ehmis" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2022-03-02 16:25:58" />
+            <column name="uuid" value="c5f00f18-c0f6-4917-b973-2b7c1d2d4a81" />
+        </insert>
+    </changeSet>
 
     <changeSet id="ugandaemrsync-20210922-1016" author="mmwanje">
         <preConditions onFail="MARK_RAN">

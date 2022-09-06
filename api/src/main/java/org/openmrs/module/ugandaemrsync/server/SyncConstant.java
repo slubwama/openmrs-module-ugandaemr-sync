@@ -75,6 +75,8 @@ public class SyncConstant {
 
 	public static final String LAB_RESULT_PULL_TYPE_UUID = "f947128e-93d7-46d5-aa32-645e38a125fe";
 
+    public static final String SEND_MER_REPORTS_SYNC_TASK_TYPE_UUID = "6ebd85c8-127b-4c88-8a40-27defef367a9";
+    public static final String SEND_HMIS_REPORTS_SYNC_TASK_TYPE_UUID = "c5f00f18-c0f6-4917-b973-2b7c1d2d4a81";
     public static final String ART_ACCESS_PULL_TYPE_UUID = "4c4e9551-d9d6-4882-93bd-e61a42e2f755";
     public static final String SMS_APPOINTMENT_TYPE_UUID = "08c5be38-1b79-4e27-b9ca-5da709aef5fe";
 
