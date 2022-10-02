@@ -212,8 +212,16 @@ public class SyncFHIRRecord {
         String organizationString = String.format("{\"reference\":\"Organization/%s\",\"type\":\"Organization\",\"identifier\":{\"use\":\"official\",\"value\":\"%s\",\"system\":\"https://hmis.health.go.ug/\"},\"display\":\"%s\"}", healthCenterIdentifier, healthCenterIdentifier, healthCenterName);
         JSONObject finalPayLoadJson = new JSONObject(payload);
         JSONObject organization = new JSONObject(organizationString);
-
         finalPayLoadJson.put(attributeName, organization);
+        return finalPayLoadJson.toString();
+    }
+
+    public String addServiceType(String payload, String attributeName) {
+        if (payload.isEmpty()) {
+            return "";
+        }
+        JSONObject finalPayLoadJson = new JSONObject(payload);
+        finalPayLoadJson.put(attributeName, new JSONObject("{\"coding\" : [{\"code\": \"dcd87b79-30ab-102d-86b0-7a5022ba4115\", \"display\": \"MEDICAL OUTPATIENT\"}],\"text\" : \"Out-Patient\"}"));
         return finalPayLoadJson.toString();
     }
 
@@ -390,19 +398,16 @@ public class SyncFHIRRecord {
 
         List<org.openmrs.PatientProgram> patientProgramList;
 
+
         if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("EpisodeOfCare")) {
             Collection<Program> programs = new ArrayList<>();
             Program program = Context.getProgramWorkflowService().getProgramByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId());
             patientProgramList = Context.getProgramWorkflowService().getPatientPrograms(null, program, null, null, null, null, false);
 
+            List<PatientProgram> patientPrograms1 = patientProgramList.stream().filter(patientProgram -> patientProgram.getPatient().getVoided()).collect(Collectors.toList());
 
-            for (org.openmrs.PatientProgram patientProgram : patientProgramList) {
-                org.openmrs.Patient patient = patientProgram.getPatient();
-                if (!patient.getVoided()) {
-                    String caseIdentifier = patientProgram.getUuid();
-                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
-                }
-            }
+            patientPrograms1.forEach(patientProgram -> saveSyncFHIRCase(syncFhirProfile, currentDate, patientProgram.getPatient(), patientProgram.getUuid()));
+
         } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("Encounter")) {
             List<org.openmrs.EncounterType> encounterTypes = new ArrayList<>();
 
@@ -410,17 +415,10 @@ public class SyncFHIRRecord {
 
             EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(null, null, null, null, null, null, encounterTypes, null, null, null, false);
 
-            Collection<Patient> patientArrayList = Context.getEncounterService().getEncounters(encounterSearchCriteria).stream().map(Encounter::getPatient).collect(Collectors.toCollection(ArrayList::new));
+            Collection<Patient> patientArrayList = Context.getEncounterService().getEncounters(encounterSearchCriteria).stream().map(Encounter::getPatient).filter(patient -> getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType()) != null).collect(Collectors.toCollection(ArrayList::new));
 
-            for (org.openmrs.Patient patient : patientArrayList) {
+            patientArrayList.forEach(patient -> saveSyncFHIRCase(syncFhirProfile, currentDate, patient, getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType()).getIdentifier()));
 
-                PatientIdentifier patientIdentifier = getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType());
-
-                if (patientIdentifier != null) {
-                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier.getIdentifier());
-                }
-
-            }
         } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("ProgramWorkFlowState")) {
             ProgramWorkflowService programWorkflowService = Context.getProgramWorkflowService();
 
@@ -565,7 +563,7 @@ public class SyncFHIRRecord {
                     break;
                 case "ServiceRequest":
                     OrderService orderService = Context.getOrderService();
-                    List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null);
+                    List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null).stream().filter(testOrder->testOrder.getDateActivated().compareTo(lastUpdateDate)>=0).collect(Collectors.toList());
                     resources.addAll(groupInCaseBundle("ServiceRequest", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
@@ -752,16 +750,18 @@ public class SyncFHIRRecord {
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
-                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty");
+                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state","city");
             }
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner") || resourceType.equals("Person")) {
                 JSONObject jsonObject = new JSONObject(jsonString);
                 String resourceIdentifier = "";
                 resourceIdentifier = jsonObject.get("id").toString();
+
                 jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
             } else if (resourceType.equals("Encounter")) {
                 jsonString = addOrganizationToRecord(jsonString, "serviceProvider");
+                jsonString = addServiceType(jsonString, "serviceType");
                 if (anyOtherObject.get("episodeOfCare") != null) {
                     jsonString = addEpisodeOfCareToEncounter(jsonString, anyOtherObject.get("episodeOfCare"));
                 }
@@ -778,13 +778,17 @@ public class SyncFHIRRecord {
         return jsonString;
     }
 
+
     public String addCodingToIdentifier(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
         int identifierCount = 0;
         for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
             JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-            PatientIdentifierType patientIdentifierType = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString()).getIdentifierType();
-            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifierType.getUuid())));
+            PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
+            if (patientIdentifier.getPatient().getBirthdateEstimated()) {
+                jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0",""));
+            }
+            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
             identifierCount++;
         }
         return jsonObject.toString();
@@ -1197,7 +1201,7 @@ public class SyncFHIRRecord {
                 if (jsonObject1.getJSONObject("resource").get("resourceType").equals("ServiceRequest")) {
                     Order order = Context.getOrderService().getOrderByUuid(jsonObject1.getJSONObject("resource").getString("id"));
 
-                    if(!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)){
+                    if (!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)) {
                         continue;
                     }
 
