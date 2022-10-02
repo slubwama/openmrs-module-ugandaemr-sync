@@ -212,6 +212,7 @@ public class SyncFHIRRecord {
         String organizationString = String.format("{\"reference\":\"Organization/%s\",\"type\":\"Organization\",\"identifier\":{\"use\":\"official\",\"value\":\"%s\",\"system\":\"https://hmis.health.go.ug/\"},\"display\":\"%s\"}", healthCenterIdentifier, healthCenterIdentifier, healthCenterName);
         JSONObject finalPayLoadJson = new JSONObject(payload);
         JSONObject organization = new JSONObject(organizationString);
+
         finalPayLoadJson.put(attributeName, organization);
         return finalPayLoadJson.toString();
     }
@@ -398,16 +399,19 @@ public class SyncFHIRRecord {
 
         List<org.openmrs.PatientProgram> patientProgramList;
 
-
         if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("EpisodeOfCare")) {
             Collection<Program> programs = new ArrayList<>();
             Program program = Context.getProgramWorkflowService().getProgramByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId());
             patientProgramList = Context.getProgramWorkflowService().getPatientPrograms(null, program, null, null, null, null, false);
 
-            List<PatientProgram> patientPrograms1 = patientProgramList.stream().filter(patientProgram -> patientProgram.getPatient().getVoided()).collect(Collectors.toList());
 
-            patientPrograms1.forEach(patientProgram -> saveSyncFHIRCase(syncFhirProfile, currentDate, patientProgram.getPatient(), patientProgram.getUuid()));
-
+            for (org.openmrs.PatientProgram patientProgram : patientProgramList) {
+                org.openmrs.Patient patient = patientProgram.getPatient();
+                if (!patient.getVoided()) {
+                    String caseIdentifier = patientProgram.getUuid();
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
+                }
+            }
         } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("Encounter")) {
             List<org.openmrs.EncounterType> encounterTypes = new ArrayList<>();
 
@@ -415,10 +419,17 @@ public class SyncFHIRRecord {
 
             EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(null, null, null, null, null, null, encounterTypes, null, null, null, false);
 
-            Collection<Patient> patientArrayList = Context.getEncounterService().getEncounters(encounterSearchCriteria).stream().map(Encounter::getPatient).filter(patient -> getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType()) != null).collect(Collectors.toCollection(ArrayList::new));
+            Collection<Patient> patientArrayList = Context.getEncounterService().getEncounters(encounterSearchCriteria).stream().map(Encounter::getPatient).collect(Collectors.toCollection(ArrayList::new));
 
-            patientArrayList.forEach(patient -> saveSyncFHIRCase(syncFhirProfile, currentDate, patient, getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType()).getIdentifier()));
+            for (org.openmrs.Patient patient : patientArrayList) {
 
+                PatientIdentifier patientIdentifier = getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType());
+
+                if (patientIdentifier != null) {
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier.getIdentifier());
+                }
+
+            }
         } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("ProgramWorkFlowState")) {
             ProgramWorkflowService programWorkflowService = Context.getProgramWorkflowService();
 
@@ -757,7 +768,6 @@ public class SyncFHIRRecord {
                 JSONObject jsonObject = new JSONObject(jsonString);
                 String resourceIdentifier = "";
                 resourceIdentifier = jsonObject.get("id").toString();
-
                 jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
             } else if (resourceType.equals("Encounter")) {
                 jsonString = addOrganizationToRecord(jsonString, "serviceProvider");
@@ -777,7 +787,6 @@ public class SyncFHIRRecord {
         }
         return jsonString;
     }
-
 
     public String addCodingToIdentifier(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
@@ -1201,7 +1210,7 @@ public class SyncFHIRRecord {
                 if (jsonObject1.getJSONObject("resource").get("resourceType").equals("ServiceRequest")) {
                     Order order = Context.getOrderService().getOrderByUuid(jsonObject1.getJSONObject("resource").getString("id"));
 
-                    if (!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)) {
+                    if(!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)){
                         continue;
                     }
 
