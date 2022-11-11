@@ -228,7 +228,7 @@ public class UgandaEMRHttpURLConnection {
                 post.addHeader(new BasicScheme().authenticate(credentials, post, null));
             }
 
-            if (token != null && !token.equals("")) {
+                    if (token != null && !token.equals("")) {
                 post.addHeader("Authorization", token);
             }
 
@@ -469,29 +469,6 @@ public class UgandaEMRHttpURLConnection {
         }
         return true;
     }
-
-    public void disableSSLCertificatesChecks() throws Exception {
-        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-        final TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                }
-        };
-    }
-
 
     public static CloseableHttpClient createAcceptSelfSignedCertificateClient()
             throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {

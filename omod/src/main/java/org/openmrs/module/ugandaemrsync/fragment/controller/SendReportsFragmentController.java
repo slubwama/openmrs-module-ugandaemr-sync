@@ -20,6 +20,9 @@ import org.openmrs.module.reporting.report.definition.service.ReportDefinitionSe
 import org.openmrs.module.reporting.report.renderer.RenderingMode;
 import org.openmrs.module.reporting.report.renderer.TextTemplateRenderer;
 import org.openmrs.module.reporting.report.service.ReportService;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
+import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.tasks.SendReportsTask;
 import org.openmrs.ui.framework.SimpleObject;
@@ -38,7 +41,6 @@ import java.io.FileOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -47,9 +49,8 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SEND_NEXT_GEN_REPORTS_SERVER_REPORT_UUIDS;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.JSON_REPORT_RENDERER_TYPE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 /**
  *  * Controller for a fragment that sends a report 
@@ -59,21 +60,31 @@ public class SendReportsFragmentController {
 	@Autowired
 	SendReportsTask sendReportsTask;
 
+	UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
 	SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-	String reportUuids=  syncGlobalProperties.getGlobalProperty(GP_SEND_NEXT_GEN_REPORTS_SERVER_REPORT_UUIDS);
+	String reportUuids=  syncGlobalProperties.getGlobalProperty(GP_SEND_NEXT_GEN_REPORTS_SERVER_REPORT_UUIDS)+ ","+ syncGlobalProperties.getGlobalProperty(GP_SEND_HMIS_REPORTS_SERVER_REPORT_UUIDS);
 	List<ReportDefinition> rds = getReportDefinitions(reportUuids);
 
+	String merUrlEndPoint = syncGlobalProperties.getGlobalProperty(GP_SEND_NEXT_GEN_REPORTS_SERVER_URL);
+	String hmisUrlEndPoint = syncGlobalProperties.getGlobalProperty(GP_SEND_HMIS_REPORTS_SERVER_URL);
 
+	String hmisReportUuids=  syncGlobalProperties.getGlobalProperty(GP_SEND_HMIS_REPORTS_SERVER_REPORT_UUIDS);
+	String merReportUuids=  syncGlobalProperties.getGlobalProperty(GP_SEND_NEXT_GEN_REPORTS_SERVER_REPORT_UUIDS);
+	List<String> hmisReports = Arrays.asList(hmisReportUuids.split(","));
+	List<String> merReports = Arrays.asList(merReportUuids.split(","));
 
 	public void controller(@SpringBean PageModel pageModel, @RequestParam(value = "breadcrumbOverride",
 			required = false) String breadcrumbOverride) {
 
 		pageModel.put("breadcrumbOverride", breadcrumbOverride);
 		pageModel.put("previewBody",null);
+		pageModel.put("reportuuid",null);
 		pageModel.put("reportDefinitions", rds);
 		pageModel.put("errorMessage", "");
 		pageModel.put("report_title","");
+		pageModel.put("hmis_uuids","");
+		pageModel.put("mer_uuids","");
 
 	}
 
@@ -95,39 +106,62 @@ public class SendReportsFragmentController {
 				String displayTitle= getReportDefinitionService().getDefinitionByUuid(uuid).getName()+" For Period \n"+
 						displayDateFormat.format(startDate) +" To " +displayDateFormat.format(endDate);
 				pageModel.put("previewBody",bodyText);
+				pageModel.put("reportuuid",uuid);
 				pageModel.put("errorMessage", "");
 				pageModel.put("report_title",displayTitle);
 
 			}
 
-		}catch (ParseException e){
+		}catch (Exception e){
 			pageModel.put("errorMessage", e.getMessage());
 			pageModel.put("previewBody",null);
+			pageModel.put("reportuuid",null);
 			pageModel.put("report_title","");
 		}
 		pageModel.put("breadcrumbOverride", breadcrumbOverride);
 		pageModel.put("reportDefinitions", rds);
+		pageModel.put("hmis_uuids",hmisReportUuids);
+		pageModel.put("mer_uuids",merReportUuids);
 	}
 
 
-	public SimpleObject sendData(HttpServletRequest request,
-								 @RequestParam("body") String body){
+	public SimpleObject sendData(HttpServletRequest request,@RequestParam("body") String body,@RequestParam("uuid")String uuid){
 
 		String response="";
 		String status="";
 		String jsonData= body;
 
 		if(jsonData!=null){
+			SyncTaskType MERsyncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(SEND_MER_REPORTS_SYNC_TASK_TYPE_UUID);
+			SyncTaskType HMISsyncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(SEND_HMIS_REPORTS_SYNC_TASK_TYPE_UUID);
 
-			sendReportsTask= new SendReportsTask(jsonData);
+			SyncTaskType syncTaskType =new SyncTaskType();
+			if(hmisReports.contains(uuid)){
+				syncTaskType = HMISsyncTaskType;
+			}else if(merReports.contains(uuid)){
+				syncTaskType= MERsyncTaskType;
+			}
+
+			sendReportsTask= new SendReportsTask(jsonData,syncTaskType);
 			sendReportsTask.execute();
 			if(sendReportsTask.isSent()){
 				response= "Report successfully sent";
 				status="success";
 			}else{
-				response= "Report not sent";
+				response= sendReportsTask.getResponseMessage();
 				status="failure";
 			}
+			SyncTask newSyncTask = new SyncTask();
+			newSyncTask.setDateSent(new Date());
+			newSyncTask.setCreator(Context.getUserService().getUser(1));
+			newSyncTask.setSentToUrl(syncTaskType.getUrl());
+			newSyncTask.setRequireAction(true);
+			newSyncTask.setActionCompleted(false);
+			newSyncTask.setStatus(status);
+			newSyncTask.setStatusCode(sendReportsTask.getResponseCode());
+			newSyncTask.setSyncTask(getReportDefinitionService().getDefinitionByUuid(uuid).getName());
+			newSyncTask.setSyncTaskType(syncTaskType);
+			ugandaEMRSyncService.saveSyncTask(newSyncTask);
 		}else{
 			response = "No Available Data to send";
 			status="failure";

@@ -26,7 +26,9 @@ public class UgandaEMRSyncConfig {
 	public static final String GP_DHIS2_SERVER_PASSWORD = "ugandaemrsync.sendtoDHIS2.server.password";
 	public static final String GP_DHIS2_SERVER_USERNAME = "ugandaemrsync.sendtoDHIS2.server.username";
 	public static final String GP_SEND_NEXT_GEN_REPORTS_SERVER_REPORT_UUIDS = "ugandaemrsync.sendNextGenReports.server.reportuuids";
+	public static final String GP_SEND_HMIS_REPORTS_SERVER_REPORT_UUIDS = "ugandaemrsync.sendHMISReports.server.reportuuids";
 	public static final String GP_SEND_NEXT_GEN_REPORTS_SERVER_URL = "ugandaemrsync.sendNextGenReports.server.url";
+	public static final String GP_SEND_HMIS_REPORTS_SERVER_URL = "ugandaemrsync.sendHMISReports.server.url";
 
 
 	public static final String CONNECTIVITY_CHECK_URL = "https://ugisl.mets.or.ug/";
