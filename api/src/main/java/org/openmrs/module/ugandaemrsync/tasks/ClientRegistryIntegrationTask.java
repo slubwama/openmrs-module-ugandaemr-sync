@@ -13,13 +13,12 @@ public class ClientRegistryIntegrationTask extends AbstractTask {
     @Override
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName("Client Registry Integration");
+        SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName(this.taskDefinition.getName());
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 
         if(syncFhirProfile.getProfileEnabled()) {
             log.info("Generating Resources and cases for Profile " + syncFhirProfile.getName());
             syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
         }
-
     }
 }

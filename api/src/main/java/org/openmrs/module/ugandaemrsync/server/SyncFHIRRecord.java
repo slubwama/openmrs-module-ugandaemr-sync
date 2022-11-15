@@ -32,6 +32,7 @@ import org.openmrs.ConceptMap;
 import org.openmrs.PatientState;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;
+import org.openmrs.api.PatientService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
@@ -452,6 +453,31 @@ public class SyncFHIRRecord {
                 if (list.size() > 0) {
                     for (Object o : list) {
                         patientList.add(Context.getPatientService().getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
+                    }
+                }
+                for (Patient patient : patientList) {
+                    String patientIdentifier = patient.getPatientId().toString();
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
+                }
+            }
+        } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("PatientIdentifierType")) {
+            PatientService patientService = Context.getPatientService();
+            PatientIdentifierType patientIdentifierType = patientService.getPatientIdentifierTypeByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId());
+
+            if (patientIdentifierType != null) {
+
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                String formattedDate = formatter.format(new Date());
+                List<Patient> patients = new ArrayList<>();
+
+
+                List list = Context.getAdministrationService().executeSQL("select patient_id from patient_identifier where identifier_type="+patientIdentifierType.getId()+" and patient_id not  in (select patient_id from sync_fhir_case where profile="+syncFhirProfile.getId()+");", true);
+
+                List<Patient> patientList = new ArrayList<>();
+
+                if (list.size() > 0) {
+                    for (Object o : list) {
+                        patientList.add(patientService.getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
                     }
                 }
                 for (Patient patient : patientList) {
@@ -1197,7 +1223,7 @@ public class SyncFHIRRecord {
                 if (jsonObject1.getJSONObject("resource").get("resourceType").equals("ServiceRequest")) {
                     Order order = Context.getOrderService().getOrderByUuid(jsonObject1.getJSONObject("resource").getString("id"));
 
-                    if(!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)){
+                    if (!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)) {
                         continue;
                     }
 
