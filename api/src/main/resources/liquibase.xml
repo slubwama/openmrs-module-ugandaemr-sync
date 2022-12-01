@@ -1380,4 +1380,26 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-20221030-1401" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = 'd63cb4b5-97ba-4380-aba9-d3f60634cd7a'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Sent SMS Messages from central server" />
+            <column name="data_type" value="org.openmrs.Encounter" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="http://localhost:8000/api/sms/facility-sent/" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2022-10-30 12:41:27" />
+            <column name="uuid" value="d63cb4b5-97ba-4380-aba9-d3f60634cd7a" />
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
