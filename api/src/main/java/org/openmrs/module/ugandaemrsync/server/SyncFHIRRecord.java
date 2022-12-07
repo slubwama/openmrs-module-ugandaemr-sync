@@ -471,7 +471,7 @@ public class SyncFHIRRecord {
                 List<Patient> patients = new ArrayList<>();
 
 
-                List list = Context.getAdministrationService().executeSQL("select patient_id from patient_identifier where identifier_type="+patientIdentifierType.getId()+" and patient_id not  in (select patient_id from sync_fhir_case where profile="+syncFhirProfile.getId()+");", true);
+                List list = Context.getAdministrationService().executeSQL("select patient_id from patient_identifier where identifier_type=" + patientIdentifierType.getId() + " and patient_id not  in (select patient from sync_fhir_case where profile=" + syncFhirProfile.getId() + ");", true);
 
                 List<Patient> patientList = new ArrayList<>();
 
@@ -778,6 +778,7 @@ public class SyncFHIRRecord {
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
+                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty");
             }
 
@@ -811,6 +812,20 @@ public class SyncFHIRRecord {
             JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
             PatientIdentifierType patientIdentifierType = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString()).getIdentifierType();
             jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifierType.getUuid())));
+            identifierCount++;
+        }
+        return jsonObject.toString();
+    }
+
+    public String addCodingToSystemToPrimaryIdentifier(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+        int identifierCount = 0;
+        for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
+            JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
+            if (Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString()).getIdentifierType().getUuid().equals(SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID)) {
+                jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", "http://openclientregistry.org/fhir/sourceid");
+            }
+
             identifierCount++;
         }
         return jsonObject.toString();
