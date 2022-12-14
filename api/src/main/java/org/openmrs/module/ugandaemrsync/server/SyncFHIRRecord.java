@@ -779,6 +779,7 @@ public class SyncFHIRRecord {
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
                 jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
+                jsonString = addUseOfficialToName(jsonString, "name");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty");
             }
 
@@ -803,6 +804,16 @@ public class SyncFHIRRecord {
             log.error(e);
         }
         return jsonString;
+    }
+
+    private String addUseOfficialToName(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+        int objectCount = 0;
+        for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
+            jsonObject.getJSONArray(attributeName).getJSONObject(objectCount).put("use", "official");
+            objectCount++;
+        }
+        return jsonObject.toString();
     }
 
     public String addCodingToIdentifier(String payload, String attributeName) {
