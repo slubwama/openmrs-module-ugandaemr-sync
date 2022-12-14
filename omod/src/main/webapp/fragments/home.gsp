@@ -75,4 +75,10 @@
         <i class="icon-bar-chart"></i>
         Sync FHIR Profile Statistics
     </a>
+
+    <a id="ugandaemrsync-generate-initial-data" href="${ui.pageLink("ugandaemrsync","sentSms")}"
+       class="button app big">
+        <i class="icon-list-ul"></i>
+        View Sent SMS
+    </a>
 </div>

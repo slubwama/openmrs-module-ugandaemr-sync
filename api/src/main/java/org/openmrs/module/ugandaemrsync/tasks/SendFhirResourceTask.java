@@ -9,6 +9,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncFHIRRecord;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SendFhirResourceTask extends AbstractTask {
     Log log = LogFactory.getLog(SendFhirResourceTask.class);
@@ -16,7 +17,7 @@ public class SendFhirResourceTask extends AbstractTask {
     public void execute() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
-        List<SyncFhirProfile> syncFhirProfiles = ugandaEMRSyncService.getAllSyncFhirProfile();
+        List<SyncFhirProfile> syncFhirProfiles = ugandaEMRSyncService.getAllSyncFhirProfile().stream().filter(syncFhirProfile -> syncFhirProfile.getProfileEnabled()).collect(Collectors.toList());
 
         for (SyncFhirProfile syncFhirProfile : syncFhirProfiles) {
             log.info("Sending Fhir Resources for Profile "+syncFhirProfile.getName());

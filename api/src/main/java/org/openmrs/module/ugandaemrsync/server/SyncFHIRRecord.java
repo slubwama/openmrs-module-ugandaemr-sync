@@ -218,6 +218,15 @@ public class SyncFHIRRecord {
         return finalPayLoadJson.toString();
     }
 
+    public String addServiceType(String payload, String attributeName) {
+        if (payload.isEmpty()) {
+            return "";
+        }
+        JSONObject finalPayLoadJson = new JSONObject(payload);
+        finalPayLoadJson.put(attributeName, new JSONObject("{\"coding\" : [{\"code\": \"dcd87b79-30ab-102d-86b0-7a5022ba4115\", \"display\": \"MEDICAL OUTPATIENT\"}],\"text\" : \"Out-Patient\"}"));
+        return finalPayLoadJson.toString();
+    }
+
     /**
      * Adds location to encounter Resource
      *
@@ -591,7 +600,7 @@ public class SyncFHIRRecord {
                     break;
                 case "ServiceRequest":
                     OrderService orderService = Context.getOrderService();
-                    List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null);
+                    List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null).stream().filter(testOrder->testOrder.getDateActivated().compareTo(lastUpdateDate)>=0).collect(Collectors.toList());
                     resources.addAll(groupInCaseBundle("ServiceRequest", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
@@ -780,7 +789,7 @@ public class SyncFHIRRecord {
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
                 jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                 jsonString = addUseOfficialToName(jsonString, "name");
-                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty");
+                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state","city");
             }
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner") || resourceType.equals("Person")) {
@@ -790,6 +799,7 @@ public class SyncFHIRRecord {
                 jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
             } else if (resourceType.equals("Encounter")) {
                 jsonString = addOrganizationToRecord(jsonString, "serviceProvider");
+                jsonString = addServiceType(jsonString, "serviceType");
                 if (anyOtherObject.get("episodeOfCare") != null) {
                     jsonString = addEpisodeOfCareToEncounter(jsonString, anyOtherObject.get("episodeOfCare"));
                 }
@@ -821,8 +831,11 @@ public class SyncFHIRRecord {
         int identifierCount = 0;
         for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
             JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-            PatientIdentifierType patientIdentifierType = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString()).getIdentifierType();
-            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifierType.getUuid())));
+            PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
+            if (patientIdentifier.getPatient().getBirthdateEstimated()) {
+                jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0",""));
+            }
+            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
             identifierCount++;
         }
         return jsonObject.toString();
