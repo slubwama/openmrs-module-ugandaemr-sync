@@ -1402,4 +1402,16 @@
         </insert>
     </changeSet>
 
+    <changeSet id="ugandaemr-20230106-1000" author="iakileng">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6511be5a-72f2-4638-a60b-78e31c3e2b28'
+            </sqlCheck>
+        </preConditions>
+        <comment>Updating HIV CASE BASED SURVEILLANCE SYNC FHIR PROFILE </comment>
+        <sql>
+            UPDATE sync_fhir_profile SET resource_search_parameter = '{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b27bc-c2cc-11de-8d13-0010c6dffd0f","8d5b2be0-c2cc-11de-8d13-0010c6dffd0f","c11774c1-3b4a-4bdb-a847-6060895e006d","3e8354f7-31b3-4862-a52e-ff41a1ee60af","e305d98a-d6a2-45ba-ba2a-682b497ce27c"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}' WHERE uuid ='6511be5a-72f2-4638-a60b-78e31c3e2b28';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
