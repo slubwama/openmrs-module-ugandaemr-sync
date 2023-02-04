@@ -489,7 +489,7 @@ public class SyncFHIRRecord {
                         patientList.add(patientService.getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
                     }
                 }
-                for (Patient patient : patientList) {
+                for (Patient patient : patientList.stream().filter(patient -> !patient.getVoided()).collect(Collectors.toList())) {
                     String patientIdentifier = patient.getPatientId().toString();
                     saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
                 }
@@ -600,7 +600,7 @@ public class SyncFHIRRecord {
                     break;
                 case "ServiceRequest":
                     OrderService orderService = Context.getOrderService();
-                    List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null).stream().filter(testOrder->testOrder.getDateActivated().compareTo(lastUpdateDate)>=0).collect(Collectors.toList());
+                    List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null).stream().filter(testOrder -> testOrder.getDateActivated().compareTo(lastUpdateDate) >= 0).collect(Collectors.toList());
                     resources.addAll(groupInCaseBundle("ServiceRequest", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
@@ -789,7 +789,7 @@ public class SyncFHIRRecord {
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
                 jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                 jsonString = addUseOfficialToName(jsonString, "name");
-                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state","city");
+                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
             }
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner") || resourceType.equals("Person")) {
@@ -833,7 +833,7 @@ public class SyncFHIRRecord {
             JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
             PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
             if (patientIdentifier.getPatient().getBirthdateEstimated()) {
-                jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0",""));
+                jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0", ""));
             }
             jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
             identifierCount++;
