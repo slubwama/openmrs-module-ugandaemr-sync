@@ -20,6 +20,8 @@ import java.util.Date;
 import java.util.List;
 
 public class SyncConstant {
+	public static final String OPENMRS_IDENTIFIER_TYPE_UUID = "05a29f94-c0ed-11e2-94be-8c13b969e334";
+
 	public static final String ENCOUNTER_ROLE = "240b26f9-dd88-4172-823d-4a8bfeb7841f";
 
     public static final String SERVER_IP = "ugandaemrsync.serverIP";

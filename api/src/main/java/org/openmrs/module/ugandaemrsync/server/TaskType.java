@@ -17,19 +17,19 @@ public class TaskType {
 
 	public TaskType() {
 	}
-	
+
 	protected Log log = LogFactory.getLog(TaskType.class);
 
-	
+
 	public GlobalProperty setGlobalProperty(String property, String propertyValue) {
 		GlobalProperty globalProperty = new GlobalProperty();
-		
+
 		globalProperty.setProperty(property);
 		globalProperty.setPropertyValue(propertyValue);
-		
+
 		return Context.getAdministrationService().saveGlobalProperty(globalProperty);
 	}
-	
+
 	public SyncTaskType getSyncTaskType(String uuid) {
 		return Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(uuid);
 	}
@@ -47,5 +47,5 @@ public class TaskType {
 		newSyncTask.setSyncTaskType(syncTaskType);
 		Context.getService(UgandaEMRSyncService.class).saveSyncTask(newSyncTask);
 	}
-	
+
 }
