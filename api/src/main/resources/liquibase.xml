@@ -751,7 +751,7 @@
     </changeSet>
 
 
-    <changeSet id="ugandaemrsync-20230309-000" author="aikileng">
+    <changeSet id="ugandaemrsync-20210904-0000" author="iakileng">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6511be5a-72f2-4638-a60b-78e31c3e2b28'
