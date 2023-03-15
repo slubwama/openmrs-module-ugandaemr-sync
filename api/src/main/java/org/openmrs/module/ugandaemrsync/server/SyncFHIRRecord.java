@@ -1197,7 +1197,7 @@ public class SyncFHIRRecord {
             }
         }
 
-        if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0f"))) {
+        if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0f")) && !observationResource.isNull("valueCodeableConcept")) {
             JSONArray newValueCodeableJson = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding");
             String valueCodedConceptUUid = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
             Concept valueCodedConcept = conceptService.getConceptByUuid(valueCodedConceptUUid);
