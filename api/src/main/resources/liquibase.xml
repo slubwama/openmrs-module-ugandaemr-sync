@@ -751,7 +751,7 @@
     </changeSet>
 
 
-    <changeSet id="ugandaemrsync-20210904-0000" author="iakileng">
+    <changeSet id="ugandaemrsync-20230312-1143" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6511be5a-72f2-4638-a60b-78e31c3e2b28'
@@ -1400,6 +1400,73 @@
             <column name="date_created" value="2022-10-30 12:41:27" />
             <column name="uuid" value="d63cb4b5-97ba-4380-aba9-d3f60634cd7a" />
         </insert>
+    </changeSet>
+
+
+    <changeSet id="ugandaemrsync-20230220-1100" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '84242661-aadf-42e4-9431-bf8afefb4433'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating CLIENT REGISTRY INTEGRATION PROFILE</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="Client Registry Integration"/>
+            <column name="resource_types" value="Patient"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="10"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="PatientIdentifierType"/>
+            <column name="case_based_primary_resource_type_id" value="05a29f94-c0ed-11e2-94be-8c13b969e334"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":[""],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://154.72.196.30:3001/fhir/Patient"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2023-02-20 16:21:58"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="84242661-aadf-42e4-9431-bf8afefb4433"/>
+        </insert>
+    </changeSet>
+
+
+
+
+    <changeSet id="20230220-1101" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = 'ccfafdf8-8ba1-4c00-986f-21392c1af1f6'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  Client Registry Integration Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Client Registry Integration" />
+            <column name="description" value="This task sends data to the  Client Registry Integration System" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ClientRegistryIntegrationTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2023-02-20 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="ccfafdf8-8ba1-4c00-986f-21392c1af1f6" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="20230220-1102" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = 'ccfafdf8-8ba1-4c00-986f-21392c1af1f6'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='84242661-aadf-42e4-9431-bf8afefb4433';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Client Registry Integration syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '84242661-aadf-42e4-9431-bf8afefb4433', (select task_config_id from scheduler_task_config where uuid="ccfafdf8-8ba1-4c00-986f-21392c1af1f6"));
+        </sql>
     </changeSet>
 
 </databaseChangeLog>
