@@ -31,7 +31,7 @@ public class UgandaEMRSyncConfig {
 	public static final String GP_SEND_HMIS_REPORTS_SERVER_URL = "ugandaemrsync.sendHMISReports.server.url";
 
 
-	public static final String CONNECTIVITY_CHECK_URL = "https://ugisl.mets.or.ug/";
+	public static final String CONNECTIVITY_CHECK_URL = "https://www.google.com/";
 	
 	public static final String CONNECTIVITY_CHECK_SUCCESS = "Successful connection to the internet.";
 	

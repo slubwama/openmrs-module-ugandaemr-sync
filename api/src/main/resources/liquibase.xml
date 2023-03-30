@@ -1493,4 +1493,48 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-22032023-1320" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendViralLoadProgramDataToCentralServerTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sending Viral Load Program Data to CPHL</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Sending VL Program Data" />
+            <column name="description" value="Sending Viral Load Program Data to CPHL" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendViralLoadProgramDataToCentralServerTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2019-06-27T23:58:00" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="11244f5b-dc94-4cca-8108-3cc718687c3b" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-22032023-1335" author="dbaluku">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = 'f9b2fa5d-5d37-4fd9-b20a-a0cab664f520'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Send VL Program Data To CPHL" />
+            <column name="data_type" value="org.openmrs.TestOrder" />
+            <column name="data_type_id" value="315124004" />
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/vl-program/send?api_token=ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="url_username" value="emrlabClient" />
+            <column name="url_password" value="emrlabClient" />
+            <column name="url_token" value="ZggUu6d4wahRY2MTcRN9BA9fHMla8SdOOwek0IsZcRTjOrjcGdzdEANJxpQX" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2019-07-10 06:23:27" />
+            <column name="uuid" value="f9b2fa5d-5d37-4fd9-b20a-a0cab664f520" />
+        </insert>
+    </changeSet>
 </databaseChangeLog>

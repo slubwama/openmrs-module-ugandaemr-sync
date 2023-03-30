@@ -17,6 +17,7 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
@@ -49,13 +50,16 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
 
         for (Order order : orderList) {
-            SyncTask syncTask = ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getAccessionNumber());
-            if (syncTask == null) {
+            List<SyncTask> allSyncTasks = ugandaEMRSyncService.getAllSyncTask();
+            List<SyncTask> syncTasks = allSyncTasks.stream().filter(p -> order.getAccessionNumber().equals(p.getSyncTask()) && syncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
+
+            if (syncTasks.size()<1){
                 Map<String, String> dataOutput = generateVLFHIROrderTestRequestBody((TestOrder) order, VL_SEND_SAMPLE_FHIR_JSON_STRING);
                 String json = dataOutput.get("json");
+
                 try {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", json, false);
-                    if ((map != null) && UgandaEMRSyncUtil.getSuccessCodeList().contains(map.get("responseCode"))) {
+                    if (map != null) {
                         SyncTask newSyncTask = new SyncTask();
                         newSyncTask.setDateSent(new Date());
                         newSyncTask.setCreator(Context.getUserService().getUser(1));
@@ -64,12 +68,12 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                         newSyncTask.setActionCompleted(false);
                         newSyncTask.setSyncTask(order.getAccessionNumber());
                         newSyncTask.setStatusCode((Integer) map.get("responseCode"));
-                        newSyncTask.setStatus("SUCCESS");
+                        newSyncTask.setStatus((String)map.get("responseMessage"));
                         newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
                         ugandaEMRSyncService.saveSyncTask(newSyncTask);
                     }
                 } catch (Exception e) {
-                    log.error("Faied to create sync task",e);
+                    log.error("Failed to create sync task",e);
                 }
             }
         }
@@ -161,7 +165,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                 ordererContact = getProviderAttributeValue(testOrder.getOrderer().getActiveAttributes());
             }
 
-            filledJsonFile = String.format(jsonFHIRMap, healthCenterCode, healthCenterName, requestType, sourceSystem, patientARTNO, sampleID, obsSampleType, sampleCollectionDate, labTechNames, labTechContact, clinicianNames, ordererContact, "CPHL");
+            filledJsonFile = String.format(jsonFHIRMap, healthCenterCode, healthCenterName, requestType, sourceSystem, patientARTNO, sampleID, obsSampleType, sampleCollectionDate, labTechNames, labTechContact,sampleCollectionDate, clinicianNames, ordererContact, "CPHL");
         }
         jsonMap.put("json", filledJsonFile);
         return jsonMap;
