@@ -222,6 +222,11 @@
                 <version>${lombokVersion}</version>
                 <scope>provided</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.ibatis</groupId>
+                <artifactId>ibatis-core</artifactId>
+                <version>${ibatisVersion}</version>
+            </dependency>
         </dependencies>
 
 
@@ -392,5 +397,6 @@
         <fhir2ModuleVersion>1.2.2</fhir2ModuleVersion>
         <webservices.restModuleVersion>2.28.0</webservices.restModuleVersion>
         <lombokVersion>1.18.20</lombokVersion>
+        <ibatisVersion>3.0</ibatisVersion>
     </properties>
 </project>
