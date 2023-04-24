@@ -24,6 +24,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -432,5 +433,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return a list of expired resources
      */
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile);
+
+    Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException;
 }
 
