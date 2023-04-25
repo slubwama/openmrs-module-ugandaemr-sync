@@ -221,6 +221,12 @@
                 <artifactId>idgen-api</artifactId>
                 <version>${idgenVersion}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.httpcomponents</groupId>
+                        <artifactId>httpclient</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -234,7 +240,6 @@
                 <artifactId>ibatis-core</artifactId>
                 <version>${ibatisVersion}</version>
             </dependency>
-
         </dependencies>
 
 

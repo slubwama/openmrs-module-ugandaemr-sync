@@ -434,6 +434,11 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      */
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile);
 
-    Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException;
+    /**
+     * Creates Patient from FHIR Resource
+     * @param patientData The Patient Fhir Payload to be used to create a patient
+     * @return a list of expired resources
+     */
+    public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException;
 }
 

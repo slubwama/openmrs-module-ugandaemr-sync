@@ -34,7 +34,6 @@ import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.fhir2.api.FhirConceptSourceService;
 import org.openmrs.module.fhir2.api.FhirConceptSourceService;
-import org.openmrs.module.fhir2.api.FhirObservationService;
 import org.openmrs.module.idgen.IdentifierSource;
 import org.openmrs.module.idgen.service.IdentifierSourceService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -936,6 +935,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     @Override
     public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException {
+        if (patientExists(patientData)) {
+            return null;
+        }
+
         PatientService patientService = Context.getPatientService();
         Date date = new SimpleDateFormat("yyyy-MM-dd").parse(patientData.get("birthDate").toString());
 
@@ -949,7 +952,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         patient.setGender(gender);
         JSONArray patientIdentifiersObject = (JSONArray) patientData.getJSONArray("identifier");
 
-        patient = getPatientIdentifiers(patientIdentifiersObject,patient);
+        patient = getPatientIdentifiers(patientIdentifiersObject, patient);
 
         return patientService.savePatient(patient);
     }
@@ -970,8 +973,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         if (jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").length() >= 1
                 && jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0) != null) {
-            personName
-                    .setGivenName(jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0).toString());
+            personName.setGivenName(jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0).toString());
         }
 
         return personName;
@@ -998,7 +1000,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             for (Object o : jsonArray) {
                 JSONObject jsonObject = new JSONObject(o.toString());
                 if (jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_NIN_NAME) || jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_POIN_NAME)) {
-                    PatientIdentifier uicIdentifier = new PatientIdentifier();
                     patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(
                             jsonObject.get("value").toString(), jsonObject.getJSONObject("type").get("text").toString()));
                 }
@@ -1008,7 +1009,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         patient.addIdentifier(generatePatientIdentifier());
 
         return patient;
-
     }
 
 
@@ -1020,7 +1020,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientIdentifier;
     }
 
-   private PatientIdentifier generatePatientIdentifier() {
+    private PatientIdentifier generatePatientIdentifier() {
         IdentifierSourceService identifierSourceService = Context.getService(IdentifierSourceService.class);
         IdentifierSource idSource = identifierSourceService.getIdentifierSource(1);
         PatientService patientService = Context.getPatientService();
@@ -1037,6 +1037,20 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         patientIdentifier.setUuid(String.valueOf(uuid));
 
         return patientIdentifier;
+    }
+
+    private boolean patientExists(JSONObject patientData) {
+        boolean patientExists = false;
+        for (Object o : patientData.getJSONArray("identifier")) {
+            JSONObject jsonObject = new JSONObject(o.toString());
+            PatientService patientService = Context.getPatientService();
+            List<PatientIdentifier> patientIdentifier = patientService.getPatientIdentifiers(jsonObject.get("value").toString(), null, null, null, null);
+
+            if (patientIdentifier.size() > 0) {
+                patientExists = true;
+            }
+        }
+        return patientExists;
     }
 }
 
