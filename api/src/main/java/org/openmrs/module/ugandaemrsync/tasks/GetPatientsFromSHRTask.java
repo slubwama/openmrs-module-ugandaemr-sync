@@ -61,16 +61,16 @@ public class GetPatientsFromSHRTask extends AbstractTask {
 
     public SimpleObject transferIn(String patientDataObject) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-
         try {
             UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
             JSONObject results = new JSONObject(patientDataObject);
-
             for (Object jsonObject : results.getJSONArray("entry")) {
                 JSONObject patientData = new JSONObject(jsonObject.toString()).getJSONObject("resource");
                 Patient patient = null;
                 String healthCenterFrom = patientData.getJSONObject("managingOrganization").get("display").toString();
-                patient = ugandaEMRSyncService.createPatientsFromFHIR(patientData);
+                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData)) {
+                    patient = ugandaEMRSyncService.createPatientsFromFHIR(patientData);
+                }
                 if (patient != null) {
                     log.info("Patient " + patient.getNames() + "Successfully Created");
                     return SimpleObject.create("status", objectMapper.writeValueAsString("Patient Successfully Created "));

@@ -33,7 +33,6 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.fhir2.api.FhirConceptSourceService;
-import org.openmrs.module.fhir2.api.FhirConceptSourceService;
 import org.openmrs.module.idgen.IdentifierSource;
 import org.openmrs.module.idgen.service.IdentifierSourceService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -49,7 +48,6 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.scheduler.TaskDefinition;
 import org.openmrs.util.OpenmrsUtil;
-import org.openmrs.scheduler.TaskDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -935,10 +933,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     @Override
     public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException {
-        if (patientExists(patientData)) {
-            return null;
-        }
-
         PatientService patientService = Context.getPatientService();
         Date date = new SimpleDateFormat("yyyy-MM-dd").parse(patientData.get("birthDate").toString());
 
@@ -1039,7 +1033,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientIdentifier;
     }
 
-    private boolean patientExists(JSONObject patientData) {
+    public boolean patientFromFHIRExists(JSONObject patientData) {
         boolean patientExists = false;
         for (Object o : patientData.getJSONArray("identifier")) {
             JSONObject jsonObject = new JSONObject(o.toString());

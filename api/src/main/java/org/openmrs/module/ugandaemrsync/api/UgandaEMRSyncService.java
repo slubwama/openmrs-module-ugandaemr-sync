@@ -440,5 +440,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return a list of expired resources
      */
     public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException;
+
+    /**
+     * Checks if the patient coming from the fhir server already exists
+     * @param patientData The Patient Fhir Payload to be used to check if the patient exists
+     * @return wether the patient exists or not.
+     */
+    public boolean patientFromFHIRExists(JSONObject patientData);
 }
 
