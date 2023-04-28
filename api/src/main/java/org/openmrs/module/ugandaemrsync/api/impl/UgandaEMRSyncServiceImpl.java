@@ -61,14 +61,7 @@ import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Set;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
@@ -638,7 +631,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
 
-
     /**
      * Checks if the test ordered already has detached results entered on separately on the encounter the encounter
      *
@@ -951,6 +943,26 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientService.savePatient(patient);
     }
 
+    public void updatePatientsFromFHIR(JSONObject bundle) {
+        PatientService patientService = Context.getPatientService();
+        if (bundle.has("resourceType") && bundle.getString("resourceType").equals("Bundle") && bundle.getJSONArray("entry").length() > 0) {
+            JSONArray bundleResourceObjects = bundle.getJSONArray("entry");
+
+            for (int i = 0; i < bundleResourceObjects.length(); i++) {
+                JSONObject patientResource = bundleResourceObjects.getJSONObject(i).getJSONObject("resource");
+                Patient patient = patientService.getPatientByUuid(patientResource.getString("id"));
+
+
+                if (patient != null && patient.getPatientIdentifiers(patientService.getPatientIdentifierTypeByUuid(PATIENT_ID_TYPE_UIC_UUID)).size()>0) {
+                    if (patientResource.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
+                        patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(patientResource.get("value").toString(), patientResource.getJSONObject("type").get("text").toString()));
+                    }
+                }
+                patientService.savePatient(patient);
+            }
+        }
+    }
+
     private PersonName getPatientNames(JSONObject jsonObject) {
         JSONObject patientNamesObject = jsonObject.getJSONArray("name").getJSONObject(0);
         PersonName personName = new PersonName();
@@ -993,7 +1005,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         if (jsonArray.length() > 0) {
             for (Object o : jsonArray) {
                 JSONObject jsonObject = new JSONObject(o.toString());
-                if (jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_NIN_NAME) || jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_POIN_NAME)) {
+                if (jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_NIN_NAME) || jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
                     patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(
                             jsonObject.get("value").toString(), jsonObject.getJSONObject("type").get("text").toString()));
                 }

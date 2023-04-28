@@ -447,5 +447,9 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return wether the patient exists or not.
      */
     public boolean patientFromFHIRExists(JSONObject patientData);
+
+
+    public void updatePatientsFromFHIR(JSONObject patientData) throws ParseException;
+
 }
 

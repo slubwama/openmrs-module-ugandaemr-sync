@@ -69,6 +69,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.FSHR_SYNC_FHIR_PROFILE_UUID;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_ENABLE_SYNC_CBS_FHIR_DATA;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PERSON_UUID_QUERY;
@@ -1153,15 +1154,18 @@ public class SyncFHIRRecord {
             Date date = new Date();
 
             try {
-                int connectionStatus = ugandaEMRHttpURLConnection.getCheckConnection("google.com");
+                boolean connectionStatus = ugandaEMRHttpURLConnection.isConnectionAvailable();
 
-                if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
+                if (connectionStatus) {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncFhirProfile.getUrl(), syncFhirProfile.getUrlUserName(), syncFhirProfile.getUrlPassword(), syncFhirProfile.getUrlToken(), syncFhirResource.getResource(), false);
                     if (map.get("responseCode").equals(SyncConstant.CONNECTION_SUCCESS_200)) {
                         maps.add(map);
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
+                        if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID)) {
+                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")));
+                        }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {
