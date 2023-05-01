@@ -55,6 +55,7 @@ public class GetPatientsFromSHRTask extends AbstractTask {
 
             log.info("Generating Resources and cases for Profile " + syncFhirProfile.getName());
             syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
+            syncFHIRRecord.sendFhirResourcesTo(syncFhirProfile);
         }
 
     }
