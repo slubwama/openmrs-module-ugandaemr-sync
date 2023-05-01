@@ -1153,9 +1153,9 @@ public class SyncFHIRRecord {
             Date date = new Date();
 
             try {
-                int connectionStatus = ugandaEMRHttpURLConnection.getCheckConnection("google.com");
+                boolean connectionStatus = ugandaEMRHttpURLConnection.isConnectionAvailable();
 
-                if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
+                if (connectionStatus) {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncFhirProfile.getUrl(), syncFhirProfile.getUrlUserName(), syncFhirProfile.getUrlPassword(), syncFhirProfile.getUrlToken(), syncFhirResource.getResource(), false);
                     if (map.get("responseCode").equals(SyncConstant.CONNECTION_SUCCESS_200)) {
                         maps.add(map);
