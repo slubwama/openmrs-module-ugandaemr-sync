@@ -1598,7 +1598,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-20230425-0802" author="slubwama" dbms="mysql">
+    <changeSet id="ugandaemrsync-20230425-2307" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2f92cac0-ea80-45ae-bd17-673127954fba'
@@ -1608,7 +1608,7 @@
         <insert tableName="scheduler_task_config">
             <column name="name" value="Get Patients From Facility SHR" />
             <column name="description" value="This task sends data to the  Client Registry Integration System" />
-            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.GetPatientsFromSHRTask" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendPatientsToFacilitySHRTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
             <column name="start_time" valueDate="2023-04-25 23:59:59" />
             <column name="repeat_interval" value="86400" />

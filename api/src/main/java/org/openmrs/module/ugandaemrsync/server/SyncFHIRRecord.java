@@ -1163,9 +1163,7 @@ public class SyncFHIRRecord {
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
-                        if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID)) {
-                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")));
-                        }
+                        System.out.println(map.get("result"));
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {
