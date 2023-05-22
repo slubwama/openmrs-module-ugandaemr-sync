@@ -21,15 +21,6 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 
 public interface FhirEpisodeOfCareService extends FhirService<EpisodeOfCare> {
-
-	EpisodeOfCare get(@Nonnull String uuid);
-
-	EpisodeOfCare create(@Nonnull EpisodeOfCare episodeOfCare);
-
-	EpisodeOfCare update(@Nonnull String uuid, @Nonnull EpisodeOfCare episodeOfCare);
-
-	EpisodeOfCare delete(@Nonnull String uuid);
-
 	IBundleProvider searchForEpisodeOfCares(ReferenceAndListParam patient, ReferenceAndListParam type, TokenAndListParam id,
                                         DateRangeParam lastUpdated, HashSet<Include> includes, HashSet<Include> revIncludes);
 }
