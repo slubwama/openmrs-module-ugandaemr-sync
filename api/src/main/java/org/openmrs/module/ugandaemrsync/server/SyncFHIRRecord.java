@@ -69,6 +69,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_ENABLE_SYNC_CBS_FHIR_DATA;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PERSON_UUID_QUERY;
@@ -1162,6 +1163,9 @@ public class SyncFHIRRecord {
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
+                        if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
+                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")),PATIENT_ID_TYPE_CROSS_BORDER_UUID,PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                        }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {

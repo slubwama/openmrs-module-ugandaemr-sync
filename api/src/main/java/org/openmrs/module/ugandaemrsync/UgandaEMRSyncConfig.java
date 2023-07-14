@@ -83,4 +83,25 @@ public class UgandaEMRSyncConfig {
 	
 	public static final String GP_SUBMIT_RECENCY_DATA_ONCE_DAILY = "ugandaemrsync.recency.submit.data.once.daily";
 	public static final String GP_ART_ACCESS_LAST_SYNC_DATE = "ugandaemrsync.ARTAccess.last.successful.submission.date";
+
+	public static final String PATIENT_ID_TYPE_UIC_UUID = "877169c4-92c6-4cc9-bf45-1ab95faea242";
+
+	public static final String PATIENT_ID_TYPE_UIC_NAME = "Patient Unique  ID Code (UIC)";
+
+	public static final String PATIENT_ID_TYPE_PRISONID_UUID = "e7dad84a-9ae9-4be2-9ec2-62fc8832cffa";
+
+	public static final String PATIENT_ID_TYPE_POIN_NAME = "POIN";
+
+	public static final String PATIENT_ID_TYPE_NIN_UUID = "f0c16a6d-dc5f-4118-a803-616d0075d282";
+
+	public static final String PATIENT_ID_TYPE_NIN_NAME = "National ID No.";
+
+	public static final String CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID = "f2190cf4-2236-11ee-be56-0242ac120002";
+
+	public static final String PATIENT_ID_TYPE_CROSS_BORDER_UUID = "877169c4-92c6-4cc9-bf45-1ab95faea242";
+
+	public static final String PATIENT_ID_TYPE_CROSS_BORDER_NAME = "Patient Unique  ID Code (UIC)";
+	public static final String FSHR_SYNC_FHIR_PROFILE_UUID = "f2190cf4-2236-11ee-be56-0242ac120002";
+
+
 }
