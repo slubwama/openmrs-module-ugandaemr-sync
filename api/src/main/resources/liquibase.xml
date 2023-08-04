@@ -1571,4 +1571,67 @@
             <column name="uuid" value="3201d456-9699-412d-9cff-3fec93c4bb21" />
         </insert>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-20230425-0801" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '0b7eb397-4488-4a88-9967-a054b3c26d6f'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating Facility SHR Integration PROFILE</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="Facility SHR Integration"/>
+            <column name="resource_types" value="Patient"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="10"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="PatientIdentifierType"/>
+            <column name="case_based_primary_resource_type_id" value="05a29f94-c0ed-11e2-94be-8c13b969e334"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":[""],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="http://165.232.114.52:8080/fhir/Patient"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2023-02-20 16:21:58"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="0b7eb397-4488-4a88-9967-a054b3c26d6f"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20230425-2307" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2f92cac0-ea80-45ae-bd17-673127954fba'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  Get Patients From Facility SHR Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Get Patients From Facility SHR" />
+            <column name="description" value="This task sends data to the  Client Registry Integration System" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendPatientsToFacilitySHRTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2023-04-25 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="2f92cac0-ea80-45ae-bd17-673127954fba" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20230425-0803" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2f92cac0-ea80-45ae-bd17-673127954fba'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='0b7eb397-4488-4a88-9967-a054b3c26d6f';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Get Patients From Facility SHR syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '0b7eb397-4488-4a88-9967-a054b3c26d6f', (select task_config_id from scheduler_task_config where uuid="2f92cac0-ea80-45ae-bd17-673127954fba"));
+        </sql>
+    </changeSet>
 </databaseChangeLog>

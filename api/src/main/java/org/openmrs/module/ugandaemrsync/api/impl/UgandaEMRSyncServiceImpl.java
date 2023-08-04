@@ -22,16 +22,22 @@ import org.openmrs.Concept;
 import org.openmrs.Patient;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptSource;
+import org.openmrs.PersonName;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ObsService;
+import org.openmrs.api.PatientService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.fhir2.api.FhirConceptSourceService;
-import org.openmrs.module.fhir2.api.FhirObservationService;
+import org.openmrs.module.idgen.IdentifierSource;
+import org.openmrs.module.idgen.service.IdentifierSourceService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
+import org.openmrs.module.ugandaemrsync.mapper.Identifier;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
@@ -40,8 +46,8 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
-import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.scheduler.TaskDefinition;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -55,17 +61,10 @@ import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Set;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SYNC_METRIC_DATA;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
 
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
 
@@ -632,7 +631,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
 
-
     /**
      * Checks if the test ordered already has detached results entered on separately on the encounter the encounter
      *
@@ -923,6 +921,142 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     @Override
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile) {
         return dao.getSyncedFHirResources(syncFhirProfile);
+    }
+
+    @Override
+    public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException {
+        PatientService patientService = Context.getPatientService();
+        Date date = new SimpleDateFormat("yyyy-MM-dd").parse(patientData.get("birthDate").toString());
+
+        String gender = String.valueOf(patientData.get("gender"));
+
+        PersonName patientName = getPatientNames(patientData);
+
+        Patient patient = new Patient();
+        patient.addName(patientName);
+        patient.setBirthdate(date);
+        patient.setGender(gender);
+        JSONArray patientIdentifiersObject = (JSONArray) patientData.getJSONArray("identifier");
+
+        patient = getPatientIdentifiers(patientIdentifiersObject, patient);
+
+        return patientService.savePatient(patient);
+    }
+
+    public void updatePatientsFromFHIR(JSONObject bundle) {
+        PatientService patientService = Context.getPatientService();
+        if (bundle.has("resourceType") && bundle.getString("resourceType").equals("Bundle") && bundle.getJSONArray("entry").length() > 0) {
+            JSONArray bundleResourceObjects = bundle.getJSONArray("entry");
+
+            for (int i = 0; i < bundleResourceObjects.length(); i++) {
+                JSONObject patientResource = bundleResourceObjects.getJSONObject(i).getJSONObject("resource");
+                Patient patient = patientService.getPatientByUuid(patientResource.getString("id"));
+
+
+                if (patient != null && patient.getPatientIdentifiers(patientService.getPatientIdentifierTypeByUuid(PATIENT_ID_TYPE_UIC_UUID)).size()>0) {
+                    if (patientResource.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
+                        patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(patientResource.get("value").toString(), patientResource.getJSONObject("type").get("text").toString()));
+                    }
+                }
+                patientService.savePatient(patient);
+            }
+        }
+    }
+
+    private PersonName getPatientNames(JSONObject jsonObject) {
+        JSONObject patientNamesObject = jsonObject.getJSONArray("name").getJSONObject(0);
+        PersonName personName = new PersonName();
+
+        if (patientNamesObject.get("family") != null) {
+            personName.setFamilyName(patientNamesObject.get("family").toString());
+        }
+
+        if (jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").length() >= 2
+                && jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(1) != null) {
+            personName.setMiddleName(jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(1)
+                    .toString());
+        }
+
+        if (jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").length() >= 1
+                && jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0) != null) {
+            personName.setGivenName(jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0).toString());
+        }
+
+        return personName;
+    }
+
+    private List<Identifier> getPatientIdentifiers(JSONArray jsonArray) {
+        List<Identifier> identifiers = new ArrayList<Identifier>();
+        for (Object idenrifierobject : jsonArray) {
+            JSONObject jsonObject = new JSONObject(idenrifierobject.toString());
+            Identifier identifier = new Identifier();
+            identifier.setIdentifier(jsonObject.get("identifier").toString());
+            identifier.setIdentifierType(jsonObject.get("identifierType").toString());
+            identifier.setIdentifierTypeName(Context.getPatientService()
+                    .getPatientIdentifierTypeByUuid(jsonObject.get("identifierType").toString()).getName());
+            identifiers.add(identifier);
+        }
+        return identifiers;
+    }
+
+    private Patient getPatientIdentifiers(JSONArray jsonArray, Patient patient) {
+        PatientService patientService = Context.getPatientService();
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        if (jsonArray.length() > 0) {
+            for (Object o : jsonArray) {
+                JSONObject jsonObject = new JSONObject(o.toString());
+                if (jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_NIN_NAME) || jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
+                    patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(
+                            jsonObject.get("value").toString(), jsonObject.getJSONObject("type").get("text").toString()));
+                }
+            }
+        }
+
+        patient.addIdentifier(generatePatientIdentifier());
+
+        return patient;
+    }
+
+
+    private PatientIdentifier createPatientIdentifierByIdentifierTypeName(String identifier, String identifierTypeName) {
+        PatientService patientService = Context.getPatientService();
+        PatientIdentifier patientIdentifier = new PatientIdentifier();
+        patientIdentifier.setIdentifierType(patientService.getPatientIdentifierTypeByName(identifierTypeName));
+        patientIdentifier.setIdentifier(identifier);
+        return patientIdentifier;
+    }
+
+    private PatientIdentifier generatePatientIdentifier() {
+        IdentifierSourceService identifierSourceService = Context.getService(IdentifierSourceService.class);
+        IdentifierSource idSource = identifierSourceService.getIdentifierSource(1);
+        PatientService patientService = Context.getPatientService();
+
+        UUID uuid = UUID.randomUUID();
+
+        PatientIdentifierType patientIdentifierType = patientService.getPatientIdentifierTypeByUuid("05a29f94-c0ed-11e2-94be-8c13b969e334");
+
+        PatientIdentifier patientIdentifier = new PatientIdentifier();
+        patientIdentifier.setIdentifierType(patientIdentifierType);
+        String identifier = identifierSourceService.generateIdentifier(idSource, "New OpenMRS ID with CheckDigit");
+        patientIdentifier.setIdentifier(identifier);
+        patientIdentifier.setPreferred(true);
+        patientIdentifier.setUuid(String.valueOf(uuid));
+
+        return patientIdentifier;
+    }
+
+    public boolean patientFromFHIRExists(JSONObject patientData) {
+        boolean patientExists = false;
+        for (Object o : patientData.getJSONArray("identifier")) {
+            JSONObject jsonObject = new JSONObject(o.toString());
+            PatientService patientService = Context.getPatientService();
+            List<PatientIdentifier> patientIdentifier = patientService.getPatientIdentifiers(jsonObject.get("value").toString(), null, null, null, null);
+
+            if (patientIdentifier.size() > 0) {
+                patientExists = true;
+            }
+        }
+        return patientExists;
     }
 }
 
