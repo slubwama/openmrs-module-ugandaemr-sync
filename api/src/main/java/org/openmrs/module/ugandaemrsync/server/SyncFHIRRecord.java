@@ -495,6 +495,17 @@ public class SyncFHIRRecord {
                     saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
                 }
             }
+        } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("CohortType")) {
+            String uuid = syncFhirProfile.getCaseBasedPrimaryResourceTypeId();
+
+            List<Patient> patientList = getPatientByCohortType(uuid);
+            if(patientList.size()>0){
+                for(Patient patient:patientList){
+                    String patientIdentifier = patient.getPatientId().toString();
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
+                }
+            }
+
         }
     }
 
@@ -1284,5 +1295,18 @@ public class SyncFHIRRecord {
 
 
         }
+    }
+
+    private List<Patient> getPatientByCohortType(String cohortTypeUuid){
+        List list = Context.getAdministrationService().executeSQL("SELECT patient_id from cohort_member cm inner join cohort c on cm.cohort_id = c.cohort_id inner join cohort_type ct on c.cohort_type_id = ct.cohort_type_id where ct.uuid='"+cohortTypeUuid+"' and c.voided=0 and cm.voided=0;", true);
+        PatientService patientService = Context.getPatientService();
+        List<Patient> patientList = new ArrayList<>();
+
+        if (list.size() > 0) {
+            for (Object o : list) {
+                patientList.add(patientService.getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
+            }
+        }
+        return patientList;
     }
 }
