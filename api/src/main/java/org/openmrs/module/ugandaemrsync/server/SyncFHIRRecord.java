@@ -1,8 +1,10 @@
 package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.param.DateRangeParam;
+import ca.uhn.fhir.rest.param.StringAndListParam;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import org.apache.commons.logging.Log;
@@ -14,6 +16,8 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import org.openmrs.module.fhir2.api.search.param.PatientSearchParams;
+import org.openmrs.module.fhir2.api.search.param.EncounterSearchParams;
 import org.openmrs.PatientProgram;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
@@ -245,7 +249,7 @@ public class SyncFHIRRecord {
     }
 
 
-    public Collection<String> proccessBuldeFHIRResources(String resourceType, String lastUpdateOnDate) {
+    /** public Collection<String> proccessBuldeFHIRResources(String resourceType, String lastUpdateOnDate) {
 
         String finalQuery;
 
@@ -309,7 +313,7 @@ public class SyncFHIRRecord {
         }
 
         return groupInBundles(resourceType, results, interval, null);
-    }
+    } **/
 
     public List<Map> syncFHIRData() {
 
@@ -961,9 +965,11 @@ public class SyncFHIRRecord {
             }
         }
 
+        PatientSearchParams patientSearchParams=new PatientSearchParams(null, null, null, null, null, null,
+                null, null, null, null, null, null, null, lastUpdated, null, null);
 
-        return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(null, null, null, patientReference, null, null, null, null, null,
-                null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
+
+        return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
     private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<org.openmrs.Encounter> encounterList) {
@@ -976,7 +982,6 @@ public class SyncFHIRRecord {
         }
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
-
         if (providerUUIDs.size() == 0 && !syncFhirProfile.getCaseBasedProfile()) {
             DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
 
@@ -1163,7 +1168,6 @@ public class SyncFHIRRecord {
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
-                        System.out.println(map.get("result"));
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {

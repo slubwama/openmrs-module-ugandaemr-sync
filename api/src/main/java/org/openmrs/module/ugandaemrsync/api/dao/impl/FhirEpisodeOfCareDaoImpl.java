@@ -17,20 +17,21 @@ import org.hibernate.Criteria;
 
 import org.openmrs.Encounter;
 import org.openmrs.PatientProgram;
+import org.openmrs.annotation.Authorized;
 import org.openmrs.module.fhir2.FhirConstants;
 import org.openmrs.module.fhir2.api.dao.FhirEncounterDao;
 import org.openmrs.module.fhir2.api.dao.impl.BaseFhirDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.ugandaemrsync.api.dao.FhirEpisodeOfCareDao;
+import org.openmrs.util.PrivilegeConstants;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 @Component
 @Setter(AccessLevel.PACKAGE)
 public class FhirEpisodeOfCareDaoImpl extends BaseFhirDao<PatientProgram> implements FhirEpisodeOfCareDao {
-
-
 	@Override
 	protected void setupSearchParams(Criteria criteria, SearchParameterMap theParams) {
 		theParams.getParameters().forEach(entry -> {
@@ -57,5 +58,4 @@ public class FhirEpisodeOfCareDaoImpl extends BaseFhirDao<PatientProgram> implem
 			}
 		});
 	}
-
 }
