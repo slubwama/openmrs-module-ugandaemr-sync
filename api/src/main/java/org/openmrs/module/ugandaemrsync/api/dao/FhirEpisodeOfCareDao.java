@@ -34,9 +34,5 @@ public interface FhirEpisodeOfCareDao extends FhirDao<PatientProgram> {
 
 	@Override
 	@Authorized(PrivilegeConstants.GET_PATIENT_PROGRAMS)
-	List<String> getSearchResultUuids(@Nonnull SearchParameterMap theParams);
-
-	@Override
-	@Authorized(PrivilegeConstants.GET_PATIENT_PROGRAMS)
-	List<PatientProgram> getSearchResults(@Nonnull SearchParameterMap theParams, @Nonnull List<String> resourceUuids);
+	List<PatientProgram> getSearchResults(@Nonnull SearchParameterMap theParams, @Nonnull List<Integer> resourceIds);
 }
