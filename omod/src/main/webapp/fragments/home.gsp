@@ -6,7 +6,7 @@
     </a>
 
     <% if (requestFacility == true) { %>
-    <a id="ugandaemrsync-get-facility-id" href="${ui.pageLink("ugandaemrsync","getFacility")}" class="button app big">
+    <a id="ugandaemrsync-get-facility-id" href="${ui.pageLink("ugandaemrsync","nationalRegistry")}" class="button app big">
 
         <i class="icon-lock"></i>
         Request Facility ID
