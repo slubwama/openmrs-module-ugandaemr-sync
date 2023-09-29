@@ -1571,4 +1571,23 @@
             <column name="uuid" value="3201d456-9699-412d-9cff-3fec93c4bb21" />
         </insert>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-20230929-1247" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="sync_limit" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20230929-1248" author="slubwama">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="statusCode" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add statusCodeDetail Column -->
+    <changeSet id="ugandaemrsync-20230929-1249" author="slubwama">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="status_code_detail" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

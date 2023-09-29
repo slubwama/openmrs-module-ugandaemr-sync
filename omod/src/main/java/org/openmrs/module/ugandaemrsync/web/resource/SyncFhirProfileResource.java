@@ -90,6 +90,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("caseBasedPrimaryResourceType");
 			description.addProperty("resourceSearchParameter");
 			description.addProperty("conceptSource");
+			description.addProperty("url");
+			description.addProperty("syncLimit");
+			description.addProperty("urlToken");
+			description.addProperty("urlUserName");
+			description.addProperty("urlPassword");
 			description.addSelfLink();
 			return description;
 		} else if (rep instanceof FullRepresentation) {
@@ -109,6 +114,7 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("resourceSearchParameter");
 			description.addProperty("conceptSource", Representation.REF);
 			description.addProperty("url");
+			description.addProperty("syncLimit");
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
@@ -137,6 +143,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("caseBasedPrimaryResourceTypeId");
 			description.addProperty("resourceSearchParameter");
 			description.addProperty("conceptSource", Representation.REF);
+			description.addProperty("url");
+			description.addProperty("syncLimit");
+			description.addProperty("urlToken");
+			description.addProperty("urlUserName");
+			description.addProperty("urlPassword");
 			description.addSelfLink();
 			return description;
 		}
@@ -168,6 +179,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		description.addProperty("caseBasedPrimaryResourceTypeId");
 		description.addProperty("resourceSearchParameter");
 		description.addProperty("conceptSource");
+		description.addProperty("syncLimit");
+		description.addProperty("url");
+		description.addProperty("urlToken");
+		description.addProperty("urlUserName");
+		description.addProperty("urlPassword");
 
 		return description;
 	}
