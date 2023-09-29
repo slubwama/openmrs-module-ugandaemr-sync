@@ -51,7 +51,7 @@ public class UgandaEMRSyncConfig {
 	public static final String GP_DHIS2_ORGANIZATION_UUID = "ugandaemr.dhis2.organizationuuid";
 	public static final String SYNC_METRIC_DATA = "ugandaemr.syncmetricsdata";
 
-	public static final String GP_FACILITY_NAME = "aijar.healthCenterName";
+	public static final String GP_FACILITY_NAME = "ugandaemr.healthCenterName";
 
 	public static final String RECENCY_CSV_FILE_NAME = "HTS_Recency_Client_Card_Data_Export_2019.csv";
 
@@ -83,4 +83,22 @@ public class UgandaEMRSyncConfig {
 	
 	public static final String GP_SUBMIT_RECENCY_DATA_ONCE_DAILY = "ugandaemrsync.recency.submit.data.once.daily";
 	public static final String GP_ART_ACCESS_LAST_SYNC_DATE = "ugandaemrsync.ARTAccess.last.successful.submission.date";
+
+
+	public static final String GP_NHFR_UNIQUE_IDENTIFIER = "ugandaemrsync.national.health.facility.registry.identifier";
+  
+	public static final String PATIENT_ID_TYPE_UIC_UUID = "877169c4-92c6-4cc9-bf45-1ab95faea242";
+
+	public static final String PATIENT_ID_TYPE_UIC_NAME = "Patient Unique  ID Code (UIC)";
+
+	public static final String PATIENT_ID_TYPE_PRISONID_UUID = "e7dad84a-9ae9-4be2-9ec2-62fc8832cffa";
+
+	public static final String PATIENT_ID_TYPE_POIN_NAME = "POIN";
+
+	public static final String PATIENT_ID_TYPE_NIN_UUID = "f0c16a6d-dc5f-4118-a803-616d0075d282";
+
+	public static final String PATIENT_ID_TYPE_NIN_NAME = "National ID No.";
+
+	public static final String PATIENT_ID_TYPE_PATIENT_POIN_UUID = "5ddcb840-e1d3-11ed-b5ea-0242ac120002";
+	public static final String FSHR_SYNC_FHIR_PROFILE_UUID = "0b7eb397-4488-4a88-9967-a054b3c26d6f";
 }
