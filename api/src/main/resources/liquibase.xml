@@ -1538,15 +1538,18 @@
         </insert>
     </changeSet>
 
-    <changeSet id="20230405-1001" author="iakileng">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="20231002-1001" author="iakileng">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '8adee026-d795-4f2a-aa29-6bafaf56b90e'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                select COUNT(patient_identifier_type_id) from patient_identifier_type where uuid='e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Updating HIV Exposed Infant Profile </comment>
         <sql>
-            UPDATE sync_fhir_profile SET patient_identifier_type = 5 WHERE uuid ='8adee026-d795-4f2a-aa29-6bafaf56b90e';
+            UPDATE sync_fhir_profile SET patient_identifier_type = (select patient_identifier_type_id from uuid='e1731641-30ab-102d-86b0-7a5022ba4115') WHERE uuid ='8adee026-d795-4f2a-aa29-6bafaf56b90e';
         </sql>
     </changeSet>
     <changeSet id="ugandaemrsync-20230302-0940" author="dbaluku">
