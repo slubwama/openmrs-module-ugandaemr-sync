@@ -13,6 +13,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -147,13 +148,11 @@ public class UgandaEMRHttpURLConnection {
 
         HttpResponse response = null;
 
-        HttpGet httpGet = new HttpGet(url);
 
+        HttpUriRequest httpGet = new HttpGet(url);
         httpGet.setHeader("Method", "GET");
 
         Map map = new HashMap();
-
-
         try {
             SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
             CloseableHttpClient client = createAcceptSelfSignedCertificateClient();

@@ -24,6 +24,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -432,5 +433,23 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return a list of expired resources
      */
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile);
+
+    /**
+     * Creates Patient from FHIR Resource
+     * @param patientData The Patient Fhir Payload to be used to create a patient
+     * @return a list of expired resources
+     */
+    public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException;
+
+    /**
+     * Checks if the patient coming from the fhir server already exists
+     * @param patientData The Patient Fhir Payload to be used to check if the patient exists
+     * @return wether the patient exists or not.
+     */
+    public boolean patientFromFHIRExists(JSONObject patientData);
+
+
+    public void updatePatientsFromFHIR(JSONObject patientData) throws ParseException;
+
 }
 
