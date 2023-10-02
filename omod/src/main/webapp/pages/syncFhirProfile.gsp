@@ -508,6 +508,7 @@
                                                         <option value="ProgramWorkFlowState">Program Workflow State</option>
                                                         <option value="PatientIdentifierType">PatientIdentifierType</option>
                                                         <option value="Order">Order</option>
+                                                        <option value="CohortType">CohortType</option>
                                                     </select>
                                                 </div>
 

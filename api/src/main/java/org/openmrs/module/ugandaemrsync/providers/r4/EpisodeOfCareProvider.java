@@ -58,11 +58,8 @@ public class EpisodeOfCareProvider implements IResourceProvider {
     @Delete
     @SuppressWarnings("unused")
     public OperationOutcome deleteEpisodeOfCare(@IdParam @Nonnull IdType id) {
-        org.hl7.fhir.r4.model.EpisodeOfCare episodeOfCare = episodeOfCareService.delete(id.getIdPart());
-        if (episodeOfCare == null) {
-            throw new ResourceNotFoundException("Could not find episodeOfCare to delete with id " + id.getIdPart());
-        }
-        return FhirProviderUtils.buildDelete(episodeOfCare);
+        episodeOfCareService.delete(id.getIdPart());
+        return FhirProviderUtils.buildDeleteR4();
     }
 
     @History
