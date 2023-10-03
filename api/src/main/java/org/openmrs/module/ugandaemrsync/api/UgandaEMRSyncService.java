@@ -451,5 +451,17 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public void updatePatientsFromFHIR(JSONObject patientData) throws ParseException;
 
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date  dateSyncedFrom, Date dateSyncedTo);
+
+    /**
+     * Gets TaskType By name of SyncTaskType
+     * @param name the name to be matched to the syncTaskType
+     * @return List<SyncTaskType> that match the name provided
+     */
+    public List<SyncTaskType> getSyncTaskTypeByName(String name);
+
+    public SyncTaskType getSyncTaskTypeById(Integer id);
+
+    List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo);
 }
 
