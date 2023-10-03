@@ -963,6 +963,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
     }
 
+    @Override
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date dateSyncedFrom, Date dateSyncedTo) {
+       return dao.getSyncedFHirResources(syncFhirProfile, dateSyncedFrom, dateSyncedTo);
+    }
+
     private PersonName getPatientNames(JSONObject jsonObject) {
         JSONObject patientNamesObject = jsonObject.getJSONArray("name").getJSONObject(0);
         PersonName personName = new PersonName();
@@ -1058,5 +1063,20 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
         return patientExists;
     }
+    @Override
+    public List<SyncTaskType> getSyncTaskTypeByName(String name){
+        return dao.getSyncTaskTypeByName(name);
+    };
+
+    @Override
+    public SyncTaskType getSyncTaskTypeById(Integer id){
+        return dao.getSyncTaskTypeById(id);
+    };
+
+    @Override
+    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo){
+        return dao.getSyncTasksByType(syncTaskType, synceDateFrom, synceDateTo);
+    };
+
 }
 

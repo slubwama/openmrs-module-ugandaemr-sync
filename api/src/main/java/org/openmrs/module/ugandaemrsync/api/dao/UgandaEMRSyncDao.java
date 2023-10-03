@@ -383,4 +383,34 @@ public class UgandaEMRSyncDao {
 
         return criteria.list();
     }
+
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date startTime, Date endTime) {
+
+        Criteria criteria = getSession().createCriteria(SyncFhirResource.class);
+        criteria.add(Restrictions.eq("generatorProfile", syncFhirProfile));
+        criteria.add(Restrictions.eq("synced", true));
+        criteria.add(Restrictions.between("dateSynced", startTime, endTime));
+
+        return criteria.list();
+    }
+
+    public List<SyncTaskType> getSyncTaskTypeByName(String name) {
+        Criteria criteria = getSession().createCriteria(SyncTaskType.class);
+        criteria.add(Restrictions.eq("name", name));
+        return criteria.list();
+    }
+
+    public SyncTaskType getSyncTaskTypeById(Integer id) {
+        Criteria criteria = getSession().createCriteria(SyncTaskType.class);
+        criteria.add(Restrictions.eq("id", id));
+        return (SyncTaskType) criteria.uniqueResult();
+    }
+
+    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo) {
+        Criteria criteria = getSession().createCriteria(SyncTask.class);
+        criteria.add(Restrictions.eq("syncTaskType", syncTaskType));
+        criteria.add(Restrictions.between("dateSent", synceDateFrom, synceDateTo));
+        criteria.add(Restrictions.eq("status", "SUCCESS"));
+        return criteria.list();
+    }
 }
