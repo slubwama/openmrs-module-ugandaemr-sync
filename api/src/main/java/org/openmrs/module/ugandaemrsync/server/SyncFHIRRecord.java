@@ -531,18 +531,24 @@ public class SyncFHIRRecord {
 
     public SyncFhirResource saveCaseResources(SyncFhirProfile syncFhirProfile, SyncFhirCase syncFhirCase) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
-        if (resource != null && !resource.equals("")) {
-            SyncFhirResource syncFHIRResource = new SyncFhirResource();
-            syncFHIRResource.setGeneratorProfile(syncFhirProfile);
-            syncFHIRResource.setResource(resource);
-            syncFHIRResource.setSynced(false);
-            ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
-            syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
-            return syncFHIRResource;
-        } else {
-            return null;
+        try {
+            String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
+
+            if (resource != null && !resource.isEmpty()) {
+                SyncFhirResource syncFHIRResource = new SyncFhirResource();
+                syncFHIRResource.setGeneratorProfile(syncFhirProfile);
+                syncFHIRResource.setResource(resource);
+                syncFHIRResource.setSynced(false);
+
+                ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
+                syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
+
+                return syncFHIRResource;
+            }
+        } catch (Exception e) {
+            log.error(e);
         }
+        return null;
     }
 
 
@@ -1168,7 +1174,6 @@ public class SyncFHIRRecord {
 
         for (SyncFhirResource syncFhirResource : syncFhirResources) {
             Date date = new Date();
-
             try {
                 boolean connectionStatus = ugandaEMRHttpURLConnection.isConnectionAvailable();
 
@@ -1178,6 +1183,9 @@ public class SyncFHIRRecord {
                         maps.add(map);
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
+                        syncFhirResource.setResource(null);
+                        syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
+                        syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }

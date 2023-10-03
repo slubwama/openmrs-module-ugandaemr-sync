@@ -4,6 +4,7 @@ import org.hibernate.annotations.Type;
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.ConceptSource;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.logic.op.In;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -80,6 +81,9 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Column(name = "url_password")
     private String urlPassword;
+
+    @Column(name = "sync_limit")
+    private Integer syncLimit;
 
     public int getSyncFhirProfileId() {
         return syncFhirProfileId;
@@ -241,5 +245,12 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Override
     public void setId(Integer id) {
+    }
+
+    public Integer getSyncLimit() {
+        return syncLimit;
+    }
+    public void setSyncLimit(Integer syncLimit) {
+        this.syncLimit = syncLimit;
     }
 }

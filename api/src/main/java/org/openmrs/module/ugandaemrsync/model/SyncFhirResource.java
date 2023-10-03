@@ -25,6 +25,12 @@ public class SyncFhirResource extends BaseOpenmrsData implements Serializable {
     @Column(name = "synced")
     private Boolean synced;
 
+    @Column(name = "statusCode")
+    private Integer statusCode;
+
+    @Column(name = "status_code_detail")
+    private String statusCodeDetail;
+
     @Column(name = "date_synced")
     private Date dateSynced;
 
@@ -97,5 +103,21 @@ public class SyncFhirResource extends BaseOpenmrsData implements Serializable {
     @Override
     public void setId(Integer id) {
         this.resourceId = id;
+    }
+
+    public Integer getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(Integer statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public String getStatusCodeDetail() {
+        return statusCodeDetail;
+    }
+
+    public void setStatusCodeDetail(String statusCodeDetail) {
+        this.statusCodeDetail = statusCodeDetail;
     }
 }
