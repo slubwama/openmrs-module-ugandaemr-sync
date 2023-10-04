@@ -83,6 +83,8 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             description.addProperty("expiryDate");
             description.addProperty("generatorProfile", Representation.REF);
             description.addProperty("resource");
+            description.addProperty("statusCode");
+            description.addProperty("statusCodeDetail");
             description.addSelfLink();
             return description;
         } else if (rep instanceof FullRepresentation) {
@@ -93,6 +95,8 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             description.addProperty("expiryDate");
             description.addProperty("generatorProfile", Representation.REF);
             description.addProperty("resource");
+            description.addProperty("statusCode");
+            description.addProperty("statusCodeDetail");
             description.addProperty("creator", Representation.REF);
             description.addProperty("dateCreated");
             description.addProperty("changedBy", Representation.REF);
@@ -109,8 +113,10 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             description.addProperty("synced");
             description.addProperty("dateSynced");
             description.addProperty("expiryDate");
-            description.addProperty("expiryDate");
             description.addProperty("generatorProfile", Representation.REF);
+            description.addProperty("resource");
+            description.addProperty("statusCode");
+            description.addProperty("statusCodeDetail");
             description.addSelfLink();
             return description;
         }

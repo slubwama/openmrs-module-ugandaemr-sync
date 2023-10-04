@@ -104,6 +104,8 @@ public class SyncFHIRRecord {
     String healthCenterIdentifier;
     String healthCenterName;
     String lastSyncDate;
+
+    private SyncFhirProfile profile;
     private List<PatientProgram> patientPrograms;
 
     Map<String, Object> anyOtherObject = new HashMap<>();
@@ -249,71 +251,73 @@ public class SyncFHIRRecord {
     }
 
 
-    /** public Collection<String> proccessBuldeFHIRResources(String resourceType, String lastUpdateOnDate) {
-
-        String finalQuery;
-
-        StringBuilder currentBundleString = new StringBuilder();
-        Integer currentNumberOfBundlesCollected = 0;
-        Integer interval = 1000;
-        List<String> resourceBundles = new ArrayList<>();
-
-        DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBound(lastUpdateOnDate);
-        IParser iParser = FhirContext.forR4().newJsonParser();
-        Collection<IBaseResource> results = null;
-        List<String> jsoStrings = new ArrayList<>();
-
-        String bundleWrapperString = "{\"resourceType\":\"Bundle\",\"type\":\"transaction\",\"entry\":%s}";
-
-        FhirPersonService fhirPersonService;
-        FhirPatientService fhirPatientService;
-        FhirPractitionerService fhirPractitionerService;
-        FhirEncounterService fhirEncounterService;
-        FhirObservationService fhirObservationService;
-
-
-        try {
-            Field serviceContextField = Context.class.getDeclaredField("serviceContext");
-            serviceContextField.setAccessible(true);
-            try {
-                ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null))
-                        .getApplicationContext();
-
-                fhirPersonService = applicationContext.getBean(FhirPersonService.class);
-                fhirPatientService = applicationContext.getBean(FhirPatientService.class);
-                fhirEncounterService = applicationContext.getBean(FhirEncounterService.class);
-                fhirObservationService = applicationContext.getBean(FhirObservationService.class);
-                fhirPractitionerService = applicationContext.getBean(FhirPractitionerService.class);
-
-
-            } finally {
-                serviceContextField.setAccessible(false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
-        if (resourceType == "Patient") {
-            results = fhirPatientService.searchForPatients(null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
-        } else if (resourceType.equals("Person")) {
-            results = fhirPersonService.searchForPeople(null, null, null, null,
-                    null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
-        } else if (resourceType.equals("Encounter")) {
-            results = fhirEncounterService.searchForEncounters(null, null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
-        } else if (resourceType.equals("Observation")) {
-            results = fhirObservationService.searchForObservations(null,
-                    null, null, null,
-                    null, null, null,
-                    null, null, null, null, lastUpdated, null, null, null).getResources(0, Integer.MAX_VALUE);
-        } else if (resourceType.equals("Practitioner")) {
-            results = fhirPractitionerService.searchForPractitioners(null, null, null, null, null,
-                    null, null, null, null, lastUpdated, null).getResources(0, Integer.MAX_VALUE);
-        }
-
-        return groupInBundles(resourceType, results, interval, null);
-    } **/
+    /**
+     * public Collection<String> proccessBuldeFHIRResources(String resourceType, String lastUpdateOnDate) {
+     * <p>
+     * String finalQuery;
+     * <p>
+     * StringBuilder currentBundleString = new StringBuilder();
+     * Integer currentNumberOfBundlesCollected = 0;
+     * Integer interval = 1000;
+     * List<String> resourceBundles = new ArrayList<>();
+     * <p>
+     * DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBound(lastUpdateOnDate);
+     * IParser iParser = FhirContext.forR4().newJsonParser();
+     * Collection<IBaseResource> results = null;
+     * List<String> jsoStrings = new ArrayList<>();
+     * <p>
+     * String bundleWrapperString = "{\"resourceType\":\"Bundle\",\"type\":\"transaction\",\"entry\":%s}";
+     * <p>
+     * FhirPersonService fhirPersonService;
+     * FhirPatientService fhirPatientService;
+     * FhirPractitionerService fhirPractitionerService;
+     * FhirEncounterService fhirEncounterService;
+     * FhirObservationService fhirObservationService;
+     * <p>
+     * <p>
+     * try {
+     * Field serviceContextField = Context.class.getDeclaredField("serviceContext");
+     * serviceContextField.setAccessible(true);
+     * try {
+     * ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null))
+     * .getApplicationContext();
+     * <p>
+     * fhirPersonService = applicationContext.getBean(FhirPersonService.class);
+     * fhirPatientService = applicationContext.getBean(FhirPatientService.class);
+     * fhirEncounterService = applicationContext.getBean(FhirEncounterService.class);
+     * fhirObservationService = applicationContext.getBean(FhirObservationService.class);
+     * fhirPractitionerService = applicationContext.getBean(FhirPractitionerService.class);
+     * <p>
+     * <p>
+     * } finally {
+     * serviceContextField.setAccessible(false);
+     * }
+     * } catch (Exception e) {
+     * throw new RuntimeException(e);
+     * }
+     * <p>
+     * <p>
+     * if (resourceType == "Patient") {
+     * results = fhirPatientService.searchForPatients(null, null, null, null, null, null, null, null, null,
+     * null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
+     * } else if (resourceType.equals("Person")) {
+     * results = fhirPersonService.searchForPeople(null, null, null, null,
+     * null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
+     * } else if (resourceType.equals("Encounter")) {
+     * results = fhirEncounterService.searchForEncounters(null, null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
+     * } else if (resourceType.equals("Observation")) {
+     * results = fhirObservationService.searchForObservations(null,
+     * null, null, null,
+     * null, null, null,
+     * null, null, null, null, lastUpdated, null, null, null).getResources(0, Integer.MAX_VALUE);
+     * } else if (resourceType.equals("Practitioner")) {
+     * results = fhirPractitionerService.searchForPractitioners(null, null, null, null, null,
+     * null, null, null, null, lastUpdated, null).getResources(0, Integer.MAX_VALUE);
+     * }
+     * <p>
+     * return groupInBundles(resourceType, results, interval, null);
+     * }
+     **/
 
     public List<Map> syncFHIRData() {
 
@@ -354,7 +358,7 @@ public class SyncFHIRRecord {
 
 
     public Collection<SyncFhirResource> generateCaseBasedFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
-
+        this.profile = syncFhirProfile;
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         if (syncFhirProfile != null && (!syncFhirProfile.getCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
             return null;
@@ -503,8 +507,8 @@ public class SyncFHIRRecord {
             String uuid = syncFhirProfile.getCaseBasedPrimaryResourceTypeId();
 
             List<Patient> patientList = getPatientByCohortType(uuid);
-            if(patientList.size()>0){
-                for(Patient patient:patientList){
+            if (patientList.size() > 0) {
+                for (Patient patient : patientList) {
                     String patientIdentifier = patient.getPatientId().toString();
                     saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
                 }
@@ -531,18 +535,24 @@ public class SyncFHIRRecord {
 
     public SyncFhirResource saveCaseResources(SyncFhirProfile syncFhirProfile, SyncFhirCase syncFhirCase) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
-        if (resource != null && !resource.equals("")) {
-            SyncFhirResource syncFHIRResource = new SyncFhirResource();
-            syncFHIRResource.setGeneratorProfile(syncFhirProfile);
-            syncFHIRResource.setResource(resource);
-            syncFHIRResource.setSynced(false);
-            ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
-            syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
-            return syncFHIRResource;
-        } else {
-            return null;
+        try {
+            String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
+
+            if (resource != null && !resource.isEmpty()) {
+                SyncFhirResource syncFHIRResource = new SyncFhirResource();
+                syncFHIRResource.setGeneratorProfile(syncFhirProfile);
+                syncFHIRResource.setResource(resource);
+                syncFHIRResource.setSynced(false);
+
+                ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
+                syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
+
+                return syncFHIRResource;
+            }
+        } catch (Exception e) {
+            log.error(e);
         }
+        return null;
     }
 
 
@@ -805,6 +815,10 @@ public class SyncFHIRRecord {
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
                 jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                 jsonString = addUseOfficialToName(jsonString, "name");
+                if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
+                    jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
+                }
+                jsonString = removeAttribute(jsonString,"contained");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
             }
 
@@ -839,6 +853,24 @@ public class SyncFHIRRecord {
             jsonObject.getJSONArray(attributeName).getJSONObject(objectCount).put("use", "official");
             objectCount++;
         }
+        return jsonObject.toString();
+    }
+
+    private String removeIdentifierExceptProfileId(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+        int objectCount = 0;
+        for (int i = 0; i < jsonObject.getJSONArray(attributeName).length(); i++) {
+            if (!jsonObject.getJSONArray("identifier").getJSONObject(i).getJSONObject("type").getJSONArray("coding").getJSONObject(0).get("code").toString().equals(profile.getPatientIdentifierType().getUuid())) {
+                jsonObject.getJSONArray("identifier").remove(i);
+            }
+        }
+        return jsonObject.toString();
+    }
+
+    private String removeAttribute(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+       jsonObject.remove(attributeName);
+
         return jsonObject.toString();
     }
 
@@ -976,7 +1008,7 @@ public class SyncFHIRRecord {
             }
         }
 
-        PatientSearchParams patientSearchParams=new PatientSearchParams(null, null, null, null, null, null,
+        PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, null, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
 
@@ -1168,7 +1200,6 @@ public class SyncFHIRRecord {
 
         for (SyncFhirResource syncFhirResource : syncFhirResources) {
             Date date = new Date();
-
             try {
                 boolean connectionStatus = ugandaEMRHttpURLConnection.isConnectionAvailable();
 
@@ -1178,7 +1209,14 @@ public class SyncFHIRRecord {
                         maps.add(map);
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
+                        syncFhirResource.setResource(null);
+                        syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
+                        syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
+                        ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
+                    } else {
+                        syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
+                        syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {
@@ -1301,8 +1339,8 @@ public class SyncFHIRRecord {
         }
     }
 
-    private List<Patient> getPatientByCohortType(String cohortTypeUuid){
-        List list = Context.getAdministrationService().executeSQL("SELECT patient_id from cohort_member cm inner join cohort c on cm.cohort_id = c.cohort_id inner join cohort_type ct on c.cohort_type_id = ct.cohort_type_id where ct.uuid='"+cohortTypeUuid+"' and c.voided=0 and cm.voided=0;", true);
+    private List<Patient> getPatientByCohortType(String cohortTypeUuid) {
+        List list = Context.getAdministrationService().executeSQL("SELECT patient_id from cohort_member cm inner join cohort c on cm.cohort_id = c.cohort_id inner join cohort_type ct on c.cohort_type_id = ct.cohort_type_id where ct.uuid='" + cohortTypeUuid + "' and c.voided=0 and cm.voided=0;", true);
         PatientService patientService = Context.getPatientService();
         List<Patient> patientList = new ArrayList<>();
 

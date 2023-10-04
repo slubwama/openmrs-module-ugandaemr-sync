@@ -274,7 +274,7 @@ public class UgandaEMRSyncDao {
         Criteria criteria = getSession().createCriteria(SyncFhirResource.class);
         criteria.add(Restrictions.eq("generatorProfile", syncFhirProfile));
         criteria.add(Restrictions.eq("synced", false));
-
+        criteria.setMaxResults(syncFhirProfile.getSyncLimit());
         return criteria.list();
     }
 

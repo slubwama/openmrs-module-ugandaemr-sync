@@ -61,6 +61,7 @@
 
 
                 modal.find("#username").val("");
+                modal.find("#syncLimit").val("");
                 modal.find("#password").val("");
                 modal.find("#url").val("");
                 modal.find("#token").val("");
@@ -112,6 +113,7 @@
 
 
                     modal.find("#username").val(syncFhirProfile.urlUserName);
+                    modal.find("#syncLimit").val(syncFhirProfile.syncLimit);
                     modal.find("#password").val(syncFhirProfile.urlPassword);
                     modal.find("#url").val(syncFhirProfile.url);
                     modal.find("#token").val(syncFhirProfile.urlToken);
@@ -532,7 +534,6 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <div class="card">
-
                                             <div class="card-body" id="identifier_type">
                                                 <div class="form-group">
                                                     <label>Patient Identifier Type</label>
@@ -609,6 +610,12 @@
                                                     <input type="text" class="form-control" id="url"
                                                            placeholder="url or ip Address to Send Data to"
                                                            name="url">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Number of Resources to Sync at a time</label>
+                                                    <input type="text" class="form-control" id="syncLimit"
+                                                           placeholder="Number of Resources to Sync at a time" name="syncLimit">
                                                 </div>
 
                                                 <div class="form-group">

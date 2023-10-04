@@ -1637,4 +1637,29 @@
             INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '0b7eb397-4488-4a88-9967-a054b3c26d6f', (select task_config_id from scheduler_task_config where uuid="2f92cac0-ea80-45ae-bd17-673127954fba"));
         </sql>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-20230929-1247" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="sync_limit" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20230929-1248" author="slubwama">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="statusCode" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add statusCodeDetail Column -->
+    <changeSet id="ugandaemrsync-20230929-1249" author="slubwama">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="status_code_detail" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20231004-1249" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="keep_profile_identifier_only" type="TINYINT(3)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
