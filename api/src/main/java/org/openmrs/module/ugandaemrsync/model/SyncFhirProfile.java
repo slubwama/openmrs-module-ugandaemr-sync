@@ -44,6 +44,9 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
     @JoinColumn(name = "patient_identifier_type")
     private PatientIdentifierType patientIdentifierType;
 
+    @Column(name = "keep_profile_identifier_only")
+    private Boolean keepProfileIdentifierOnly;
+
     @Column(name = "number_of_resources_in_bundle", length = 11)
     private Integer numberOfResourcesInBundle;
 
@@ -252,5 +255,13 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
     }
     public void setSyncLimit(Integer syncLimit) {
         this.syncLimit = syncLimit;
+    }
+
+    public Boolean getKeepProfileIdentifierOnly() {
+        return keepProfileIdentifierOnly;
+    }
+
+    public void setKeepProfileIdentifierOnly(Boolean keepProfileIdentifierOnly) {
+        this.keepProfileIdentifierOnly = keepProfileIdentifierOnly;
     }
 }

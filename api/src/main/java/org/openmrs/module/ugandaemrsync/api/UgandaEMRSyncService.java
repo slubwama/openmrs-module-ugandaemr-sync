@@ -343,7 +343,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param order the order which was used to order the test. this can be null.
      * @return Encounter the encounter where the test results have been added.
      */
-    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order);
+    public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order);
 
 
     /**
