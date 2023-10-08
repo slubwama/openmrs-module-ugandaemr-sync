@@ -56,8 +56,6 @@
                 modal.find("resourceTypePractitioner").checked = false;
                 modal.find("resourceTypeServiceRequest").checked = false;
                 modal.find("resourceTypeMedicationRequest").checked = false;
-                modal.find("#identifier_source_id").hide();
-                modal.find("#identifier_type").hide();
 
 
                 modal.find("#username").val("");
