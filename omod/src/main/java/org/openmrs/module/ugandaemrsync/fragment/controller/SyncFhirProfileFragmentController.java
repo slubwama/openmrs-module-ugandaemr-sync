@@ -30,7 +30,7 @@ public class SyncFhirProfileFragmentController {
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		SimpleObject syncFhirProfileMapper=SimpleObject.create("profileId",syncFhirProfile.getId(),"name",syncFhirProfile.getName(),"profileEnabled",syncFhirProfile.getProfileEnabled(),"generateBundle",syncFhirProfile.getGenerateBundle(),"syncDataEverSince",syncFhirProfile.getSyncDataEverSince(),"dataToSyncStartDate",syncFhirProfile.getDataToSyncStartDate(),"resourceTypes",syncFhirProfile.getResourceTypes(),"durationToKeepSyncedResources",syncFhirProfile.getDurationToKeepSyncedResources(),"noOfResourcesInBundle",syncFhirProfile.getNumberOfResourcesInBundle(),"isCaseBasedProfile",syncFhirProfile.getCaseBasedProfile(),"caseBasedPrimaryResourceType",syncFhirProfile.getCaseBasedPrimaryResourceType(),"caseBasedPrimaryResourceUUID",syncFhirProfile.getCaseBasedPrimaryResourceTypeId(),"patientIdentifierType",syncFhirProfile.getPatientIdentifierType().getUuid(),"resourceSearchParameter",syncFhirProfile.getResourceSearchParameter(),"url",syncFhirProfile.getUrl()
-		,"urlToken",syncFhirProfile.getUrlToken(),"urlUserName",syncFhirProfile.getUrlUserName(),"urlPassword",syncFhirProfile.getUrlPassword());
+		,"urlToken",syncFhirProfile.getUrlToken(),"urlUserName",syncFhirProfile.getUrlUserName(),"urlPassword",syncFhirProfile.getUrlPassword(),"urlPassword",syncFhirProfile.getUrlPassword(),"syncLimit",syncFhirProfile.getSyncLimit());
 		simpleObject.put("syncFhirProfile", objectMapper.writeValueAsString(syncFhirProfileMapper));
 		return simpleObject;
 	}

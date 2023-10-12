@@ -4,6 +4,7 @@ import org.hibernate.annotations.Type;
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.ConceptSource;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.logic.op.In;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -43,6 +44,9 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
     @JoinColumn(name = "patient_identifier_type")
     private PatientIdentifierType patientIdentifierType;
 
+    @Column(name = "keep_profile_identifier_only")
+    private Boolean keepProfileIdentifierOnly;
+
     @Column(name = "number_of_resources_in_bundle", length = 11)
     private Integer numberOfResourcesInBundle;
 
@@ -80,6 +84,9 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Column(name = "url_password")
     private String urlPassword;
+
+    @Column(name = "sync_limit")
+    private Integer syncLimit;
 
     public int getSyncFhirProfileId() {
         return syncFhirProfileId;
@@ -241,5 +248,20 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Override
     public void setId(Integer id) {
+    }
+
+    public Integer getSyncLimit() {
+        return syncLimit;
+    }
+    public void setSyncLimit(Integer syncLimit) {
+        this.syncLimit = syncLimit;
+    }
+
+    public Boolean getKeepProfileIdentifierOnly() {
+        return keepProfileIdentifierOnly;
+    }
+
+    public void setKeepProfileIdentifierOnly(Boolean keepProfileIdentifierOnly) {
+        this.keepProfileIdentifierOnly = keepProfileIdentifierOnly;
     }
 }

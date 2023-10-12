@@ -56,11 +56,10 @@
                 modal.find("resourceTypePractitioner").checked = false;
                 modal.find("resourceTypeServiceRequest").checked = false;
                 modal.find("resourceTypeMedicationRequest").checked = false;
-                modal.find("#identifier_source_id").hide();
-                modal.find("#identifier_type").hide();
 
 
                 modal.find("#username").val("");
+                modal.find("#syncLimit").val("");
                 modal.find("#password").val("");
                 modal.find("#url").val("");
                 modal.find("#token").val("");
@@ -112,6 +111,7 @@
 
 
                     modal.find("#username").val(syncFhirProfile.syncFhirProfile.urlUserName);
+                    modal.find("#syncLimit").val(syncFhirProfile.syncFhirProfile.syncLimit);
                     modal.find("#password").val(syncFhirProfile.syncFhirProfile.urlPassword);
                     modal.find("#url").val(syncFhirProfile.syncFhirProfile.url);
                     modal.find("#token").val(syncFhirProfile.syncFhirProfile.urlToken);
@@ -609,6 +609,12 @@
                                                     <input type="text" class="form-control" id="url"
                                                            placeholder="url or ip Address to Send Data to"
                                                            name="url">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Number of Resources to Sync at a time</label>
+                                                    <input type="text" class="form-control" id="syncLimit"
+                                                           placeholder="Number of Resources to Sync at a time" name="syncLimit">
                                                 </div>
 
                                                 <div class="form-group">

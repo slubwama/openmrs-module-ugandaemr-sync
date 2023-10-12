@@ -238,6 +238,28 @@
            When Enabled to true CBS FHIR Data will be synced to the central fhir server
         </description>
     </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.national.health.facility.registry.identifier</property>
+        <defaultValue></defaultValue>
+        <description>
+           This is the national Health facility Registry Unique Identifier
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.nhfr.district.url</property>
+        <defaultValue>https://nhfr-staging-api.planetsystems.co/nhfrApi/v0.0.1/externalSystem/byParentId/</defaultValue>
+        <description>
+            This is the national Health facility Registry url to get districts
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.nhfr.facility.url</property>
+        <defaultValue>https://nhfr-staging-api.planetsystems.co/nhfrApi/v0.0.1/externalSystem/search</defaultValue>
+        <description>
+            This is the national Health facility Registry url to get facilities
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
     <messages>
