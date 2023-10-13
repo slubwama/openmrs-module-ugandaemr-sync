@@ -809,14 +809,14 @@ public class SyncFHIRRecord {
             jsonString = iParser.encodeResourceToString(iBaseResource);
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
-                jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
-                jsonString = addCodingToIdentifier(jsonString, "identifier");
-                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
-                jsonString = addUseOfficialToName(jsonString, "name");
                 if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
                     jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
                 }
-                jsonString = removeAttribute(jsonString,"contained");
+                jsonString = addCodingToIdentifier(jsonString, "identifier");
+                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
+                jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
+                jsonString = addUseOfficialToName(jsonString, "name");
+                jsonString = removeAttribute(jsonString, "contained");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
             }
 
@@ -867,8 +867,9 @@ public class SyncFHIRRecord {
 
     private String removeAttribute(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
-       jsonObject.remove(attributeName);
-
+        if (jsonObject.has(attributeName)) {
+            jsonObject.remove(attributeName);
+        }
         return jsonObject.toString();
     }
 
@@ -1006,7 +1007,7 @@ public class SyncFHIRRecord {
             }
         }
 
-        PatientSearchParams patientSearchParams=new PatientSearchParams(null, null, null, null, null, null,
+        PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
 
