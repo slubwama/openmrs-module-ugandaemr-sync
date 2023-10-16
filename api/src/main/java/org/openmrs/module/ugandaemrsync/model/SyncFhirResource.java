@@ -38,7 +38,7 @@ public class SyncFhirResource extends BaseOpenmrsData implements Serializable {
     private SyncFhirProfile generatorProfile;
 
     @ManyToOne
-    @JoinColumn(name = "patient")
+    @JoinColumn(name = "patient_id")
     private Patient patient;
 
     @Column(name = "resource", length = 1000000)
