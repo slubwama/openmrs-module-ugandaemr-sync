@@ -67,42 +67,42 @@
                 jq.get('${ ui.actionLink("ugandaemrsync","syncFhirProfile","getSyncFhirProfile",) }', {
                     "profileId": profileId
                 }, function (response) {
-                    var syncFhirProfile = JSON.parse(response.replace("syncFhirProfile=", "\"syncFhirProfile\":").trim());
+                    var syncFhirProfile = JSON.parse(response.syncFhirProfile);
 
                     if (!duplicate) {
                         modal.find("#profileId").val(profileId);
                     }
 
-                    modal.find("#syncFhirProfileName").val(syncFhirProfile.syncFhirProfile.name);
-                    modal.find("#profileEnabled").attr('checked', syncFhirProfile.syncFhirProfile.profileEnabled);
+                    modal.find("#syncFhirProfileName").val(syncFhirProfile.name);
+                    modal.find("#profileEnabled").attr('checked', syncFhirProfile.profileEnabled);
 
-                    modal.find("#generateBundle").attr('checked', syncFhirProfile.syncFhirProfile.generateBundle);
-                    modal.find("#syncDataEverSince").attr('checked', syncFhirProfile.syncFhirProfile.syncDataEverSince);
-                    modal.find("#noOfResourcesInBundle").val(syncFhirProfile.syncFhirProfile.noOfResourcesInBundle);
+                    modal.find("#generateBundle").attr('checked', syncFhirProfile.generateBundle);
+                    modal.find("#syncDataEverSince").attr('checked', syncFhirProfile.syncDataEverSince);
+                    modal.find("#noOfResourcesInBundle").val(syncFhirProfile.noOfResourcesInBundle);
 
-                    modal.find("#durationToKeepSyncedResources").val(syncFhirProfile.syncFhirProfile.durationToKeepSyncedResources);
+                    modal.find("#durationToKeepSyncedResources").val(syncFhirProfile.durationToKeepSyncedResources);
 
-                    modal.find("#isCaseBasedProfile").attr('checked', syncFhirProfile.syncFhirProfile.isCaseBasedProfile);
-                    if (syncFhirProfile.syncFhirProfile.dataToSyncStartDate !== "") {
-                        modal.find("#dataToSyncStartDate").val(formatDateForDisplay(new Date(syncFhirProfile.syncFhirProfile.dataToSyncStartDate)));
+                    modal.find("#isCaseBasedProfile").attr('checked', syncFhirProfile.isCaseBasedProfile);
+                    if (syncFhirProfile.dataToSyncStartDate !== "") {
+                        modal.find("#dataToSyncStartDate").val(formatDateForDisplay(new Date(syncFhirProfile.dataToSyncStartDate)));
                     }
 
-                    modal.find("#caseBasedPrimaryResourceType").val(syncFhirProfile.syncFhirProfile.caseBasedPrimaryResourceType);
-                    modal.find("#caseBasedPrimaryResourceUUID").val(syncFhirProfile.syncFhirProfile.caseBasedPrimaryResourceUUID);
+                    modal.find("#caseBasedPrimaryResourceType").val(syncFhirProfile.caseBasedPrimaryResourceType);
+                    modal.find("#caseBasedPrimaryResourceUUID").val(syncFhirProfile.caseBasedPrimaryResourceUUID);
 
-                    modal.find("#patientIdentifierType").val(syncFhirProfile.syncFhirProfile.patientIdentifierType);
+                    modal.find("#patientIdentifierType").val(syncFhirProfile.patientIdentifierType);
 
-                    var resourceType = syncFhirProfile.syncFhirProfile.resourceTypes.split(",");
+                    var resourceType = syncFhirProfile.resourceTypes.split(",");
 
                     resourceType.forEach(function (item, index) {
                         modal.find("#resourceType" + item).attr('checked', true);
                     });
 
-                    var encounterFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).encounterFilter.type;
+                    var encounterFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).encounterFilter.type;
 
-                    var obervationFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).observationFilter.code;
+                    var obervationFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).observationFilter.code;
 
-                    var episodeOfCareFilters = JSON.parse(syncFhirProfile.syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+                    var episodeOfCareFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
 
 
                     modal.find("#encounterTypeUUIDS").val(encounterFilters);
@@ -110,11 +110,11 @@
                     modal.find("#episodeOfCareUUIDS").val(episodeOfCareFilters);
 
 
-                    modal.find("#username").val(syncFhirProfile.syncFhirProfile.urlUserName);
-                    modal.find("#syncLimit").val(syncFhirProfile.syncFhirProfile.syncLimit);
-                    modal.find("#password").val(syncFhirProfile.syncFhirProfile.urlPassword);
-                    modal.find("#url").val(syncFhirProfile.syncFhirProfile.url);
-                    modal.find("#token").val(syncFhirProfile.syncFhirProfile.urlToken);
+                    modal.find("#username").val(syncFhirProfile.urlUserName);
+                    modal.find("#syncLimit").val(syncFhirProfile.syncLimit);
+                    modal.find("#password").val(syncFhirProfile.urlPassword);
+                    modal.find("#url").val(syncFhirProfile.url);
+                    modal.find("#token").val(syncFhirProfile.urlToken);
 
 
                     if (!response) {
