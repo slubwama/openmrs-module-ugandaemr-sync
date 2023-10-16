@@ -1662,4 +1662,15 @@
             <column name="keep_profile_identifier_only" type="TINYINT(3)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-20231016-1249">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="patient_id" type="INT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-20231016-1250">
+        <addForeignKeyConstraint
+                baseTableName="sync_fhir_resource" baseColumnNames="patient_id" constraintName="sync_fhir_resource_patient" referencedTableName="patient" referencedColumnNames="patient_id" onDelete="NO ACTION" onUpdate="NO ACTION"/>
+    </changeSet>
 </databaseChangeLog>

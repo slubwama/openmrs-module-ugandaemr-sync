@@ -3,13 +3,9 @@ package org.openmrs.module.ugandaemrsync.model;
 
 import org.hibernate.annotations.Type;
 import org.openmrs.BaseOpenmrsData;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Id;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Column;
-import javax.persistence.ManyToOne;
-import javax.persistence.JoinColumn;
+import org.openmrs.Patient;
+
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -40,6 +36,10 @@ public class SyncFhirResource extends BaseOpenmrsData implements Serializable {
     @ManyToOne
     @JoinColumn(name = "generator_profile")
     private SyncFhirProfile generatorProfile;
+
+    @ManyToOne
+    @JoinColumn(name = "patient_id")
+    private Patient patient;
 
     @Column(name = "resource", length = 1000000)
     @Type(type="text")
@@ -119,5 +119,14 @@ public class SyncFhirResource extends BaseOpenmrsData implements Serializable {
 
     public void setStatusCodeDetail(String statusCodeDetail) {
         this.statusCodeDetail = statusCodeDetail;
+    }
+
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
     }
 }
