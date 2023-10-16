@@ -1664,9 +1664,9 @@
     </changeSet>
 
     <changeSet author="slubwama" id="ugandaemrsync-20231016-1249">
-        <createTable tableName="sync_fhir_resource">
+        <addColumn tableName="sync_fhir_resource">
             <column name="patient_id" type="INT"/>
-        </createTable>
+        </addColumn>
     </changeSet>
 
     <changeSet author="slubwama" id="ugandaemrsync-20231016-1250">
