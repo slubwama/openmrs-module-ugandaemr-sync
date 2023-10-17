@@ -541,7 +541,7 @@ public class SyncFHIRRecord {
                 syncFHIRResource.setGeneratorProfile(syncFhirProfile);
                 syncFHIRResource.setResource(resource);
                 syncFHIRResource.setSynced(false);
-
+                syncFHIRResource.setPatient(syncFhirCase.getPatient());
                 ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
                 syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
 
