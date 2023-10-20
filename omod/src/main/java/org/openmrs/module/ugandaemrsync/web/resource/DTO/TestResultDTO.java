@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.util.List;
 
 public class TestResultDTO implements Serializable {
+
+    private String uuid;
     private Patient patient;
 
     private List<Encounter> encounterList;
@@ -25,5 +27,13 @@ public class TestResultDTO implements Serializable {
 
     public void setEncounterList(List<Encounter> encounterList) {
         this.encounterList = encounterList;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }

@@ -25,7 +25,7 @@ import org.openmrs.module.webservices.validation.ValidateUtil;
 import java.util.Arrays;
 import java.util.List;
 
-@Resource(name = RestConstants.VERSION_1 + "/TestResult", supportedClass = TestResultDTO.class, supportedOpenmrsVersions = {
+@Resource(name = RestConstants.VERSION_1 + "/diagnosisreport", supportedClass = TestResultDTO.class, supportedOpenmrsVersions = {
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*", "2.3.*", "2.4.*", "2.5.*"})
 public class RecieveLabResultResource extends DelegatingCrudResource<TestResultDTO> {
 
@@ -36,7 +36,7 @@ public class RecieveLabResultResource extends DelegatingCrudResource<TestResultD
 
     @Override
     public TestResultDTO save(TestResultDTO TestResult) {
-       throw new ResourceDoesNotSupportOperationException("Operation not supported");
+        throw new ResourceDoesNotSupportOperationException("Operation not supported");
     }
 
     @Override
@@ -48,8 +48,11 @@ public class RecieveLabResultResource extends DelegatingCrudResource<TestResultD
 
         TestResultDTO delegate = new TestResultDTO();
 
-        delegate.setPatient(encounters.get(0).getPatient());
-        delegate.setEncounterList(encounters);
+        if (encounters.size() > 0) {
+            delegate.setPatient(encounters.get(0).getPatient());
+            delegate.setEncounterList(encounters);
+            delegate.setUuid(encounters.get(0).getUuid());
+        }
 
         ValidateUtil.validate(delegate);
         SimpleObject ret = (SimpleObject) ConversionUtil.convertToRepresentation(delegate, context.getRepresentation());
@@ -86,15 +89,15 @@ public class RecieveLabResultResource extends DelegatingCrudResource<TestResultD
             return description;
         } else if (rep instanceof FullRepresentation) {
             DelegatingResourceDescription description = new DelegatingResourceDescription();
-            description.addProperty("patient",Representation.REF);
-            description.addProperty("encounterList",Representation.REF);
+            description.addProperty("patient", Representation.REF);
+            description.addProperty("encounterList", Representation.REF);
             description.addSelfLink();
             description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
             return description;
         } else if (rep instanceof RefRepresentation) {
             DelegatingResourceDescription description = new DelegatingResourceDescription();
-            description.addProperty("patient",Representation.REF);
-            description.addProperty("encounterList",Representation.REF);
+            description.addProperty("patient", Representation.REF);
+            description.addProperty("encounterList", Representation.REF);
             description.addSelfLink();
             return description;
         }
