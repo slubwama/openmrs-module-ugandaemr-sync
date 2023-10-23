@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.List;
 
 @Controller
-@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + SyncTaskStatsResource.DATASET )
+@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + SyncTaskStatsResource.DATASET)
 
 public class SyncTaskStatsResource {
     public static final String DATASET = "/synctaskstats";
@@ -27,8 +27,10 @@ public class SyncTaskStatsResource {
     @RequestMapping(method = RequestMethod.GET)
     @ResponseBody
     public Object getSyncTaskLogsByType(@RequestParam String startDate, @RequestParam String endDate,
-                                @RequestParam(required = true, value = "type") String type) {
-        List<SyncTask> syncTasks= new ArrayList<>();
+                                        @RequestParam(required = true, value = "type") String type) {
+        List<SyncTask> syncTasks = new ArrayList<>();
+        int failures = 0;
+        int successes = 0;
         try {
             if (!validateDateIsValidFormat(endDate)) {
                 SimpleObject message = new SimpleObject();
@@ -40,17 +42,29 @@ public class SyncTaskStatsResource {
             UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
             SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(type);
-             if(syncTaskType !=null) {
-                 Date synceDateFrom = DateUtil.parseYmd(startDate);
-                 Date synceDateTo = DateUtil.parseYmd(endDate);
+            if (syncTaskType != null) {
+                Date synceDateFrom = DateUtil.parseYmd(startDate);
+                Date synceDateTo = DateUtil.parseYmd(endDate);
 
-              syncTasks=   ugandaEMRSyncService.getSyncTasksByType(syncTaskType, synceDateFrom,synceDateTo);
-             }
+                syncTasks = ugandaEMRSyncService.getSyncTasksByType(syncTaskType, synceDateFrom, synceDateTo);
 
-             return new ResponseEntity<>("{\"count\":"+syncTasks.size()+"}", HttpStatus.OK);
+                for (SyncTask syncTask : syncTasks) {
+                    int statusCode = syncTask.getStatusCode();
+                    if (statusCode == 200 || statusCode == 201) {
+                        successes++;
+                    } else {
+                        failures++;
+                    }
+                }
+            }
+            String result ="{\"total\":" + syncTasks.size() + "," +
+                    "\"successes\":" + successes+ "," +
+                    "\"failures\":" + failures+ "}";
+
+            return new ResponseEntity<Object>(result, HttpStatus.OK);
 
         } catch (Exception ex) {
-            return new ResponseEntity<String>("{Error: " + ex.getMessage()+"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<String>("{Error: " + ex.getMessage() + "}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

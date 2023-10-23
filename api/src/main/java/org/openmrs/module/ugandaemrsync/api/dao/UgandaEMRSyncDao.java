@@ -274,7 +274,9 @@ public class UgandaEMRSyncDao {
         Criteria criteria = getSession().createCriteria(SyncFhirResource.class);
         criteria.add(Restrictions.eq("generatorProfile", syncFhirProfile));
         criteria.add(Restrictions.eq("synced", false));
-        criteria.setMaxResults(syncFhirProfile.getSyncLimit());
+        if (syncFhirProfile.getSyncLimit() != null) {
+            criteria.setMaxResults(syncFhirProfile.getSyncLimit());
+        }
         return criteria.list();
     }
 
@@ -409,8 +411,36 @@ public class UgandaEMRSyncDao {
     public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo) {
         Criteria criteria = getSession().createCriteria(SyncTask.class);
         criteria.add(Restrictions.eq("syncTaskType", syncTaskType));
-        criteria.add(Restrictions.between("dateSent", synceDateFrom, synceDateTo));
-        criteria.add(Restrictions.eq("status", "SUCCESS"));
+        criteria.add(Restrictions.between("dateCreated", synceDateFrom, synceDateTo));
         return criteria.list();
+    }
+
+    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType) {
+        Criteria criteria = getSession().createCriteria(SyncTask.class);
+        criteria.add(Restrictions.eq("syncTaskType", syncTaskType));
+        return criteria.list();
+    }
+
+    public SyncTask getSyncTaskByUUID(String uniqueId) {
+        Criteria criteria = getSession().createCriteria(SyncTask.class);
+        criteria.add(Restrictions.eq("uuid", uniqueId));
+        return (SyncTask) criteria.uniqueResult();
+    }
+
+    public SyncTask getSyncTaskById(Integer uniqueId) {
+        Criteria criteria = getSession().createCriteria(SyncTask.class);
+        criteria.add(Restrictions.eq("id", uniqueId));
+        return (SyncTask) criteria.uniqueResult();
+    }
+
+    public List<SyncFhirResource> getSyncResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String from, String to) {
+        String query ="select resource_id, synced, date_synced, expiry_date, generator_profile, NULL as resource, sfr.creator, sfr.date_created, sfr.changed_by, sfr.date_changed, sfr.voided, sfr.date_voided, sfr.voided_by, sfr.void_reason, sfr.uuid, sfr.statusCode, status_code_detail, patient_id from sync_fhir_resource sfr inner join sync_fhir_profile sfp on sfr.generator_profile = sfp.sync_fhir_profile_id where sfp.uuid='" + syncFhirProfile.getUuid()
+                + "' and sfr.date_created >='"+from +"'"+"and sfr.date_created <='"+to +"';" ;
+        SQLQuery sqlQuery = getSession()
+                .createSQLQuery(query);
+        System.out.println(query);
+        sqlQuery.addEntity(SyncFhirResource.class);
+        return sqlQuery.list();
+
     }
 }

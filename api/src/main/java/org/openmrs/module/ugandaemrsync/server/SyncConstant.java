@@ -87,6 +87,7 @@ public class SyncConstant {
     public static final String SMS_APPOINTMENT_TYPE_UUID = "08c5be38-1b79-4e27-b9ca-5da709aef5fe";
 
     public static final String PATIENT_IDENTIFIER_TYPE = "e1731641-30ab-102d-86b0-7a5022ba4115";
+    public static final String UIC_IDENTIFIER_TYPE = "877169c4-92c6-4cc9-bf45-1ab95faea242";
 
     public static final int VL_SAMPLE_ID_CELL_NO = 1;
 
