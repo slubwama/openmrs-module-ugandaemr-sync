@@ -495,4 +495,5 @@ public class SyncConstant {
     public static List<String> VL_SYNC_TASK_COLUMNS = Arrays.asList("sync_task_id", "sync_task_type", "sync_task", "status", "status_code", "sent_to_url", "require_action", "action_completed", "date_sent", "creator", "date_created", "changed_by", "date_changed", "voided", "date_voided", "voided_by ", "void_reason", "uuid");
 
 	public static final String Latest_obs_of_Person = "SELECT %s from obs where person_id=%s and concept_id=%s and obs_datetime <= '%s' and voided= 0 ORDER BY obs_datetime DESC LIMIT 1";
+	public static final String ALIS_SYNC_TASK_TYPE_UUID = "d4a3ebbb-e793-4e56-867c-0cf998e51f56";
 }
