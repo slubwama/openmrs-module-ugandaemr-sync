@@ -14,6 +14,7 @@ import org.openmrs.module.reporting.report.service.ReportService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
+import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @Controller
-@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + SyncFhirResourceStatsResource.DATASET )
+@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + SyncFhirResourceStatsResource.DATASET)
 
 public class SyncFhirResourceStatsResource {
     public static final String DATASET = "/syncfhirresourcestats";
@@ -34,8 +35,8 @@ public class SyncFhirResourceStatsResource {
     @RequestMapping(method = RequestMethod.GET)
     @ResponseBody
     public Object getCasesByProfile(@RequestParam String startDate, @RequestParam String endDate,
-                                @RequestParam(required = true, value = "profile") String profile) {
-        List<SyncFhirResource> syncFhirResources= new ArrayList<>();
+                                    @RequestParam(required = true, value = "profile") String profile) {
+        List<SyncFhirResource> syncFhirResources = new ArrayList<>();
         try {
             if (!validateDateIsValidFormat(endDate)) {
                 SimpleObject message = new SimpleObject();
@@ -45,19 +46,34 @@ public class SyncFhirResourceStatsResource {
             }
 
             UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-
+            int successes = 0;
+            int failures = 0;
             SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByUUID(profile);
-             if(syncFhirProfile!=null) {
-                 Date synceDateFrom = DateUtil.parseYmd(startDate);
-                 Date synceDateTo = DateUtil.parseYmd(endDate);
+            if (syncFhirProfile != null) {
+                Date synceDateFrom = DateUtil.parseYmd(startDate);
+                Date synceDateTo = DateUtil.parseYmd(endDate);
 
-              syncFhirResources=   ugandaEMRSyncService.getSyncedFHirResources(syncFhirProfile, synceDateFrom,synceDateTo);
-             }
+                syncFhirResources = ugandaEMRSyncService.getSyncedFHirResources(syncFhirProfile, synceDateFrom, synceDateTo);
 
-             return new ResponseEntity<>("{\"count\":"+syncFhirResources.size()+"}", HttpStatus.OK);
+                for (SyncFhirResource resource : syncFhirResources) {
+                    int statusCode = resource.getStatusCode();
+                    if (statusCode == 200 || statusCode == 201) {
+
+                        successes++;
+                    } else {
+
+                        failures++;
+                    }
+                }
+            }
+            String result ="{\"total\":" + syncFhirResources.size() + "," +
+                    "\"successes\":" + successes+ "," +
+                    "\"failures\":" + failures+ "}";
+
+            return new ResponseEntity<Object>(result, HttpStatus.OK);
 
         } catch (Exception ex) {
-            return new ResponseEntity<String>("{Error: " + ex.getMessage()+"}", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<String>("{Error: " + ex.getMessage() + "}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

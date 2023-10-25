@@ -7,8 +7,13 @@ import io.swagger.models.properties.IntegerProperty;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.StringProperty;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.reporting.common.DateUtil;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
+import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
+import org.openmrs.module.ugandaemrsync.web.resource.DTO.SyncTaskDetails;
+import org.openmrs.module.ugandaemrsync.web.resource.mapper.ConverterHelper;
+import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
@@ -25,46 +30,52 @@ import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
-@Resource(name = RestConstants.VERSION_1 + "/synctasktype", supportedClass = SyncTaskType.class, supportedOpenmrsVersions = {
+@Resource(name = RestConstants.VERSION_1 + "/synctaskdetails", supportedClass = SyncTaskDetails.class, supportedOpenmrsVersions = {
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*", "2.3.*", "2.4.*", "2.5.*" })
-public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
+public class SyncTaskDetailsResource extends DelegatingCrudResource<SyncTaskDetails> {
 
 	@Override
-	public SyncTaskType newDelegate() {
-		return new SyncTaskType();
+	public SyncTaskDetails newDelegate() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public SyncTaskType save(SyncTaskType syncTaskType	) {
-		return Context.getService(UgandaEMRSyncService.class).saveSyncTaskType(syncTaskType);
+	public SyncTaskDetails save(SyncTaskDetails SyncTask) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public SyncTaskType getByUniqueId(String uniqueId) {
-		SyncTaskType syncTaskType = null;
+	public SyncTaskDetails getByUniqueId(String uniqueId) {
+		SyncTask SyncTask = null;
 		Integer id = null;
+		SyncTaskDetails details = null;
 
-		syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(uniqueId);
-		if (syncTaskType == null && uniqueId != null) {
+		SyncTask = Context.getService(UgandaEMRSyncService.class).getSyncTaskByUUID(uniqueId);
+		if (SyncTask == null && uniqueId != null) {
 			try {
 				id = Integer.parseInt(uniqueId);
 			}
 			catch (Exception e) {}
 
 			if (id != null) {
-				syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeById(id);
+				SyncTask = Context.getService(UgandaEMRSyncService.class).getSyncTaskById(id);
 			}
+			details = ConverterHelper.convertSyncTaskDetails(SyncTask);
 		}
 
-		return syncTaskType;
+		return details;
 	}
 
 	@Override
-	public NeedsPaging<SyncTaskType> doGetAll(RequestContext context) throws ResponseException {
-		return new NeedsPaging<SyncTaskType>(new ArrayList<SyncTaskType>(Context.getService(UgandaEMRSyncService.class)
-		        .getAllSyncTaskType()), context);
+	public NeedsPaging<SyncTaskDetails> doGetAll(RequestContext context) throws ResponseException {
+		List<SyncTask> syncTasks = Context.getService(UgandaEMRSyncService.class)
+				.getAllSyncTask();
+		List<SyncTaskDetails> syncTaskDetails = new ArrayList<>();
+		syncTaskDetails = ConverterHelper.convertSyncTasks(syncTasks);
+		return new NeedsPaging<SyncTaskDetails>(syncTaskDetails, context);
 	}
 
 	@Override
@@ -74,57 +85,32 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 
 	@Override
 	public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
-		if (rep instanceof DefaultRepresentation) {
 			DelegatingResourceDescription description = new DelegatingResourceDescription();
-			description.addProperty("uuid");
 			description.addProperty("name");
-			description.addProperty("dataType");
-			description.addProperty("url");
-
-			description.addSelfLink();
+			description.addProperty("identifier");
+			description.addProperty("status");
+			description.addProperty("statusCode");
+			description.addProperty("dateCreated");
+			description.addProperty("comment");
 			return description;
-		} else if (rep instanceof FullRepresentation) {
-			DelegatingResourceDescription description = new DelegatingResourceDescription();
-			description.addProperty("uuid");
-			description.addProperty("name");
-			description.addProperty("dataType");
-			description.addProperty("url");
-			description.addProperty("urlToken");
-			description.addProperty("urlUserName");
-			description.addProperty("urlPassword");
-			description.addSelfLink();
-			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
-			return description;
-		} else if (rep instanceof RefRepresentation) {
-			DelegatingResourceDescription description = new DelegatingResourceDescription();
-			description.addProperty("uuid");
-			description.addProperty("name");
-			description.addProperty("dataType");
-			description.addProperty("url");
-			description.addSelfLink();
-			return description;
-		}
-		return null;
 	}
 
 	@Override
-	protected void delete(SyncTaskType syncTaskType, String s, RequestContext requestContext) throws ResponseException {
-
+	protected void delete(SyncTaskDetails SyncTaskDetails, String s, RequestContext requestContext) throws ResponseException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void purge(SyncTaskType syncTaskType, RequestContext requestContext) throws ResponseException {
-
+	public void purge(SyncTaskDetails syncTask, RequestContext requestContext) throws ResponseException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
 		DelegatingResourceDescription description = new DelegatingResourceDescription();
-		description.addProperty("name", Representation.REF);
-		description.addProperty("dataType");
-		description.addProperty("url");
-		description.addProperty("urlUserName");
-		description.addProperty(" urlPassword");
+		description.addProperty("name");
+		description.addProperty("identifier");
+		description.addProperty("status");
 
 		return description;
 	}
@@ -133,22 +119,43 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	protected PageableResult doSearch(RequestContext context) {
 		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-		String name = context.getParameter("name");
-		String uuid = context.getParameter("uuid");
+		String syncTaskTypeUuid = context.getParameter("synctasktype");
 
-		List<SyncTaskType> SyncTaskTypesByQuery = null;
+		String startDateString = context.getParameter("startDate");
+		String endDateString = context.getParameter("endDate");
 
-		if(name !=null){
-			SyncTaskTypesByQuery = ugandaEMRSyncService.getSyncTaskTypeByName(name);
+		SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(syncTaskTypeUuid);
+		List<SyncTask> syncTasksByQuery = null;
+		if(startDateString != null &&endDateString != null) {
+
+			try {
+				if (!validateDateIsValidFormat(endDateString) || !validateDateIsValidFormat(startDateString)) {
+					SimpleObject message = new SimpleObject();
+					message.put("error", "date parsed " + endDateString + "is not valid");
+
+				}
+
+				if (syncTaskType != null) {
+					Date synceDateFrom = DateUtil.parseYmd(startDateString);
+					Date synceDateTo = DateUtil.parseYmd(endDateString);
+
+					syncTasksByQuery = ugandaEMRSyncService.getSyncTasksByType(syncTaskType, synceDateFrom, synceDateTo);
+				}
+
+			} catch (Exception ex) {
+			}
+		}else{
+			syncTasksByQuery = ugandaEMRSyncService.getSyncTasksByType(syncTaskType);
+		}
+		List<SyncTaskDetails> syncTaskDetailsList = new ArrayList<>();
+		if(!syncTasksByQuery.isEmpty()){
+			for (SyncTask syncTask : syncTasksByQuery) {
+				SyncTaskDetails syncTaskDetails = ConverterHelper.convertSyncTaskDetails(syncTask);
+				syncTaskDetailsList.add(syncTaskDetails);
+			}
 		}
 
-		if(uuid !=null){
-			SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(uuid);
-			SyncTaskTypesByQuery.add(syncTaskType);
-		}
-
-
-		return new NeedsPaging<SyncTaskType>(SyncTaskTypesByQuery, context);
+		return new NeedsPaging<SyncTaskDetails>(syncTaskDetailsList, context);
 	}
 
 	@Override
@@ -156,14 +163,14 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
 			model.property("uuid", new StringProperty()).property("name", new StringProperty())
-			        .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
+			        .property("syncTaskType", new StringProperty()).property("profileEnabled", new BooleanProperty())
 			        .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
 			        .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
 			        .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
-			model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
+			model.property("syncTaskType", new RefProperty("#/syncTaskType"))
 			        .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
 			        .property("creator", new RefProperty("#/definitions/UserGetRef"))
 			        .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
@@ -220,5 +227,14 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))
                 .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
                 .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+	}
+
+	public Boolean validateDateIsValidFormat(String date) {
+		try {
+			DateUtil.parseYmd(date);
+			return true;
+		} catch (Exception ex) {
+			return false;
+		}
 	}
 }

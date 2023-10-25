@@ -1673,4 +1673,26 @@
         <addForeignKeyConstraint
                 baseTableName="sync_fhir_resource" baseColumnNames="patient_id" constraintName="sync_fhir_resource_patient" referencedTableName="patient" referencedColumnNames="patient_id" onDelete="NO ACTION" onUpdate="NO ACTION"/>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-2023-10-24" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = 'd4a3ebbb-e793-4e56-867c-0cf998e51f56'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Receive Results From ALIS" />
+            <column name="data_type" value="org.openmrs.TestOrder" />
+            <column name="data_type_id" value="52a447d3-a64a-11e3-9aeb-50e549534c5e" />
+            <column name="url_end_point" value="" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2023-10-24 08:20:58" />
+            <column name="uuid" value="d4a3ebbb-e793-4e56-867c-0cf998e51f56" />
+        </insert>
+    </changeSet>
 </databaseChangeLog>
