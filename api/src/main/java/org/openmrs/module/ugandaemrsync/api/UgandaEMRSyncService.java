@@ -449,7 +449,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public boolean patientFromFHIRExists(JSONObject patientData);
 
 
-    public void updatePatientsFromFHIR(JSONObject patientData) throws ParseException;
+    public Patient updatePatientsFromFHIR(JSONObject bundle,String identifierUUID,String identifierName) throws ParseException;
 
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date  dateSyncedFrom, Date dateSyncedTo);
 
