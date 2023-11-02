@@ -1538,15 +1538,18 @@
         </insert>
     </changeSet>
 
-    <changeSet id="20230405-1001" author="iakileng">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="20231002-1001" author="iakileng">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '8adee026-d795-4f2a-aa29-6bafaf56b90e'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                select COUNT(patient_identifier_type_id) from patient_identifier_type where uuid='e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Updating HIV Exposed Infant Profile </comment>
         <sql>
-            UPDATE sync_fhir_profile SET patient_identifier_type = 5 WHERE uuid ='8adee026-d795-4f2a-aa29-6bafaf56b90e';
+            UPDATE sync_fhir_profile SET patient_identifier_type = (select patient_identifier_type_id from patient_identifier_type where uuid ='e1731641-30ab-102d-86b0-7a5022ba4115') WHERE uuid ='8adee026-d795-4f2a-aa29-6bafaf56b90e';
         </sql>
     </changeSet>
     <changeSet id="ugandaemrsync-20230302-0940" author="dbaluku">
@@ -1649,5 +1652,63 @@
         <sql>
             INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', 'f2190cf4-2236-11ee-be56-0242ac120002', (select task_config_id from scheduler_task_config where uuid="f2191078-2236-11ee-be56-0242ac120002"));
         </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20230929-1247" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="sync_limit" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20230929-1248" author="slubwama">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="statusCode" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add statusCodeDetail Column -->
+    <changeSet id="ugandaemrsync-20230929-1249" author="slubwama">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="status_code_detail" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-20231004-1249" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="keep_profile_identifier_only" type="TINYINT(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-20231016-1249">
+        <addColumn tableName="sync_fhir_resource">
+            <column name="patient_id" type="INT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="slubwama" id="ugandaemrsync-20231016-1250">
+        <addForeignKeyConstraint
+                baseTableName="sync_fhir_resource" baseColumnNames="patient_id" constraintName="sync_fhir_resource_patient" referencedTableName="patient" referencedColumnNames="patient_id" onDelete="NO ACTION" onUpdate="NO ACTION"/>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2023-10-24" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = 'd4a3ebbb-e793-4e56-867c-0cf998e51f56'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Receive Results From ALIS" />
+            <column name="data_type" value="org.openmrs.TestOrder" />
+            <column name="data_type_id" value="52a447d3-a64a-11e3-9aeb-50e549534c5e" />
+            <column name="url_end_point" value="" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2023-10-24 08:20:58" />
+            <column name="uuid" value="d4a3ebbb-e793-4e56-867c-0cf998e51f56" />
+        </insert>
     </changeSet>
 </databaseChangeLog>

@@ -82,6 +82,7 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             description.addProperty("dateSynced");
             description.addProperty("expiryDate");
             description.addProperty("generatorProfile", Representation.REF);
+            description.addProperty("patient", Representation.REF);
             description.addProperty("resource");
             description.addSelfLink();
             return description;
@@ -92,6 +93,7 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             description.addProperty("dateSynced");
             description.addProperty("expiryDate");
             description.addProperty("generatorProfile", Representation.REF);
+            description.addProperty("patient", Representation.REF);
             description.addProperty("resource");
             description.addProperty("creator", Representation.REF);
             description.addProperty("dateCreated");
@@ -111,6 +113,7 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
             description.addProperty("expiryDate");
             description.addProperty("expiryDate");
             description.addProperty("generatorProfile", Representation.REF);
+            description.addProperty("patient", Representation.REF);
             description.addSelfLink();
             return description;
         }
@@ -136,6 +139,7 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
         description.addProperty("expiryDate");
         description.addProperty("expiryDate");
         description.addProperty("generatorProfile", Representation.REF);
+        description.addProperty("patient", Representation.REF);
         description.addProperty("resource");
 
         return description;
@@ -187,12 +191,14 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
         }
         if (rep instanceof DefaultRepresentation) {
             model.property("generatorProfile", new RefProperty("#/definitions/SyncFhirProfileGetRef"))
+                    .property("patient", new RefProperty("#/definitions/PatientGetRef"))
                     .property("creator", new RefProperty("#/definitions/UserGetRef"))
                     .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
                     .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));;
 
         } else if (rep instanceof FullRepresentation) {
             model.property("generatorProfile", new RefProperty("#/definitions/SyncFhirProfileGetRef"))
+                    .property("patient", new RefProperty("#/definitions/PatientGetRef"))
                     .property("creator", new RefProperty("#/definitions/UserGetRef"))
                     .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
                     .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
@@ -205,6 +211,7 @@ public class SyncFhirResourceResource extends DelegatingCrudResource<SyncFhirRes
         return new ModelImpl().property("uuid", new StringProperty()).property("synced", new BooleanProperty())
                 .property("dateSynced", new DateProperty()).property("expiryDate", new DateProperty())
                 .property("generatorProfile", new RefProperty("#/definitions/SyncFhirProfileGetRef"))
+                .property("patient", new RefProperty("#/definitions/PatientGetRef"))
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))
                 .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
                 .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));

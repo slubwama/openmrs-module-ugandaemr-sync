@@ -343,7 +343,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param order the order which was used to order the test. this can be null.
      * @return Encounter the encounter where the test results have been added.
      */
-    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order);
+    public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order);
 
 
     /**
@@ -451,5 +451,25 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public Patient updatePatientsFromFHIR(JSONObject bundle,String identifierUUID,String identifierName) throws ParseException;
 
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date  dateSyncedFrom, Date dateSyncedTo);
+
+    /**
+     * Gets TaskType By name of SyncTaskType
+     * @param name the name to be matched to the syncTaskType
+     * @return List<SyncTaskType> that match the name provided
+     */
+    public List<SyncTaskType> getSyncTaskTypeByName(String name);
+
+    public SyncTaskType getSyncTaskTypeById(Integer id);
+
+    List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo);
+
+    List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType);
+
+    SyncTask getSyncTaskByUUID(String uniqueId);
+
+    SyncTask getSyncTaskById(Integer uniqueId);
+
+    List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String synceDateFrom, String synceDateTo);
 }
 

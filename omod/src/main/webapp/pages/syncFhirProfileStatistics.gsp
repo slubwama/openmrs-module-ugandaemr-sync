@@ -144,7 +144,7 @@
         jq("#sync_fhir_resource_table").html("");
         var profileLogDataRows = "";
 
-        var header = "<table><thead><tr><th>RESOURCE ID</th><th>DATE CREATED</th><th>SYNCED TO SERVER</th><th>SYNCED DATED</th><th>PURGE DATE</th></tr></thead><tbody>";
+        var header = "<table><thead><tr><th>RESOURCE ID</th><th>DATE CREATED</th><th>SYNCED TO SERVER</th><th>SYNCED DATED</th><th>PURGE DATE</th><th>STATUS CODE</th><th>STATUS MESSAGE</th></tr></thead><tbody>";
         var footer = "</tbody></table>";
 
         var dataToDisplay = [];
@@ -164,6 +164,8 @@
                 dataRowTable += "<td>" + profileLogElement.synced + "</td>";
                 dataRowTable += "<td>" + profileLogElement.dateSynced + "</td>";
                 dataRowTable += "<td>" + profileLogElement.expiryDate + "</td>";
+                dataRowTable += "<td>" + profileLogElement.statusCode + "</td>";
+                dataRowTable += "<td>" + profileLogElement.statusCodeDetail + "</td>";
                 dataRowTable += "</tr>";
 
                 profileLogDataRows += dataRowTable;

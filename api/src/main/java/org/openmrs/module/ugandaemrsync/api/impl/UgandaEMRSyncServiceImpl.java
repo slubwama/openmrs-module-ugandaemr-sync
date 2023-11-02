@@ -65,6 +65,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ALIS_SYNC_TASK_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
 
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
 
@@ -753,22 +755,24 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     /**
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addTestResultsToEncounter(org.json.JSONObject, org.openmrs.Order)
      */
-    public Encounter addTestResultsToEncounter(JSONObject bundleResults, Order order) {
-        Encounter encounter = order.getEncounter();
-        Encounter returningEncounter = null;
-        if (!resultsEnteredOnEncounter(order)) {
-            JSONArray jsonArray = bundleResults.getJSONArray("entry");
+    public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order) {
+        Encounter encounter = null;
 
-            JSONArray filteredDiagnosticReportArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "DiagnosticReport");
+        if (order != null) {
+            encounter = order.getEncounter();
+        }
 
-            JSONArray filteredObservationArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "Observation");
+        List<Encounter> returningEncounter = new ArrayList<>();
+        JSONArray jsonArray = bundleResults.getJSONArray("entry");
 
-            for (Object jsonObject : filteredDiagnosticReportArray) {
-                JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
+        JSONArray filteredDiagnosticReportArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "DiagnosticReport");
 
-                returningEncounter = processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
-            }
+        JSONArray filteredObservationArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "Observation");
 
+        for (Object jsonObject : filteredDiagnosticReportArray) {
+            JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
+
+            returningEncounter = processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
         }
 
         return returningEncounter;
@@ -810,86 +814,129 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return obj;
     }
 
-    private Encounter processTestResults(JSONObject jsonObject, Encounter encounter, JSONArray observationArray, Order order) {
-        JSONObject diagnosticReport = jsonObject.getJSONObject("resource");
+    private Order getOrderFromFHIRObs(JSONObject jsonObject) {
+        String orderUUID = jsonObject.getJSONArray("basedOn").getJSONObject(0).getString("reference").replace("ServiceRequest/", "");
+        return Context.getOrderService().getOrderByUuid(orderUUID);
+    }
 
-        String orderCode = diagnosticReport.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
-        String orderCodeSystem = diagnosticReport.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("system");
+    private Concept getConceptFromCodableConcept(JSONObject codableConcept) {
+        for (int i = 0; i < codableConcept.getJSONArray("coding").length(); i++) {
+            JSONObject orderFHIRConcept = codableConcept.getJSONArray("coding").getJSONObject(i);
+            String orderCode = orderFHIRConcept.getString("code");
+            Concept concept = null;
+            String orderCodeSystem = orderFHIRConcept.getString("system");
+            if (getConceptSourceBySystemURL(orderCodeSystem) != null) {
+                concept = Context.getConceptService().getConceptByMapping(orderCode, getConceptSourceBySystemURL(orderCodeSystem).getName());
+            }
+            return concept;
+        }
+        return null;
+    }
 
-        Concept orderConcept = Context.getConceptService().getConceptByMapping(orderCode, getConceptSourceBySystemURL(orderCodeSystem).getName());
+    private List<Encounter> processTestResults(JSONObject diagonisisReportJsonObject, Encounter encounter, JSONArray observationArray, Order order) {
+        JSONObject diagnosticReport = diagonisisReportJsonObject.getJSONObject("resource");
 
-
-        boolean orderConceptIsaSet = (orderConcept.getSetMembers().size() > 0);
-
-        Obs groupingObservation = createObs(order.getEncounter(), order, orderConcept, null, null, null);
+        List<Encounter> encounters = new ArrayList<>();
 
         JSONArray jsonArray = diagnosticReport.getJSONArray("result");
         for (Object resultReferenceObject : jsonArray) {
             JSONObject resultReference = new JSONObject(resultReferenceObject.toString());
-            Concept concept = null;
 
-            String reference = resultReference.getString("reference");
+            String searchKey = resultReference.getString("reference").replace("Observation/", "");
 
-            JSONObject observation = searchForJSONOBJECTByKey(observationArray, "id", reference).getJSONObject("resource");
+            JSONObject observation = searchForJSONOBJECTByKey(observationArray, "id", searchKey).getJSONObject("resource");
 
-            String code = observation.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
-            String system = observation.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("system");
-            ConceptSource conceptSource = getConceptSourceBySystemURL(system);
+            if (order == null) {
+                order = getOrderFromFHIRObs(observation);
 
-            if (conceptSource != null) {
-                concept = Context.getConceptService().getConceptByMapping(code, conceptSource.getName());
+                encounter = order.getEncounter();
             }
 
-            if (concept == null) {
-                continue;
+            if (!resultsEnteredOnEncounter(order)) {
+
+                Obs obs = createObsFromFHIRObervation(observation, order, observation.has("hasMember"));
+
+                if (!order.getConcept().getSetMembers().isEmpty() && observation.has("hasMember") && observation.getJSONArray("hasMember").length() > 0) {
+                    for (int i = 0; i < observation.getJSONArray("hasMember").length(); i++) {
+                        String paramReference = observation.getJSONArray("hasMember").getJSONObject(i).getString("reference").replace("Observation/", "");
+                        JSONObject parameters = searchForJSONOBJECTByKey(observationArray, "id", paramReference).getJSONObject("resource");
+                        Obs parameterObs = createObsFromFHIRObervation(parameters, order, parameters.has("hasMember"));
+                        if (parameterObs != null) {
+                            obs.addGroupMember(parameterObs);
+                            encounter.addObs(parameterObs);
+                        }
+                    }
+                }
+                encounter.addObs(obs);
+
+                Context.getEncounterService().saveEncounter(encounter);
+
+                List<Order> activeOrdersWithResults = encounter.getAllObs().stream().filter(obs1 -> obs1.getOrder() != null && obs1.getOrder().isActive()).map(Obs::getOrder).collect(Collectors.toList());
+
+                for (Order resultedOrder : activeOrdersWithResults) {
+                    try {
+                        Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+                        logResultsRecieved(order);
+                    } catch (Exception e) {
+                        log.error(e);
+                    }
+                }
+
+                encounters.add(encounter);
             }
+        }
+        return encounters;
+    }
 
+    private SyncTask logResultsRecieved(Order order) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        SyncTask syncTask = new SyncTask();
+        syncTask.setActionCompleted(true);
+        syncTask.setStatusCode(CONNECTION_SUCCESS_200);
+        syncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(ALIS_SYNC_TASK_TYPE_UUID));
+        syncTask.setDateSent(order.getDateActivated());
+        syncTask.setStatus("Completed");
+        syncTask.setSyncTask(order.getConcept().getName().getName());
+        syncTask.setRequireAction(false);
 
-            Obs obs;
+        return ugandaEMRSyncService.saveSyncTask(syncTask);
 
-            if (orderConceptIsaSet) {
-                obs = createObs(order.getEncounter(), order, concept, null, null, null);
-                groupingObservation.addGroupMember(obs);
-            } else {
-                obs = groupingObservation;
-            }
+    }
 
+    private Obs createObsFromFHIRObervation(JSONObject observation, Order order, boolean isSet) {
+
+        Concept concept = getConceptFromCodableConcept(observation.getJSONObject("code"));
+        if (concept != null) {
+            Obs obs = createObs(order.getEncounter(), order, concept, null, null, null);
             assert obs != null;
-            switch (concept.getDatatype().getUuid()) {
-                case ConceptDatatype.CODED_UUID:
-                    String valueCodedCode = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
-                    String valueCodedSystemURL = observation.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("system");
-                    Concept valueCodedConcept = Context.getConceptService().getConceptByMapping(valueCodedCode, getConceptSourceBySystemURL(valueCodedSystemURL).getName());
-                    obs.setValueCoded(valueCodedConcept);
-                    break;
-                case ConceptDatatype.NUMERIC_UUID:
-                    obs.setValueNumeric(observation.getJSONObject("valueQuantity").getDouble("value"));
+            if (!isSet) {
+                switch (concept.getDatatype().getUuid()) {
+                    case ConceptDatatype.CODED_UUID:
+                        Concept valueCodedConcept = getConceptFromCodableConcept(observation.getJSONObject("valueCodeableConcept"));
+                        obs.setValueCoded(valueCodedConcept);
+                        break;
+                    case ConceptDatatype.NUMERIC_UUID:
+                        obs.setValueNumeric(observation.getJSONObject("valueQuantity").getDouble("value"));
 
-                    break;
-                case ConceptDatatype.BOOLEAN_UUID:
-                    obs.setValueBoolean(observation.getBoolean("valueBoolean"));
+                        break;
+                    case ConceptDatatype.BOOLEAN_UUID:
+                        obs.setValueBoolean(observation.getBoolean("valueBoolean"));
 
-                    break;
-                case ConceptDatatype.TEXT_UUID:
-                    obs.setValueText(observation.getString("valueString"));
-                    break;
+                        break;
+                    case ConceptDatatype.TEXT_UUID:
+                        obs.setValueText(observation.getString("valueString"));
+                        break;
+                }
+                if (obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
+                    return null;
+                }
             }
 
-            if (obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
-                continue;
-            }
-
-            encounter.addObs(obs);
-
-        }
-        if (orderConceptIsaSet) {
-            encounter.addObs(groupingObservation);
+            return obs;
+        } else {
+            return null;
         }
 
-        Context.getEncounterService().saveEncounter(encounter);
-
-
-        return encounter;
     }
 
 
@@ -900,8 +947,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             Field serviceContextField = Context.class.getDeclaredField("serviceContext");
             serviceContextField.setAccessible(true);
 
-            ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null))
-                    .getApplicationContext();
+            ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null)).getApplicationContext();
             fhirConceptSourceService = applicationContext.getBean(FhirConceptSourceService.class);
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
@@ -953,6 +999,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 JSONObject patientResource = bundleResourceObjects.getJSONObject(i).getJSONObject("resource");
                 patient = patientService.getPatientByUuid(patientResource.getString("id"));
 
+
                 if (patient != null && patient.getPatientIdentifiers(patientService.getPatientIdentifierTypeByUuid(PATIENT_ID_TYPE_UIC_UUID)).size() > 0) {
                     if (patientResource.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
                         patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(patientResource.get("value").toString(), patientResource.getJSONObject("type").get("text").toString()));
@@ -962,6 +1009,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             }
         }
         return patient;
+    }
+
+    @Override
+    public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date dateSyncedFrom, Date dateSyncedTo) {
+        return dao.getSyncedFHirResources(syncFhirProfile, dateSyncedFrom, dateSyncedTo);
     }
 
     private PersonName getPatientNames(JSONObject jsonObject) {
@@ -1059,5 +1111,45 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
         return patientExists;
     }
+
+    @Override
+    public List<SyncTaskType> getSyncTaskTypeByName(String name) {
+        return dao.getSyncTaskTypeByName(name);
+    }
+
+    ;
+
+    @Override
+    public SyncTaskType getSyncTaskTypeById(Integer id) {
+        return dao.getSyncTaskTypeById(id);
+    }
+
+    ;
+
+    @Override
+    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo) {
+        return dao.getSyncTasksByType(syncTaskType, synceDateFrom, synceDateTo);
+    }
+
+    ;
+
+    public SyncTask getSyncTaskByUUID(String uniqueId){
+        return dao.getSyncTaskByUUID(uniqueId);
+    };
+
+    public SyncTask getSyncTaskById(Integer uniqueId){
+        return dao.getSyncTaskById(uniqueId);
+    }
+
+    @Override
+    public List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String synceDateFrom, String synceDateTo) {
+        return dao.getSyncResourceBySyncFhirProfile(syncFhirProfile, synceDateFrom,synceDateTo);
+    }
+
+    ;
+
+    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType){
+        return dao.getSyncTasksByType(syncTaskType);
+    };
 }
 

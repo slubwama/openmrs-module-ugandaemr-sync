@@ -107,6 +107,8 @@ public class SyncFHIRRecord {
     String healthCenterIdentifier;
     String healthCenterName;
     String lastSyncDate;
+
+    private SyncFhirProfile profile;
     private List<PatientProgram> patientPrograms;
 
     Map<String, Object> anyOtherObject = new HashMap<>();
@@ -357,7 +359,7 @@ public class SyncFHIRRecord {
 
 
     public Collection<SyncFhirResource> generateCaseBasedFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
-
+        this.profile = syncFhirProfile;
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         if (syncFhirProfile != null && (!syncFhirProfile.getCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
             return null;
@@ -534,18 +536,24 @@ public class SyncFHIRRecord {
 
     public SyncFhirResource saveCaseResources(SyncFhirProfile syncFhirProfile, SyncFhirCase syncFhirCase) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
-        if (resource != null && !resource.equals("")) {
-            SyncFhirResource syncFHIRResource = new SyncFhirResource();
-            syncFHIRResource.setGeneratorProfile(syncFhirProfile);
-            syncFHIRResource.setResource(resource);
-            syncFHIRResource.setSynced(false);
-            ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
-            syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
-            return syncFHIRResource;
-        } else {
-            return null;
+        try {
+            String resource = generateFHIRCaseResource(syncFhirProfile, syncFhirCase);
+
+            if (resource != null && !resource.isEmpty()) {
+                SyncFhirResource syncFHIRResource = new SyncFhirResource();
+                syncFHIRResource.setGeneratorProfile(syncFhirProfile);
+                syncFHIRResource.setResource(resource);
+                syncFHIRResource.setSynced(false);
+                syncFHIRResource.setPatient(syncFhirCase.getPatient());
+                ugandaEMRSyncService.saveFHIRResource(syncFHIRResource);
+                syncFhirCase.setLastUpdateDate(syncFHIRResource.getDateCreated());
+
+                return syncFHIRResource;
+            }
+        } catch (Exception e) {
+            log.error(e);
         }
+        return null;
     }
 
 
@@ -804,10 +812,14 @@ public class SyncFHIRRecord {
             jsonString = iParser.encodeResourceToString(iBaseResource);
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
-                jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
+                if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
+                    jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
+                }
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
                 jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
+                jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addUseOfficialToName(jsonString, "name");
+                jsonString = removeAttribute(jsonString, "contained");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
             }
 
@@ -841,6 +853,25 @@ public class SyncFHIRRecord {
         for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
             jsonObject.getJSONArray(attributeName).getJSONObject(objectCount).put("use", "official");
             objectCount++;
+        }
+        return jsonObject.toString();
+    }
+
+    private String removeIdentifierExceptProfileId(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+        int objectCount = 0;
+        for (int i = 0; i < jsonObject.getJSONArray(attributeName).length(); i++) {
+            if (!jsonObject.getJSONArray("identifier").getJSONObject(i).getJSONObject("type").getJSONArray("coding").getJSONObject(0).get("code").toString().equals(profile.getPatientIdentifierType().getUuid())) {
+                jsonObject.getJSONArray("identifier").remove(i);
+            }
+        }
+        return jsonObject.toString();
+    }
+
+    private String removeAttribute(String payload, String attributeName) {
+        JSONObject jsonObject = new JSONObject(payload);
+        if (jsonObject.has(attributeName)) {
+            jsonObject.remove(attributeName);
         }
         return jsonObject.toString();
     }
@@ -979,7 +1010,7 @@ public class SyncFHIRRecord {
             }
         }
 
-        PatientSearchParams patientSearchParams=new PatientSearchParams(null, null, null, null, null, null,
+        PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
 
@@ -1171,20 +1202,26 @@ public class SyncFHIRRecord {
 
         for (SyncFhirResource syncFhirResource : syncFhirResources) {
             Date date = new Date();
-
             try {
                 boolean connectionStatus = ugandaEMRHttpURLConnection.isConnectionAvailable();
 
                 if (connectionStatus) {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncFhirProfile.getUrl(), syncFhirProfile.getUrlUserName(), syncFhirProfile.getUrlPassword(), syncFhirProfile.getUrlToken(), syncFhirResource.getResource(), false);
-                    if (map.get("responseCode").equals(SyncConstant.CONNECTION_SUCCESS_200)) {
+                    if (map.get("responseCode").equals(SyncConstant.CONNECTION_SUCCESS_200) || map.get("responseCode").equals(SyncConstant.CONNECTION_SUCCESS_201)) {
                         maps.add(map);
                         syncFhirResource.setDateSynced(date);
                         syncFhirResource.setSynced(true);
+                        syncFhirResource.setResource(null);
+                        syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
+                        syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
                         if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
                             ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")),PATIENT_ID_TYPE_CROSS_BORDER_UUID,PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                         }
+                        ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
+                    } else {
+                        syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
+                        syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     }
                 } else {

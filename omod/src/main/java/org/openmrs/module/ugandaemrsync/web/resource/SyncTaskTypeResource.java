@@ -2,13 +2,13 @@ package org.openmrs.module.ugandaemrsync.web.resource;
 
 import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
-import io.swagger.models.properties.StringProperty;
-import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.BooleanProperty;
 import io.swagger.models.properties.IntegerProperty;
+import io.swagger.models.properties.RefProperty;
+import io.swagger.models.properties.StringProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
-import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
@@ -27,44 +27,44 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Resource(name = RestConstants.VERSION_1 + "/syncfhirprofile", supportedClass = SyncFhirProfile.class, supportedOpenmrsVersions = {
+@Resource(name = RestConstants.VERSION_1 + "/synctasktype", supportedClass = SyncTaskType.class, supportedOpenmrsVersions = {
         "1.9.*", "1.10.*", "1.11.*", "1.12.*", "2.0.*", "2.1.*", "2.2.*", "2.3.*", "2.4.*", "2.5.*" })
-public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProfile> {
+public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 
 	@Override
-	public SyncFhirProfile newDelegate() {
-		return new SyncFhirProfile();
+	public SyncTaskType newDelegate() {
+		return new SyncTaskType();
 	}
 
 	@Override
-	public SyncFhirProfile save(SyncFhirProfile SyncFhirProfile) {
-		return Context.getService(UgandaEMRSyncService.class).saveSyncFhirProfile(SyncFhirProfile);
+	public SyncTaskType save(SyncTaskType syncTaskType	) {
+		return Context.getService(UgandaEMRSyncService.class).saveSyncTaskType(syncTaskType);
 	}
 
 	@Override
-	public SyncFhirProfile getByUniqueId(String uniqueId) {
-		SyncFhirProfile syncFfhirProfile = null;
+	public SyncTaskType getByUniqueId(String uniqueId) {
+		SyncTaskType syncTaskType = null;
 		Integer id = null;
 
-		syncFfhirProfile = Context.getService(UgandaEMRSyncService.class).getSyncFhirProfileByUUID(uniqueId);
-		if (syncFfhirProfile == null && uniqueId != null) {
+		syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(uniqueId);
+		if (syncTaskType == null && uniqueId != null) {
 			try {
 				id = Integer.parseInt(uniqueId);
 			}
 			catch (Exception e) {}
 
 			if (id != null) {
-				syncFfhirProfile = Context.getService(UgandaEMRSyncService.class).getSyncFhirProfileById(id);
+				syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeById(id);
 			}
 		}
 
-		return syncFfhirProfile;
+		return syncTaskType;
 	}
 
 	@Override
-	public NeedsPaging<SyncFhirProfile> doGetAll(RequestContext context) throws ResponseException {
-		return new NeedsPaging<SyncFhirProfile>(new ArrayList<SyncFhirProfile>(Context.getService(UgandaEMRSyncService.class)
-		        .getAllSyncFhirProfile()), context);
+	public NeedsPaging<SyncTaskType> doGetAll(RequestContext context) throws ResponseException {
+		return new NeedsPaging<SyncTaskType>(new ArrayList<SyncTaskType>(Context.getService(UgandaEMRSyncService.class)
+		        .getAllSyncTaskType()), context);
 	}
 
 	@Override
@@ -77,77 +77,30 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		if (rep instanceof DefaultRepresentation) {
 			DelegatingResourceDescription description = new DelegatingResourceDescription();
 			description.addProperty("uuid");
-			description.addProperty("name", Representation.REF);
-			description.addProperty("resourceTypes");
-			description.addProperty("profileEnabled");
-			description.addProperty("patientIdentifierType", Representation.REF);
-			description.addProperty("numberOfResourcesInBundle");
-			description.addProperty("durationToKeepSyncedResources");
-			description.addProperty("generateBundle");
-			description.addProperty("caseBasedProfile");
-			description.addProperty("caseBasedPrimaryResourceType");
-			description.addProperty("caseBasedPrimaryResourceTypeId");
-			description.addProperty("caseBasedPrimaryResourceType");
-			description.addProperty("resourceSearchParameter");
-			description.addProperty("conceptSource");
+			description.addProperty("name");
+			description.addProperty("dataType");
 			description.addProperty("url");
-			description.addProperty("syncLimit");
-			description.addProperty("urlToken");
-			description.addProperty("urlUserName");
-			description.addProperty("urlPassword");
+
 			description.addSelfLink();
 			return description;
 		} else if (rep instanceof FullRepresentation) {
 			DelegatingResourceDescription description = new DelegatingResourceDescription();
 			description.addProperty("uuid");
-			description.addProperty("name", Representation.REF);
-			description.addProperty("resourceTypes");
-			description.addProperty("profileEnabled");
-			description.addProperty("patientIdentifierType", Representation.REF);
-			description.addProperty("numberOfResourcesInBundle");
-			description.addProperty("durationToKeepSyncedResources");
-			description.addProperty("generateBundle");
-			description.addProperty("caseBasedProfile");
-			description.addProperty("caseBasedPrimaryResourceType");
-			description.addProperty("caseBasedPrimaryResourceTypeId");
-			description.addProperty("caseBasedPrimaryResourceType");
-			description.addProperty("resourceSearchParameter");
-			description.addProperty("conceptSource", Representation.REF);
+			description.addProperty("name");
+			description.addProperty("dataType");
 			description.addProperty("url");
-			description.addProperty("syncLimit");
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
-			description.addProperty("creator", Representation.REF);
-			description.addProperty("dateCreated");
-			description.addProperty("changedBy", Representation.REF);
-			description.addProperty("dateChanged");
-			description.addProperty("voidedBy", Representation.REF);
-			description.addProperty("dateVoided");
-			description.addProperty("voidReason");
 			description.addSelfLink();
 			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
 			return description;
 		} else if (rep instanceof RefRepresentation) {
 			DelegatingResourceDescription description = new DelegatingResourceDescription();
 			description.addProperty("uuid");
-			description.addProperty("name", Representation.REF);
-			description.addProperty("resourceTypes");
-			description.addProperty("profileEnabled");
-			description.addProperty("patientIdentifierType", Representation.REF);
-			description.addProperty("numberOfResourcesInBundle");
-			description.addProperty("durationToKeepSyncedResources");
-			description.addProperty("generateBundle");
-			description.addProperty("caseBasedProfile");
-			description.addProperty("caseBasedPrimaryResourceType");
-			description.addProperty("caseBasedPrimaryResourceTypeId");
-			description.addProperty("resourceSearchParameter");
-			description.addProperty("conceptSource", Representation.REF);
+			description.addProperty("name");
+			description.addProperty("dataType");
 			description.addProperty("url");
-			description.addProperty("syncLimit");
-			description.addProperty("urlToken");
-			description.addProperty("urlUserName");
-			description.addProperty("urlPassword");
 			description.addSelfLink();
 			return description;
 		}
@@ -155,35 +108,23 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 	}
 
 	@Override
-	protected void delete(SyncFhirProfile syncFfhirProfile, String s, RequestContext requestContext) throws ResponseException {
+	protected void delete(SyncTaskType syncTaskType, String s, RequestContext requestContext) throws ResponseException {
 
 	}
 
 	@Override
-	public void purge(SyncFhirProfile syncFfhirProfile, RequestContext requestContext) throws ResponseException {
+	public void purge(SyncTaskType syncTaskType, RequestContext requestContext) throws ResponseException {
 
 	}
 
 	@Override
 	public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
 		DelegatingResourceDescription description = new DelegatingResourceDescription();
-		description.addProperty("name");
-		description.addProperty("resourceTypes");
-		description.addProperty("profileEnabled");
-		description.addProperty("patientIdentifierType");
-		description.addProperty("numberOfResourcesInBundle");
-		description.addProperty("numberOfResourcesInBundle");
-		description.addProperty("generateBundle");
-		description.addProperty("caseBasedProfile");
-		description.addProperty("caseBasedPrimaryResourceType");
-		description.addProperty("caseBasedPrimaryResourceTypeId");
-		description.addProperty("resourceSearchParameter");
-		description.addProperty("conceptSource");
-		description.addProperty("syncLimit");
+		description.addProperty("name", Representation.REF);
+		description.addProperty("dataType");
 		description.addProperty("url");
-		description.addProperty("urlToken");
 		description.addProperty("urlUserName");
-		description.addProperty("urlPassword");
+		description.addProperty(" urlPassword");
 
 		return description;
 	}
@@ -195,11 +136,19 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		String name = context.getParameter("name");
 		String uuid = context.getParameter("uuid");
 
-		List<SyncFhirProfile> SyncFhirProfilesByQuery = null;
+		List<SyncTaskType> SyncTaskTypesByQuery = null;
 
-		SyncFhirProfilesByQuery = ugandaEMRSyncService.getSyncFhirProfileByName(name);
+		if(name !=null){
+			SyncTaskTypesByQuery = ugandaEMRSyncService.getSyncTaskTypeByName(name);
+		}
 
-		return new NeedsPaging<SyncFhirProfile>(SyncFhirProfilesByQuery, context);
+		if(uuid !=null){
+			SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(uuid);
+			SyncTaskTypesByQuery.add(syncTaskType);
+		}
+
+
+		return new NeedsPaging<SyncTaskType>(SyncTaskTypesByQuery, context);
 	}
 
 	@Override

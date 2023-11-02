@@ -53,6 +53,7 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "username", required = false) String username,
                      @RequestParam(value = "password", required = false) String password,
                      @RequestParam(value = "token", required = false) String token,
+                     @RequestParam(value = "syncLimit", required = false) Integer syncLimit,
                      UiSessionContext uiSessionContext, UiUtils uiUtils, HttpServletRequest request) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
@@ -96,6 +97,7 @@ public class SyncFhirProfilePageController {
         syncFhirProfile.setUrlUserName(username);
         syncFhirProfile.setUrlPassword(password);
         syncFhirProfile.setUrlToken(token);
+        syncFhirProfile.setSyncLimit(syncLimit);
         ugandaEMRSyncService.saveSyncFhirProfile(syncFhirProfile);
 
         pageModel.put("syncFhirProfiles", ugandaEMRSyncService.getAllSyncFhirProfile());
