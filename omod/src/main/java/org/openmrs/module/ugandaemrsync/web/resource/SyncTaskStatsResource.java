@@ -47,6 +47,7 @@ public class SyncTaskStatsResource {
                 Date synceDateFrom = DateUtil.parseYmd(startDate);
                 Date synceDateTo = DateUtil.parseYmd(endDate);
 
+                synceDateTo = DateUtil.getEndOfDay(synceDateTo);
                 syncTasks = ugandaEMRSyncService.getSyncTasksByType(syncTaskType, synceDateFrom, synceDateTo);
 
                 for (SyncTask syncTask : syncTasks) {
