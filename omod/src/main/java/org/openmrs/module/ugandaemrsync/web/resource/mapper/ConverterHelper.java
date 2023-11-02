@@ -35,7 +35,7 @@ public class ConverterHelper {
             if (pi != null) {
                 identifier = pi.getIdentifier();
             }
-            return new SyncTaskDetails(patient.getPersonName().getFullName(), identifier, statusCode, status, dateSent);
+            return new SyncTaskDetails(patient.getPersonName().getFullName(), identifier, statusCode, status, dateSent,patient.getUuid());
         } if(Objects.equals(syncTask.getSyncTaskType().getUuid(), VIRAL_LOAD_RESULT_PULL_TYPE_UUID)){
             PatientIdentifierType identifierType = Context.getPatientService().getPatientIdentifierTypeByUuid(PATIENT_IDENTIFIER_TYPE);
             String accessionNumber = syncTask.getSyncTask();
@@ -49,7 +49,7 @@ public class ConverterHelper {
             if (pi != null) {
                 identifier = pi.getIdentifier();
             }
-            return new SyncTaskDetails(patient.getPersonName().getFullName(), identifier, status, statusCode, dateSent,statusMessage);
+            return new SyncTaskDetails(patient.getPersonName().getFullName(), identifier, status, statusCode, dateSent,statusMessage,patient.getUuid());
         }
         else {
             return null;
@@ -72,8 +72,10 @@ public class ConverterHelper {
         }
         String identifier = "";
         String name = "";
+        String uuid ="";
         if (patient != null) {
             name = patient.getPersonName().getFullName();
+            uuid = patient.getUuid();
             PatientIdentifier pi = patient.getPatientIdentifier(identifierType);
 
             if (pi != null) {
@@ -81,7 +83,7 @@ public class ConverterHelper {
             }
         }
 
-        return new FhirResourceDetails(name, identifier, statusCode, status, dateCreated, dateSent);
+        return new FhirResourceDetails(name, identifier, statusCode, status, dateCreated, dateSent, uuid);
 
     }
 

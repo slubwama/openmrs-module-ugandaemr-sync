@@ -72,6 +72,7 @@ public class SyncFhirResourceDetailsResource extends DelegatingCrudResource<Sync
 			description.addProperty("status");
 			description.addProperty("statusCode");
 			description.addProperty("dateCreated");
+			description.addProperty("patientUuid");
 
 
 			description.addSelfLink();
@@ -83,6 +84,7 @@ public class SyncFhirResourceDetailsResource extends DelegatingCrudResource<Sync
 			description.addProperty("status");
 			description.addProperty("statusCode");
 			description.addProperty("dateCreated");
+			description.addProperty("patientUuid");
 			return description;
 		} else if (rep instanceof RefRepresentation) {
 			DelegatingResourceDescription description = new DelegatingResourceDescription();
@@ -91,6 +93,7 @@ public class SyncFhirResourceDetailsResource extends DelegatingCrudResource<Sync
 			description.addProperty("status");
 			description.addProperty("statusCode");
 			description.addProperty("dateCreated");
+			description.addProperty("patientUuid");
 			return description;
 		}
 		return null;

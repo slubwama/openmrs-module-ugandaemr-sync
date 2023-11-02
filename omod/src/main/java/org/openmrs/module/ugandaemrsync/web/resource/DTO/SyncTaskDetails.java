@@ -9,15 +9,18 @@ public class SyncTaskDetails {
     int statusCode;
     Date dateCreated;
 
+    String patientUuid;
+
     String comment;
 
 
-    public SyncTaskDetails(String name, String identifier,int statusCode, String status, Date dateCreated) {
+    public SyncTaskDetails(String name, String identifier,int statusCode, String status, Date dateCreated,String patientUuid) {
         this.name = name;
         this.identifier = identifier;
         this.status = status;
         this.dateCreated = dateCreated;
         this.statusCode = statusCode;
+        this.patientUuid = patientUuid;
     }
 
     public SyncTaskDetails(String name, String identifier, String status, int statusCode, Date dateCreated, String comment) {
@@ -26,6 +29,16 @@ public class SyncTaskDetails {
         this.status = status;
         this.statusCode = statusCode;
         this.dateCreated = dateCreated;
+        this.comment = comment;
+    }
+
+    public SyncTaskDetails(String name, String identifier, String status, int statusCode, Date dateCreated, String patientUuid, String comment) {
+        this.name = name;
+        this.identifier = identifier;
+        this.status = status;
+        this.statusCode = statusCode;
+        this.dateCreated = dateCreated;
+        this.patientUuid = patientUuid;
         this.comment = comment;
     }
 
@@ -78,5 +91,13 @@ public class SyncTaskDetails {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getPatientUuid() {
+        return patientUuid;
+    }
+
+    public void setPatientUuid(String patientUuid) {
+        this.patientUuid = patientUuid;
     }
 }
