@@ -875,8 +875,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
                 for (Order resultedOrder : activeOrdersWithResults) {
                     try {
-                        Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
-                        logResultsRecieved(order);
+                        Context.getOrderService().discontinueOrder(resultedOrder, "Completed", new Date(), resultedOrder.getOrderer(), resultedOrder.getEncounter());
+                        logResultsRecieved(resultedOrder);
                     } catch (Exception e) {
                         log.error(e);
                     }
