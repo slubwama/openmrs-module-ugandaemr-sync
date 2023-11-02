@@ -31,7 +31,7 @@ public class SyncTask extends BaseOpenmrsData {
 	private String status;
 
 	@Column(name = "status_code", length = 11)
-	private int statusCode;
+	private Integer statusCode;
 
 	@Column(name = "sent_to_url", length = 255)
 	private String sentToUrl;
@@ -85,11 +85,11 @@ public class SyncTask extends BaseOpenmrsData {
 		this.status = status;
 	}
 
-	public int getStatusCode() {
+	public Integer getStatusCode() {
 		return statusCode;
 	}
 
-	public void setStatusCode(int statusCode) {
+	public void setStatusCode(Integer statusCode) {
 		this.statusCode = statusCode;
 	}
 
