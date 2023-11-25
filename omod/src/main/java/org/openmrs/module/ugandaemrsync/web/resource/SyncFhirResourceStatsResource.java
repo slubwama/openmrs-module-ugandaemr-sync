@@ -53,10 +53,13 @@ public class SyncFhirResourceStatsResource {
                 Date synceDateFrom = DateUtil.parseYmd(startDate);
                 Date synceDateTo = DateUtil.parseYmd(endDate);
 
+                synceDateTo =DateUtil.getEndOfDay(synceDateTo);
+
                 syncFhirResources = ugandaEMRSyncService.getSyncedFHirResources(syncFhirProfile, synceDateFrom, synceDateTo);
 
                 for (SyncFhirResource resource : syncFhirResources) {
-                    int statusCode = resource.getStatusCode();
+                    Integer statusCode = 0;
+                    statusCode =resource.getStatusCode();
                     if (statusCode == 200 || statusCode == 201) {
 
                         successes++;
@@ -73,8 +76,7 @@ public class SyncFhirResourceStatsResource {
             return new ResponseEntity<Object>(result, HttpStatus.OK);
 
         } catch (Exception ex) {
-            return new ResponseEntity<String>("{Error: " + ex.getMessage() + "}", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            throw new RuntimeException(ex);        }
     }
 
     public Boolean validateDateIsValidFormat(String date) {

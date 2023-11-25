@@ -11,6 +11,8 @@ public class FhirResourceDetails {
 
     int statusCode;
 
+    String patientUuid;
+
 
     public FhirResourceDetails(String name, String identifier,int statusCode, String status, Date dateCreated, Date dateSynced) {
         this.name = name;
@@ -19,6 +21,16 @@ public class FhirResourceDetails {
         this.dateCreated = dateCreated;
         this.statusCode = statusCode;
         this.dateSynced = dateSynced;
+    }
+
+    public FhirResourceDetails(String name, String identifier,int statusCode, String status, Date dateCreated, Date dateSynced,String patientUuid) {
+        this.name = name;
+        this.identifier = identifier;
+        this.status = status;
+        this.dateCreated = dateCreated;
+        this.statusCode = statusCode;
+        this.dateSynced = dateSynced;
+        this.patientUuid = patientUuid;
     }
 
     public FhirResourceDetails() {
@@ -70,5 +82,13 @@ public class FhirResourceDetails {
 
     public void setDateSynced(Date dateSynced) {
         this.dateSynced = dateSynced;
+    }
+
+    public String getPatientUuid() {
+        return patientUuid;
+    }
+
+    public void setPatientUuid(String patientUuid) {
+        this.patientUuid = patientUuid;
     }
 }
