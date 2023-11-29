@@ -101,7 +101,7 @@
 
                 var obervationFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).observationFilter.code;
 
-                var episodeOfCareFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeOfCareFilter.type;
+                var episodeOfCareFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
 
 
                 modal.find("#encounterTypeUUIDS").val(encounterFilters);
