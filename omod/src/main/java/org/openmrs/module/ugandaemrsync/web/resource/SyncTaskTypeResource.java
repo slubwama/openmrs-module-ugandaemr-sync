@@ -6,6 +6,7 @@ import io.swagger.models.properties.BooleanProperty;
 import io.swagger.models.properties.IntegerProperty;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.StringProperty;
+import io.swagger.models.properties.DateProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
@@ -92,6 +93,8 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
+			description.addProperty("tokenExpiryDate");
+			description.addProperty("tokenType");
 			description.addSelfLink();
 			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
 			return description;
@@ -125,6 +128,10 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 		description.addProperty("url");
 		description.addProperty("urlUserName");
 		description.addProperty(" urlPassword");
+		description.addProperty("urlToken");
+		description.addProperty("tokenExpiryDate");
+		description.addProperty("tokenType");
+		description.addProperty("tokenRefreshKey");
 
 		return description;
 	}
@@ -155,12 +162,18 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	public Model getGETModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("uuid", new StringProperty()).property("name", new StringProperty())
-			        .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-			        .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-			        .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-			        .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
+			model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+			        .property("resourceTypes", new StringProperty())
+					.property("profileEnabled", new BooleanProperty())
+			        .property("patientIdentifierType", new StringProperty())
+					.property("numberOfResourcesInBundle", new IntegerProperty())
+			        .property("durationToKeepSyncedResources", new IntegerProperty())
+					.property("generateBundle", new BooleanProperty())
+			        .property("caseBasedProfile", new BooleanProperty())
+					.property("caseBasedPrimaryResourceType", new StringProperty())
+                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+					.property("resourceSearchParameter", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
 			model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -171,6 +184,9 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 
 		} else if (rep instanceof FullRepresentation) {
             model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
+					.property("urlToken", new StringProperty())
+					.property("tokenExpiryDate", new DateProperty())
+					.property("tokenType", new StringProperty())
                     .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
 			        .property("creator", new RefProperty("#/definitions/UserGetRef"))
 			        .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
@@ -183,12 +199,18 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	public Model getCREATEModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-            model.property("uuid", new StringProperty()).property("name", new StringProperty())
-                    .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-                    .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-                    .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-                    .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
+            model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+                    .property("resourceTypes", new StringProperty())
+					.property("profileEnabled", new BooleanProperty())
+                    .property("patientIdentifierType", new StringProperty())
+					.property("numberOfResourcesInBundle", new IntegerProperty())
+                    .property("durationToKeepSyncedResources", new IntegerProperty())
+					.property("generateBundle", new BooleanProperty())
+                    .property("caseBasedProfile", new BooleanProperty())
+					.property("caseBasedPrimaryResourceType", new StringProperty())
+                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+					.property("resourceSearchParameter", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
             model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -202,7 +224,11 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
                     .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
                     .property("creator", new RefProperty("#/definitions/UserGetRef"))
                     .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"))
+					.property("urlToken", new StringProperty())
+					.property("tokenExpiryDate", new DateProperty())
+					.property("tokenType", new StringProperty())
+					.property("tokenRefreshKey", new StringProperty());
 		}
 		return model;
 	}
@@ -210,15 +236,24 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	@Override
 	public Model getUPDATEModel(Representation rep) {
 		return new ModelImpl().property("uuid", new StringProperty()).property("name", new StringProperty())
-                .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-                .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-                .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-                .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty())
+                .property("resourceTypes", new StringProperty())
+				.property("profileEnabled", new BooleanProperty())
+                .property("patientIdentifierType", new StringProperty())
+				.property("numberOfResourcesInBundle", new IntegerProperty())
+                .property("durationToKeepSyncedResources", new IntegerProperty())
+				.property("generateBundle", new BooleanProperty())
+                .property("caseBasedProfile", new BooleanProperty())
+				.property("caseBasedPrimaryResourceType", new StringProperty())
+                .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+				.property("resourceSearchParameter", new StringProperty())
                 .property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
                 .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))
                 .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-                .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+                .property("voidedBy", new RefProperty("#/definitions/UserGetRef"))
+				.property("urlToken", new StringProperty())
+				.property("tokenExpiryDate", new DateProperty())
+				.property("tokenType", new StringProperty())
+				.property("tokenRefreshKey", new StringProperty());
 	}
 }

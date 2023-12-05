@@ -1,5 +1,6 @@
 package org.openmrs.module.ugandaemrsync.model;
 
+import lombok.Getter;
 import org.hibernate.annotations.Type;
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.ConceptSource;
@@ -87,6 +88,18 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     @Column(name = "sync_limit")
     private Integer syncLimit;
+
+    @Getter
+    @Column(name = "token_expiry_date")
+    private Date tokenExpiryDate;
+
+    @Getter
+    @Column(name = "token_type", length = 255)
+    private String tokenType;
+
+    @Getter
+    @Column(name = "token_refresh_key", length = 255)
+    private String tokenRefreshKey;
 
     public int getSyncFhirProfileId() {
         return syncFhirProfileId;
@@ -263,5 +276,17 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     public void setKeepProfileIdentifierOnly(Boolean keepProfileIdentifierOnly) {
         this.keepProfileIdentifierOnly = keepProfileIdentifierOnly;
+    }
+
+    public void setTokenExpiryDate(Date tokenExpiryDate) {
+        this.tokenExpiryDate = tokenExpiryDate;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
+    public void setTokenRefreshKey(String tokenRefreshKey) {
+        this.tokenRefreshKey = tokenRefreshKey;
     }
 }

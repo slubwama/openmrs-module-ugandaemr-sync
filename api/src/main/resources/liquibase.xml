@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
- 
+
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
@@ -1710,5 +1710,55 @@
             <column name="date_created" value="2023-10-24 08:20:58" />
             <column name="uuid" value="d4a3ebbb-e793-4e56-867c-0cf998e51f56" />
         </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-202312-03-1247" author="slubwama">
+        <addColumn tableName="sync_task_type">
+            <column name="token_type" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-202312-03-1248" author="slubwama">
+        <addColumn tableName="sync_task_type">
+            <column name="token_refresh_key" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-202312-03-1249" author="slubwama">
+        <addColumn tableName="sync_task_type">
+            <column name="token_expiry_date" type="datetime"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="ugandaemrsync-202312-03-1250" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="token_type" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-202312-03-1251" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="token_refresh_key" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-202312-03-1252" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="token_expiry_date" type="datetime"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="ugandaemrsync-202312-03-1253" author="slubwama" dbms="mysql">
+        <comment>change column url_token in table  sync_task_type to text from varchar</comment>
+        <sql>
+            ALTER TABLE sync_task_type MODIFY url_token text;
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-202312-03-1254" author="slubwama" dbms="mysql">
+        <comment>change column url_token in table  sync_fhir_profile to text from varchar</comment>
+        <sql>
+            ALTER TABLE sync_fhir_profile MODIFY url_token text;
+        </sql>
     </changeSet>
 </databaseChangeLog>
