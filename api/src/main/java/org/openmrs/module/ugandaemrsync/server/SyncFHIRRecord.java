@@ -848,16 +848,6 @@ public class SyncFHIRRecord {
         return jsonString;
     }
 
-    private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
-        JSONObject jsonObject = new JSONObject(payload);
-        int objectCount = 0;
-        for (Object jsonObject1 : jsonObject.getJSONArray(targetObject)) {
-            jsonObject.getJSONArray(targetObject).getJSONObject(objectCount).put(attributeName, attributeValue);
-            objectCount++;
-        }
-        return jsonObject.toString();
-    }
-
     private String addUseOfficialToName(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
         int objectCount = 0;
