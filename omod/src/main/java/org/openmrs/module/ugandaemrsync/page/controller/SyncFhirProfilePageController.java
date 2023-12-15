@@ -88,7 +88,7 @@ public class SyncFhirProfilePageController {
         syncFhirProfile.setNumberOfResourcesInBundle(noOfResourcesInBundle);
         syncFhirProfile.setResourceTypes(resourceType);
         syncFhirProfile.setDurationToKeepSyncedResources(durationToKeepSyncedResources);
-        syncFhirProfile.setCaseBasedProfile(Boolean.parseBoolean(isCaseBasedProfile));
+        syncFhirProfile.setIsCaseBasedProfile(Boolean.parseBoolean(isCaseBasedProfile));
         syncFhirProfile.setCaseBasedPrimaryResourceType(caseBasedPrimaryResourceType);
         syncFhirProfile.setCaseBasedPrimaryResourceTypeId(caseBasedPrimaryResourceUUID);
         syncFhirProfile.setPatientIdentifierType(Context.getPatientService().getPatientIdentifierTypeByUuid(patientIdentifierType));
