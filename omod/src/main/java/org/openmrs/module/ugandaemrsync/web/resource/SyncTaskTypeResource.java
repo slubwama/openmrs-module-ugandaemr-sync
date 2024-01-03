@@ -155,12 +155,18 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	public Model getGETModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("uuid", new StringProperty()).property("name", new StringProperty())
-			        .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-			        .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-			        .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-			        .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
+			model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+			        .property("resourceTypes", new StringProperty())
+					.property("profileEnabled", new BooleanProperty())
+			        .property("patientIdentifierType", new StringProperty())
+					.property("numberOfResourcesInBundle", new IntegerProperty())
+			        .property("durationToKeepSyncedResources", new IntegerProperty())
+					.property("generateBundle", new BooleanProperty())
+			        .property("isCaseBasedProfile", new BooleanProperty())
+					.property("caseBasedPrimaryResourceType", new StringProperty())
+                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+					.property("resourceSearchParameter", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
 			model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -183,12 +189,18 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	public Model getCREATEModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-            model.property("uuid", new StringProperty()).property("name", new StringProperty())
-                    .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-                    .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-                    .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-                    .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
+            model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+                    .property("resourceTypes", new StringProperty())
+					.property("profileEnabled", new BooleanProperty())
+                    .property("patientIdentifierType", new StringProperty())
+					.property("numberOfResourcesInBundle", new IntegerProperty())
+                    .property("durationToKeepSyncedResources", new IntegerProperty())
+					.property("generateBundle", new BooleanProperty())
+                    .property("isCaseBasedProfile", new BooleanProperty())
+					.property("caseBasedPrimaryResourceType", new StringProperty())
+                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+					.property("resourceSearchParameter", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
             model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -209,12 +221,18 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 
 	@Override
 	public Model getUPDATEModel(Representation rep) {
-		return new ModelImpl().property("uuid", new StringProperty()).property("name", new StringProperty())
-                .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-                .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-                .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-                .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty())
+		return new ModelImpl().property("uuid", new StringProperty())
+				.property("name", new StringProperty())
+                .property("resourceTypes", new StringProperty())
+				.property("profileEnabled", new BooleanProperty())
+                .property("patientIdentifierType", new StringProperty())
+				.property("numberOfResourcesInBundle", new IntegerProperty())
+                .property("durationToKeepSyncedResources", new IntegerProperty())
+				.property("generateBundle", new BooleanProperty())
+                .property("isCaseBasedProfile", new BooleanProperty())
+				.property("caseBasedPrimaryResourceType", new StringProperty())
+                .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+				.property("resourceSearchParameter", new StringProperty())
                 .property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
                 .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))

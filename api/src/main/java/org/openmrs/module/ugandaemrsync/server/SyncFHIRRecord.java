@@ -361,7 +361,7 @@ public class SyncFHIRRecord {
     public Collection<SyncFhirResource> generateCaseBasedFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
         this.profile = syncFhirProfile;
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        if (syncFhirProfile != null && (!syncFhirProfile.getCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
+        if (syncFhirProfile != null && (!syncFhirProfile.getIsCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
             return null;
         }
 
@@ -1001,7 +1001,7 @@ public class SyncFHIRRecord {
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getCaseBasedProfile()) {
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
             } else if (syncFhirCase != null) {
@@ -1023,7 +1023,6 @@ public class SyncFHIRRecord {
         PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
-
         return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
@@ -1037,7 +1036,7 @@ public class SyncFHIRRecord {
         }
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
-        if (providerUUIDs.size() == 0 && !syncFhirProfile.getCaseBasedProfile()) {
+        if (providerUUIDs.size() == 0 && !syncFhirProfile.getIsCaseBasedProfile()) {
             DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
 
             iBaseResources = getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(null, null, null, null, null,
@@ -1056,7 +1055,7 @@ public class SyncFHIRRecord {
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getCaseBasedProfile()) {
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
             } else {
@@ -1073,7 +1072,7 @@ public class SyncFHIRRecord {
             Collection<String> personListUUID = personList.stream().map(org.openmrs.Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
             iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
 
-        } else if (!syncFhirProfile.getCaseBasedProfile()) {
+        } else if (!syncFhirProfile.getIsCaseBasedProfile()) {
             iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(null, null, null, null,
                     null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
         }
