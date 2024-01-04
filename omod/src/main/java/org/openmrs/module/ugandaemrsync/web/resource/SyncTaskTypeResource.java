@@ -170,7 +170,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 					.property("numberOfResourcesInBundle", new IntegerProperty())
 			        .property("durationToKeepSyncedResources", new IntegerProperty())
 					.property("generateBundle", new BooleanProperty())
-			        .property("caseBasedProfile", new BooleanProperty())
+			        .property("isCaseBasedProfile", new BooleanProperty())
 					.property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 					.property("resourceSearchParameter", new StringProperty());
@@ -207,7 +207,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 					.property("numberOfResourcesInBundle", new IntegerProperty())
                     .property("durationToKeepSyncedResources", new IntegerProperty())
 					.property("generateBundle", new BooleanProperty())
-                    .property("caseBasedProfile", new BooleanProperty())
+                    .property("isCaseBasedProfile", new BooleanProperty())
 					.property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 					.property("resourceSearchParameter", new StringProperty());
@@ -235,14 +235,15 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 
 	@Override
 	public Model getUPDATEModel(Representation rep) {
-		return new ModelImpl().property("uuid", new StringProperty()).property("name", new StringProperty())
+		return new ModelImpl().property("uuid", new StringProperty())
+				.property("name", new StringProperty())
                 .property("resourceTypes", new StringProperty())
 				.property("profileEnabled", new BooleanProperty())
                 .property("patientIdentifierType", new StringProperty())
 				.property("numberOfResourcesInBundle", new IntegerProperty())
                 .property("durationToKeepSyncedResources", new IntegerProperty())
 				.property("generateBundle", new BooleanProperty())
-                .property("caseBasedProfile", new BooleanProperty())
+                .property("isCaseBasedProfile", new BooleanProperty())
 				.property("caseBasedPrimaryResourceType", new StringProperty())
                 .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 				.property("resourceSearchParameter", new StringProperty())

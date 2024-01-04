@@ -190,12 +190,12 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
         this.durationToKeepSyncedResources = durationToKeepSyncedResources;
     }
 
-    public Boolean getCaseBasedProfile() {
+    public Boolean getIsCaseBasedProfile() {
         return isCaseBasedProfile;
     }
 
-    public void setCaseBasedProfile(Boolean caseBasedProfile) {
-        isCaseBasedProfile = caseBasedProfile;
+    public void setIsCaseBasedProfile(Boolean isCaseBasedProfile) {
+        this.isCaseBasedProfile = isCaseBasedProfile;
     }
 
     public String getCaseBasedPrimaryResourceType() {
