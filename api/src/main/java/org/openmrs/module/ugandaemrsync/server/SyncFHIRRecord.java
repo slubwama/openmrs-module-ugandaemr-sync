@@ -894,10 +894,11 @@ public class SyncFHIRRecord {
 
     private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
         JSONObject jsonObject = new JSONObject(payload);
-        int objectCount = 0;
-        for (Object jsonObject1 : jsonObject.getJSONArray(targetObject)) {
-            jsonObject.getJSONArray(targetObject).getJSONObject(objectCount).put(attributeName, attributeValue);
-            objectCount++;
+        if (jsonObject.getJSONArray(targetObject) != null) {
+            for (int i = 0; i <= jsonObject.getJSONArray(targetObject).length(); i++) {
+                jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
+                i++;
+            }
         }
         return jsonObject.toString();
     }
