@@ -1761,4 +1761,18 @@
             ALTER TABLE sync_fhir_profile MODIFY url_token text;
         </sql>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-01-17-03-1254" author="slubwama" dbms="mysql">
+        <comment>set defalut value for field keep_profile_identifier_only at false</comment>
+        <sql>
+            sync_fhir_profile  SET keep_profile_identifier_only = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-01-18-03-1254" author="slubwama" dbms="mysql">
+        <comment>enable Send Lab Request to ALIS Task to allow only the primary identifier to be synced </comment>
+        <sql>
+            sync_fhir_profile  SET keep_profile_identifier_only = 1 where uuid='2f0ef683-c988-448b-b928-e3e2cf6657af';
+        </sql>
+    </changeSet>
 </databaseChangeLog>
