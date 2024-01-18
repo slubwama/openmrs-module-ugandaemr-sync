@@ -50,7 +50,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
     UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
     ConceptService conceptService = Context.getConceptService();
     VisitService visitService = Context.getVisitService();
-    EncounterService encounterService =Context.getEncounterService();
+    EncounterService encounterService = Context.getEncounterService();
     LocationService locationService = Context.getLocationService();
     Location pharmacyLocation = locationService.getLocationByUuid("3ec8ff90-3ec1-408e-bf8c-22e4553d6e17");
     EncounterType artCardEncounterType = encounterService.getEncounterTypeByUuid("8d5b2be0-c2cc-11de-8d13-0010c6dffd0f");
@@ -69,10 +69,9 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         }
 
 
-
-        String artAccessServerUrlEndPoint="";
-        String results="";
-        if(syncTaskType.getUrl()!=null){
+        String artAccessServerUrlEndPoint = "";
+        String results = "";
+        if (syncTaskType.getUrl() != null) {
             artAccessServerUrlEndPoint = syncTaskType.getUrl();
             artAccessServerUrlEndPoint = addParametersToUrl(artAccessServerUrlEndPoint);
 
@@ -82,24 +81,24 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
             }
 
         }
-
+        Map resultMap = new HashMap<>();
         try {
             String username = syncTaskType.getUrlUserName();
             String password = syncTaskType.getUrlPassword();
-            Map resultMap = ugandaEMRHttpURLConnection.getByWithBasicAuth(artAccessServerUrlEndPoint, username, password, "String");
-            results = (String)resultMap.get("result");
+            resultMap = ugandaEMRHttpURLConnection.getByWithBasicAuth(artAccessServerUrlEndPoint, username, password, "String");
+            results = (String) resultMap.get("result");
 
         } catch (Exception e) {
-            log.error("Failed to fetch results",e);
+            log.error("Failed to fetch results", e);
         }
 
-         if (results != null && !results.isEmpty() ) {
-             JSONObject object = new JSONObject(results);
-             processData(object);
+        if (results != null && !results.isEmpty()) {
+            JSONObject object = new JSONObject(results);
+            processData(object, resultMap);
 
-         }else{
-             log.error("Results are empty");
-         }
+        } else {
+            log.error("Results are empty");
+        }
     }
 
     public boolean isGpDhis2OrganizationUuidSet() {
@@ -111,55 +110,55 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
     }
 
     public String addParametersToUrl(String url) {
-        String uuid  = syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID);
+        String uuid = syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID);
         String lastSyncDate = syncGlobalProperties.getGlobalProperty(GP_ART_ACCESS_LAST_SYNC_DATE);
-        System.out.println(lastSyncDate+"last sync date");
-        String uuidParameter  = "&managingOrganisation="+uuid;
-        String startDateParameter ="";
+        System.out.println(lastSyncDate + "last sync date");
+        String uuidParameter = "&managingOrganisation=" + uuid;
+        String startDateParameter = "";
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.minusDays(1);
 
         String newEndDate = endDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String endDateParameter = "&%20periodEnd="+ newEndDate+"%20"+"23:59:59";
-        if(lastSyncDate!=null&& lastSyncDate!=""){
-            startDateParameter = "?periodStart="+lastSyncDate+"%20"+"00:00:00";
-        }else{
-           startDateParameter=  "?periodStart="+"2021-06-01"+"%20"+"00:00:00";
+        String endDateParameter = "&%20periodEnd=" + newEndDate + "%20" + "23:59:59";
+        if (lastSyncDate != null && lastSyncDate != "") {
+            startDateParameter = "?periodStart=" + lastSyncDate + "%20" + "00:00:00";
+        } else {
+            startDateParameter = "?periodStart=" + "2021-06-01" + "%20" + "00:00:00";
         }
-        String newUrl =url+startDateParameter+endDateParameter+uuidParameter;
+        String newUrl = url + startDateParameter + endDateParameter + uuidParameter;
         return newUrl;
     }
 
-    private void processData(JSONObject jsonObject){
-      JSONArray patientRecords =  jsonObject.getJSONArray("entry");
+    private void processData(JSONObject jsonObject, Map resultsMap) {
+        JSONArray patientRecords = jsonObject.getJSONArray("entry");
 
-      if(patientRecords.length()>0 && patientRecords!=null) {
-          for (Object o : patientRecords) {
-             JSONObject patientRecord = (JSONObject)o;
-           JSONObject patientAttributes = patientRecord.getJSONArray("entry").getJSONObject(0);
-           int no_of_days =(int) patientRecord.getJSONArray("entry").getJSONObject(1).get("number_of_days");
-           int no_of_pills =(int) patientRecord.getJSONArray("entry").getJSONObject(1).get("number_of_pills");
-           JSONObject patientEncounterDetails = patientRecord.getJSONArray("entry").getJSONObject(3);
+        if (patientRecords.length() > 0 && patientRecords != null) {
+            for (Object o : patientRecords) {
+                JSONObject patientRecord = (JSONObject) o;
+                JSONObject patientAttributes = patientRecord.getJSONArray("entry").getJSONObject(0);
+                int no_of_days = (int) patientRecord.getJSONArray("entry").getJSONObject(1).get("number_of_days");
+                int no_of_pills = (int) patientRecord.getJSONArray("entry").getJSONObject(1).get("number_of_pills");
+                JSONObject patientEncounterDetails = patientRecord.getJSONArray("entry").getJSONObject(3);
 
-           String patientARTNo = getIdentifier(patientAttributes);
-           Patient patient = ugandaEMRSyncService.getPatientByPatientIdentifier(patientARTNo);
-           if(patient!=null){
-               System.out.println(patientARTNo);
-                processPatientBundle(patientEncounterDetails,patient,no_of_days,no_of_pills);
-           }
+                String patientARTNo = getIdentifier(patientAttributes);
+                Patient patient = ugandaEMRSyncService.getPatientByPatientIdentifier(patientARTNo);
+                if (patient != null) {
+                    System.out.println(patientARTNo);
+                    processPatientBundle(patientEncounterDetails, patient, no_of_days, no_of_pills);
+                }
 
-          }
-          savedSyncTask();
-      }
+            }
+            savedSyncTask(resultsMap);
+        }
 
     }
 
-    private void processPatientBundle(JSONObject jsonObject, Patient patient,Integer no_of_days,Integer no_of_pills){
+    private void processPatientBundle(JSONObject jsonObject, Patient patient, Integer no_of_days, Integer no_of_pills) {
         HashMap conceptsCaptured = getARTAccessRecordsConcepts();
         UserService userService = Context.getUserService();
         User user = userService.getUserByUuid("9bd6584f-33e0-11e7-9528-1866da16840d");
 
-        Set<Obs> obsList =new HashSet<>();
+        Set<Obs> obsList = new HashSet<>();
 
         try {
             String visit_date = getJSONObjectValue(jsonObject.getJSONObject("0"), "visit_date");
@@ -168,49 +167,53 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
             Date stopVisitDate = ugandaEMRSyncService.convertStringToDate(visit_date, "23:59:59", dateFormat);
 
             String next_visit_date = getJSONObjectValue(jsonObject.getJSONObject("1"), "next_visit_date");
-           try{ Date return_date = ugandaEMRSyncService.convertStringToDate(next_visit_date, "00:00:00", ugandaEMRSyncService.getDateFormat(next_visit_date));
-            if(next_visit_date!=""&&next_visit_date!=null) {
-                addObs(obsList, next_visit_date, conceptService.getConcept((int) conceptsCaptured.get("next_visit_date")), null, return_date, null, patient, user, startVisitDate);
-            }}catch (Exception e){e.printStackTrace();}
+            try {
+                Date return_date = ugandaEMRSyncService.convertStringToDate(next_visit_date, "00:00:00", ugandaEMRSyncService.getDateFormat(next_visit_date));
+                if (next_visit_date != "" && next_visit_date != null) {
+                    addObs(obsList, next_visit_date, conceptService.getConcept((int) conceptsCaptured.get("next_visit_date")), null, return_date, null, patient, user, startVisitDate);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-            String adherence = getJSONObjectValue(jsonObject.getJSONObject("4"),"adherence");
-            Concept adherence_concept = conceptService.getConcept((int)conceptsCaptured.get("adherence"));
+            String adherence = getJSONObjectValue(jsonObject.getJSONObject("4"), "adherence");
+            Concept adherence_concept = conceptService.getConcept((int) conceptsCaptured.get("adherence"));
             Concept adherence_answer = convertAdherence(adherence);
-            addObs(obsList,adherence,adherence_concept, adherence_answer, null, null, patient, user, startVisitDate);
+            addObs(obsList, adherence, adherence_concept, adherence_answer, null, null, patient, user, startVisitDate);
 
-            String regimen= convertObjectToStringIfNotNull(jsonObject.getJSONObject("regimen").getJSONObject("coding").get("code"));
+            String regimen = convertObjectToStringIfNotNull(jsonObject.getJSONObject("regimen").getJSONObject("coding").get("code"));
             Concept regimenConcept = conceptService.getConcept((int) conceptsCaptured.get("regimen"));
             Concept regimenAnswer = convertRegimen(regimen);
-            if(regimenAnswer!=null){
-                Obs regimenObs =  processObs(regimenConcept, regimenAnswer, null, null, patient, user, startVisitDate);
-                Obs pills =processObs(conceptService.getConcept(99038),no_of_pills,patient,user,startVisitDate); // mo of pills
-                Obs days =processObs(conceptService.getConcept(99036),no_of_days,patient,user,startVisitDate); // mo of days
-                Obs groupObs = processObs(conceptService.getConcept(165430),null,null,null,patient,user,startVisitDate);
+            if (regimenAnswer != null) {
+                Obs regimenObs = processObs(regimenConcept, regimenAnswer, null, null, patient, user, startVisitDate);
+                Obs pills = processObs(conceptService.getConcept(99038), no_of_pills, patient, user, startVisitDate); // mo of pills
+                Obs days = processObs(conceptService.getConcept(99036), no_of_days, patient, user, startVisitDate); // mo of days
+                Obs groupObs = processObs(conceptService.getConcept(165430), null, null, null, patient, user, startVisitDate);
                 groupObs.addGroupMember(regimenObs);
                 groupObs.addGroupMember(pills);
                 groupObs.addGroupMember(days);
                 obsList.add(groupObs);
             }
 
-            String other_drugs = getJSONObjectValue(jsonObject.getJSONObject("13"),"other_drugs");
-            Concept other_medicationsConcept = conceptService.getConcept((int)conceptsCaptured.get("other_drugs"));
-            addObs(obsList,other_drugs,other_medicationsConcept,null,null,other_drugs,patient,user,startVisitDate);
+            String other_drugs = getJSONObjectValue(jsonObject.getJSONObject("13"), "other_drugs");
+            Concept other_medicationsConcept = conceptService.getConcept((int) conceptsCaptured.get("other_drugs"));
+            addObs(obsList, other_drugs, other_medicationsConcept, null, null, other_drugs, patient, user, startVisitDate);
 
-            String complaint = getJSONObjectValue(jsonObject.getJSONObject("6"),"complaints");
-            Concept complaintQuestion  = conceptService.getConcept((int) conceptsCaptured.get("complaints"));
-            if(!(complaint.contains("null"))&& complaint!=null){
-                if(complaint.contains(",")){
+            String complaint = getJSONObjectValue(jsonObject.getJSONObject("6"), "complaints");
+            Concept complaintQuestion = conceptService.getConcept((int) conceptsCaptured.get("complaints"));
+            if (!(complaint.contains("null")) && complaint != null) {
+                if (complaint.contains(",")) {
                     List<String> complaints = Arrays.asList(complaint.split(","));
-                    for (String s:complaints) {
+                    for (String s : complaints) {
                         Concept answer = convertComplaints(s);
-                        if(answer!=null) {
+                        if (answer != null) {
                             addObs(obsList, complaint, complaintQuestion, answer, null, null, patient, user, startVisitDate);
                         }
                     }
 
-                }else{
+                } else {
                     Concept answer = convertComplaints(complaint);
-                    if(answer!=null) {
+                    if (answer != null) {
                         addObs(obsList, complaint, complaintQuestion, answer, null, null, patient, user, startVisitDate);
                     }
                 }
@@ -230,7 +233,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 //                    addObs(obsList,complaint,complaintQuestion,other_answer,null,null,patient,user,startVisitDate);
 //                }
 //            }
-            addObsToEncounter(patient,startVisitDate,stopVisitDate,obsList,user);
+            addObsToEncounter(patient, startVisitDate, stopVisitDate, obsList, user);
 
 
 //            String medicine_picked = getJSONObjectValue(jsonObject.getJSONObject("2"),"medicine_picked");
@@ -238,7 +241,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 //        String adherence = getJSONObjectValue(jsonObject.getJSONObject("4"),"adherence");
 //        String viral_load = getJSONObjectValue(jsonObject.getJSONObject("5"),"viral_load");
 
-        String other_complaints = getJSONObjectValue(jsonObject.getJSONObject("7"),"other_complaints");
+            String other_complaints = getJSONObjectValue(jsonObject.getJSONObject("7"), "other_complaints");
 //        String reference_reason = getJSONObjectValue(jsonObject.getJSONObject("8"),"reference_reason");
 //        String client_representative = getJSONObjectValue(jsonObject.getJSONObject("9"),"client_representative");
 //        String discontinue_reason = getJSONObjectValue(jsonObject.getJSONObject("10"),"discontinue_reason");
@@ -246,55 +249,55 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 //        String pharmacist_name = getJSONObjectValue(jsonObject.getJSONObject("12"),"pharmacist_name");
 //        String other_drugs = getJSONObjectValue(jsonObject.getJSONObject("13"),"other_drugs");
 //        String next_facility_visit = getJSONObjectValue(jsonObject.getJSONObject("14"),"next_facility_visit");
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
-    private String getIdentifier(JSONObject jsonObject){
-        String identifier="";
-        if(jsonObject!=null) {
+    private String getIdentifier(JSONObject jsonObject) {
+        String identifier = "";
+        if (jsonObject != null) {
             identifier = (String) jsonObject.getJSONObject("resource").getJSONArray("identifier").
                     getJSONObject(0).getJSONObject("type").getJSONObject("coding").getJSONObject("0").get("code");
         }
         return identifier;
     }
 
-    private HashMap getARTAccessRecordsConcepts(){
-        HashMap<String,Integer> map = new HashMap<>();
-        map.put("visit_date",null);
-        map.put("next_visit_date",5096);
-        map.put("medicine_picked",null);
-        map.put("clinical_status",null);
-        map.put("adherence",90221);
-        map.put("viral_load",856);
-        map.put("complaints",90227); // side effects
-        map.put("other_complaints",99113); // other side effects
-        map.put("reference_reason",null);
-        map.put("client_representative",null);
-        map.put("discontinue_reason",164975); // other reason for next appointment
-        map.put("admission_since_last_visit",null);
-        map.put("pharmacist_name",null);
-        map.put("other_drugs",99035);
-        map.put("next_facility_visit",null);
-        map.put("regimen",90315);
+    private HashMap getARTAccessRecordsConcepts() {
+        HashMap<String, Integer> map = new HashMap<>();
+        map.put("visit_date", null);
+        map.put("next_visit_date", 5096);
+        map.put("medicine_picked", null);
+        map.put("clinical_status", null);
+        map.put("adherence", 90221);
+        map.put("viral_load", 856);
+        map.put("complaints", 90227); // side effects
+        map.put("other_complaints", 99113); // other side effects
+        map.put("reference_reason", null);
+        map.put("client_representative", null);
+        map.put("discontinue_reason", 164975); // other reason for next appointment
+        map.put("admission_since_last_visit", null);
+        map.put("pharmacist_name", null);
+        map.put("other_drugs", 99035);
+        map.put("next_facility_visit", null);
+        map.put("regimen", 90315);
 
         return map;
     }
 
-    private String getJSONObjectValue(JSONObject jsonObject,String objectName){
+    private String getJSONObjectValue(JSONObject jsonObject, String objectName) {
         Object value = "";
-        if(jsonObject!=null){
-          value = jsonObject.getJSONObject(objectName).getJSONObject("coding").get("code");
+        if (jsonObject != null) {
+            value = jsonObject.getJSONObject(objectName).getJSONObject("coding").get("code");
         }
         try {
-            return (String)value;
-        }catch (ClassCastException e){
+            return (String) value;
+        } catch (ClassCastException e) {
             return null;
         }
     }
 
-    private Visit createVisit(Patient patient, Date startDate,Date stopDate,User creator,Location location){
+    private Visit createVisit(Patient patient, Date startDate, Date stopDate, User creator, Location location) {
         Visit visit = new Visit();
         visit.setLocation(location);
         visit.setPatient(patient);
@@ -303,12 +306,12 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         visit.setVisitType(visitService.getVisitTypeByUuid("2ce24f40-8f4c-4bfa-8fde-09d475783468"));
         visit.setCreator(creator);
         visit.setDateCreated(new Date());
-        return  visit;
+        return visit;
 
     }
 
-    private Encounter createEncounter(Patient patient,Date visitDate,User creator,Location location){
-        FormService formService =Context.getFormService();
+    private Encounter createEncounter(Patient patient, Date visitDate, User creator, Location location) {
+        FormService formService = Context.getFormService();
         Encounter encounter = new Encounter();
         encounter.setEncounterDatetime(visitDate);
         encounter.setEncounterType(encounterService.getEncounterTypeByUuid("8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"));
@@ -321,7 +324,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 
     }
 
-    private Obs processObs(Concept question, Concept valueCoded, Date valueDateTime,String valueText,Patient patient,User creator,Date visitDate){
+    private Obs processObs(Concept question, Concept valueCoded, Date valueDateTime, String valueText, Patient patient, User creator, Date visitDate) {
         Obs newObs = new Obs();
         newObs.setConcept(question);
         newObs.setValueCoded(valueCoded);
@@ -333,7 +336,8 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         newObs.setLocation(pharmacyLocation);
         return newObs;
     }
-    private Obs processObs(Concept question,double valueNumeric,Patient patient,User creator,Date visitDate){
+
+    private Obs processObs(Concept question, double valueNumeric, Patient patient, User creator, Date visitDate) {
         Obs newObs = new Obs();
         newObs.setConcept(question);
         newObs.setValueNumeric(valueNumeric);
@@ -344,132 +348,132 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         return newObs;
     }
 
-    private Set<Obs> addObs(Set<Obs> obsList,String artAccessValue,Concept question, Concept valueCoded, Date valueDateTime,String valueText,Patient patient,User creator,Date visitDate){
-        if (artAccessValue!=null){
-            obsList.add(processObs(question,valueCoded, valueDateTime,valueText,patient,creator,visitDate));
+    private Set<Obs> addObs(Set<Obs> obsList, String artAccessValue, Concept question, Concept valueCoded, Date valueDateTime, String valueText, Patient patient, User creator, Date visitDate) {
+        if (artAccessValue != null) {
+            obsList.add(processObs(question, valueCoded, valueDateTime, valueText, patient, creator, visitDate));
         }
         return obsList;
     }
 
-    private Concept convertAdherence(String adherence){
-        int conceptValue =0 ;
-        if(adherence!=null) {
+    private Concept convertAdherence(String adherence) {
+        int conceptValue = 0;
+        if (adherence != null) {
             if (adherence.contains("poor")) {
                 conceptValue = 90158;
             } else if (adherence.contains("good")) {
                 conceptValue = 90156;
             } else if (adherence.contains("fair")) {
-                conceptValue =90157;
+                conceptValue = 90157;
             } else {
                 conceptValue = 90001; // unknown
             }
         }
-        if(conceptValue!=0){
+        if (conceptValue != 0) {
             return conceptService.getConcept(conceptValue);
-        }else{
-            return  null;
+        } else {
+            return null;
         }
     }
 
-    private Concept convertComplaints(String complaint){
-        int conceptValue =0 ;
-        if(complaint!=null) {
+    private Concept convertComplaints(String complaint) {
+        int conceptValue = 0;
+        if (complaint != null) {
             if (complaint.contains("cough")) {
                 conceptValue = 90132;
             } else if (complaint.contains("fever")) {
                 conceptValue = 90116;
             } else if (complaint.contains("weight loss")) {
-                conceptValue =90135;
+                conceptValue = 90135;
             } else if (complaint.contains("Diarrhoea")) {
-                conceptValue =16;
+                conceptValue = 16;
             } else if (complaint.contains("Headache")) {
-                conceptValue =90094;
+                conceptValue = 90094;
             }
         }
-        if(conceptValue!=0){
+        if (conceptValue != 0) {
             return conceptService.getConcept(conceptValue);
-        }else{
-            return  null;
-        }
-    }
-
-    private Concept convertRegimen(String regimenName){
-        int conceptValue =0 ;
-        HashMap<String, Integer> map =new HashMap<>();
-        map.put("TDF/3TC/EFV",99040);
-        map.put("ZDV/3TC/NVP" ,0);
-        map.put("ZDV/3TC/EFV",0);
-        map.put("TDF/FTC/EFV",99042);
-        map.put("TDF/ZDV/3TC",0);
-        map.put("ZDV/3TC/ABC",0);
-        map.put("NVP/TDF/3TC",99039);
-        map.put("AZT/3TC/DTG",164979);
-        map.put("TDF/3TC/NVT",0);
-        map.put("AZT/3TC/EFV",99006);
-        map.put("AZT/3TC/NVP",99005);
-        map.put("TDF/3TC/NVP",99039);
-        map.put("TDF/3TC/DTG",164977);
-        map.put("ABC/3TC/DTG",164978);
-        map.put("AZT/3TC/ATV/r",99286);
-        map.put("TDF/3TC/ATV/r",99887);
-        map.put("ABC/3TC/EFV",99885);
-        map.put("ABC/3TC/LPV/r",163017);
-        map.put("TDF/3TC/LPV/r",99044);
-        map.put("AZT/3TC/LPV/r",99046);
-        map.put("ABC/3TC/ATV/r",99888);
-        map.put("Other Specify",0);
-
-        if(regimenName!=null){
-            conceptValue = map.get(regimenName);
-            return conceptService.getConcept(conceptValue);
-        }else{
-           return null;
-        }
-    }
-
-
-
-    private String convertObjectToStringIfNotNull(Object object){
-        if(object!=null){
-            return (String)object;
-        }else{
+        } else {
             return null;
         }
     }
 
-    private void addObsToEncounter(Patient patient,Date startVisitDate,Date stopVisitDate,Set<Obs> obsList,User creator){
+    private Concept convertRegimen(String regimenName) {
+        int conceptValue = 0;
+        HashMap<String, Integer> map = new HashMap<>();
+        map.put("TDF/3TC/EFV", 99040);
+        map.put("ZDV/3TC/NVP", 0);
+        map.put("ZDV/3TC/EFV", 0);
+        map.put("TDF/FTC/EFV", 99042);
+        map.put("TDF/ZDV/3TC", 0);
+        map.put("ZDV/3TC/ABC", 0);
+        map.put("NVP/TDF/3TC", 99039);
+        map.put("AZT/3TC/DTG", 164979);
+        map.put("TDF/3TC/NVT", 0);
+        map.put("AZT/3TC/EFV", 99006);
+        map.put("AZT/3TC/NVP", 99005);
+        map.put("TDF/3TC/NVP", 99039);
+        map.put("TDF/3TC/DTG", 164977);
+        map.put("ABC/3TC/DTG", 164978);
+        map.put("AZT/3TC/ATV/r", 99286);
+        map.put("TDF/3TC/ATV/r", 99887);
+        map.put("ABC/3TC/EFV", 99885);
+        map.put("ABC/3TC/LPV/r", 163017);
+        map.put("TDF/3TC/LPV/r", 99044);
+        map.put("AZT/3TC/LPV/r", 99046);
+        map.put("ABC/3TC/ATV/r", 99888);
+        map.put("Other Specify", 0);
+
+        if (regimenName != null) {
+            conceptValue = map.get(regimenName);
+            return conceptService.getConcept(conceptValue);
+        } else {
+            return null;
+        }
+    }
+
+
+    private String convertObjectToStringIfNotNull(Object object) {
+        if (object != null) {
+            return (String) object;
+        } else {
+            return null;
+        }
+    }
+
+    private void addObsToEncounter(Patient patient, Date startVisitDate, Date stopVisitDate, Set<Obs> obsList, User creator) {
         EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(patient, pharmacyLocation, startVisitDate, stopVisitDate, null, null, Arrays.asList(artCardEncounterType), null, Arrays.asList(visitService.getVisitTypeByUuid("2ce24f40-8f4c-4bfa-8fde-09d475783468")), null, false);
         List<Encounter> savedEncounters = encounterService.getEncounters(encounterSearchCriteria);
 
-        if(!savedEncounters.isEmpty()&& savedEncounters.size()>0){
-            Encounter encounter =savedEncounters.get(0);
-            if(!obsList.isEmpty()&& obsList.size()>0){
-                voidObsFound( encounter, obsList);
+        if (!savedEncounters.isEmpty() && savedEncounters.size() > 0) {
+            Encounter encounter = savedEncounters.get(0);
+            if (!obsList.isEmpty() && obsList.size() > 0) {
+                voidObsFound(encounter, obsList);
             }
             encounter.setObs(obsList);
             encounterService.saveEncounter(encounter);
 
-        }else{
-            Visit visit =createVisit(patient,startVisitDate,stopVisitDate,creator, pharmacyLocation);
-            Encounter encounter = createEncounter(patient,startVisitDate,creator, pharmacyLocation);
+        } else {
+            Visit visit = createVisit(patient, startVisitDate, stopVisitDate, creator, pharmacyLocation);
+            Encounter encounter = createEncounter(patient, startVisitDate, creator, pharmacyLocation);
             encounter.setVisit(visit);
             encounterService.saveEncounter(encounter);
-            addObsToEncounter(patient,startVisitDate,stopVisitDate,obsList,creator);
+            addObsToEncounter(patient, startVisitDate, stopVisitDate, obsList, creator);
         }
     }
-    private void assignEncounterToGroupMember(Obs obs, Encounter encounter){
-        if(obs.hasGroupMembers()){
-            for (Obs o:obs.getGroupMembers()) {
+
+    private void assignEncounterToGroupMember(Obs obs, Encounter encounter) {
+        if (obs.hasGroupMembers()) {
+            for (Obs o : obs.getGroupMembers()) {
                 o.setEncounter(encounter);
             }
             obs.setEncounter(encounter);
-        }else{
+        } else {
             obs.setEncounter(encounter);
         }
     }
 
-    private void voidObsFound(Encounter encounter, Set<Obs> obsList){
-        for (Obs o:obsList) {
+    private void voidObsFound(Encounter encounter, Set<Obs> obsList) {
+        for (Obs o : obsList) {
             ObsService obsService = Context.getObsService();
             Concept concept = o.getConcept();
             List<Obs> obsListToIgnore = obsService.getObservationsByPersonAndConcept(encounter.getPatient(), concept);
@@ -478,21 +482,27 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
                     obsService.voidObs(obsToVoid, "Observation has been replaced or updated.");
                 }
             }
-            assignEncounterToGroupMember(o,encounter);
+            assignEncounterToGroupMember(o, encounter);
         }
     }
-    private void savedSyncTask(){
+
+    private void savedSyncTask(Map resultMap) {
         SyncTask syncTask = new SyncTask();
         syncTask.setActionCompleted(true);
         syncTask.setDateSent(new Date());
         syncTask.setSyncTaskType(syncTaskType);
         syncTask.setCreator(Context.getUserService().getUser(1));
         syncTask.setSentToUrl(syncTaskType.getUrl());
+
+        if (!resultMap.isEmpty() && resultMap.get("responseCode") != null) {
+            syncTask.setStatusCode(Integer.parseInt(resultMap.get("responseCode").toString()));
+            syncTask.setStatus(resultMap.get("responseMessage").toString());
+        }
+
         syncTask.setRequireAction(false);
-        syncTask.setSyncTask("ART Access receive date as of "+ new Date());
-        syncTask.setStatus("SUCCESS");
+        syncTask.setSyncTask("ART Access receive date as of " + new Date());
         ugandaEMRSyncService.saveSyncTask(syncTask);
 
-       syncGlobalProperties.setGlobalProperty(GP_ART_ACCESS_LAST_SYNC_DATE,LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        syncGlobalProperties.setGlobalProperty(GP_ART_ACCESS_LAST_SYNC_DATE, LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 }

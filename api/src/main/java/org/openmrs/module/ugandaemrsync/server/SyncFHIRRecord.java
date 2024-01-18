@@ -895,7 +895,7 @@ public class SyncFHIRRecord {
     private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
         JSONObject jsonObject = new JSONObject(payload);
         if (jsonObject.getJSONArray(targetObject) != null) {
-            for (int i = 0; i <= jsonObject.getJSONArray(targetObject).length(); i++) {
+            for (int i = 0; i < jsonObject.getJSONArray(targetObject).length(); i++) {
                 jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
                 i++;
             }
