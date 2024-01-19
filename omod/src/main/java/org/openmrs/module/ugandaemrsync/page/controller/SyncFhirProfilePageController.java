@@ -43,7 +43,7 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "syncDataEverSince", required = false, defaultValue = "false") String syncDataEverSince,
                      @RequestParam(value = "isCaseBasedProfile", required = false, defaultValue = "false") String isCaseBasedProfile,
                      @RequestParam(value = "caseBasedPrimaryResourceType", required = false) String caseBasedPrimaryResourceType,
-                     @RequestParam(value = "caseBasedPrimaryResourceUUID", required = false) String caseBasedPrimaryResourceUUID,
+                     @RequestParam(value = "caseBasedPrimaryResourceTypeId", required = false) String caseBasedPrimaryResourceUUID,
                      @RequestParam(value = "patientIdentifierType", required = false) String patientIdentifierType,
                      @RequestParam(value = "noOfResourcesInBundle", required = false) Integer noOfResourcesInBundle,
                      @RequestParam(value = "encounterTypeUUIDS", required = false) String encounterTypeUUIDS,

@@ -82,11 +82,11 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
             }
 
         }
-
+        Map resultMap = new HashMap<>();
         try {
             String username = syncTaskType.getUrlUserName();
             String password = syncTaskType.getUrlPassword();
-            Map resultMap = ugandaEMRHttpURLConnection.getByWithBasicAuth(artAccessServerUrlEndPoint, username, password, "String");
+            resultMap = ugandaEMRHttpURLConnection.getByWithBasicAuth(artAccessServerUrlEndPoint, username, password, "String");
             results = (String)resultMap.get("result");
 
         } catch (Exception e) {
@@ -95,7 +95,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 
          if (results != null && !results.isEmpty() ) {
              JSONObject object = new JSONObject(results);
-             processData(object);
+             processData(object, resultMap);
 
          }else{
              log.error("Results are empty");
@@ -130,7 +130,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         return newUrl;
     }
 
-    private void processData(JSONObject jsonObject){
+    private void processData(JSONObject jsonObject, Map resultsMap) {
       JSONArray patientRecords =  jsonObject.getJSONArray("entry");
 
       if(patientRecords.length()>0 && patientRecords!=null) {
@@ -149,7 +149,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
            }
 
           }
-          savedSyncTask();
+          savedSyncTask(resultsMap);
       }
 
     }
@@ -481,16 +481,22 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
             assignEncounterToGroupMember(o,encounter);
         }
     }
-    private void savedSyncTask(){
+
+    private void savedSyncTask(Map resultMap) {
         SyncTask syncTask = new SyncTask();
         syncTask.setActionCompleted(true);
         syncTask.setDateSent(new Date());
         syncTask.setSyncTaskType(syncTaskType);
         syncTask.setCreator(Context.getUserService().getUser(1));
         syncTask.setSentToUrl(syncTaskType.getUrl());
+
+        if (!resultMap.isEmpty() && resultMap.get("responseCode") != null) {
+            syncTask.setStatusCode(Integer.parseInt(resultMap.get("responseCode").toString()));
+            syncTask.setStatus(resultMap.get("responseMessage").toString());
+        }
+
         syncTask.setRequireAction(false);
-        syncTask.setSyncTask("ART Access receive date as of "+ new Date());
-        syncTask.setStatus("SUCCESS");
+        syncTask.setSyncTask("ART Access receive date as of " + new Date());
         ugandaEMRSyncService.saveSyncTask(syncTask);
 
        syncGlobalProperties.setGlobalProperty(GP_ART_ACCESS_LAST_SYNC_DATE,LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));

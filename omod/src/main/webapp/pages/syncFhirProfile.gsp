@@ -89,7 +89,7 @@
                 modal.find("#caseBasedPrimaryResourceType").val(syncFhirProfile.caseBasedPrimaryResourceType);
                 modal.find("#caseBasedPrimaryResourceTypeId").val(syncFhirProfile.caseBasedPrimaryResourceTypeId);
 
-                modal.find("#patientIdentifierType").val(syncFhirProfile.patientIdentifierType);
+                modal.find("#patientIdentifierType").val(syncFhirProfile.patientIdentifierType.uuid);
 
                 var resourceType = syncFhirProfile.resourceTypes.split(",");
 

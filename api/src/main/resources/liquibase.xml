@@ -1761,4 +1761,32 @@
             ALTER TABLE sync_fhir_profile MODIFY url_token text;
         </sql>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-01-18-1354" author="slubwama" dbms="mysql">
+        <comment>set defalut value for field keep_profile_identifier_only at false</comment>
+        <sql>
+            update sync_fhir_profile  SET keep_profile_identifier_only = 0;
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-01-18-1355" author="slubwama" dbms="mysql">
+        <comment>enable Send Lab Request to ALIS Task to allow only the primary identifier to be synced </comment>
+        <sql>
+            update sync_fhir_profile  SET keep_profile_identifier_only = 1 where uuid='2f0ef683-c988-448b-b928-e3e2cf6657af';
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-01-18-1356" author="slubwama" dbms="mysql">
+        <comment>update resource_search_parameter in art access sync to ensure editing of profile works </comment>
+        <sql>
+            update sync_fhir_profile  SET resource_search_parameter = '{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[99161,90315,5096,90221,163023,856,1305, 166500],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b27bc-c2cc-11de-8d13-0010c6dffd0f","8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}' where uuid="0a7fff77-6ac7-416c-831e-4e3f1f2c853b";
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-01-18-1357" author="slubwama" dbms="mysql">
+        <comment>update resource_search_parameter in alis sync to ensure editing of profile works</comment>
+        <sql>
+            update sync_fhir_profile  SET resource_search_parameter = '{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[160741,166421,159367,165043],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}' where uuid="2f0ef683-c988-448b-b928-e3e2cf6657af";
+        </sql>
+    </changeSet>
 </databaseChangeLog>
