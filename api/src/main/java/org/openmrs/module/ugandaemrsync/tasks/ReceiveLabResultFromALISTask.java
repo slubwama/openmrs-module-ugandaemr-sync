@@ -28,7 +28,7 @@ public class ReceiveLabResultFromALISTask extends AbstractTask {
             return;
         }
 
-        for (SyncTask syncTask : ugandaEMRSyncService.getIncompleteActionSyncTask(LAB_RESULT_PULL_TYPE_UUID)) {
+        for (SyncTask syncTask : ugandaEMRSyncService.getIncompleteActionSyncTask(LAB_RESULT_PULL_SYNC_TASK_TYPE_UUID)) {
 
             Order order = getOrder(syncTask.getSyncTask());
             Map results = new HashMap();
