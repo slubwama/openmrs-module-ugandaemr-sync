@@ -9,7 +9,6 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
-import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 import java.util.*;
@@ -29,8 +28,7 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
             return;
         }
 
-        for (SyncTask syncTask : ugandaEMRSyncService.getIncompleteActionSyncTask(VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER)) {
-
+        for (SyncTask syncTask : ugandaEMRSyncService.getIncompleteActionSyncTask(VIRAL_LOAD_SYNC_TASK_TYPE_UUID)) {
             Order order = getOrder(syncTask.getSyncTask());
 
             String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, ugandaEMRSyncService.getHealthCenterCode(), ugandaEMRSyncService.getPatientIdentifier(order.getEncounter().getPatient(), PATIENT_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask())).get("json");
