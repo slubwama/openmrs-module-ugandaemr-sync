@@ -72,14 +72,14 @@ public class SyncConstant {
 
     public static final String VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID = "077c43ee-9745-11e9-bc42-526af7764f64";
 
-    public static final String VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER = "315124004";
+    public static final String VIRAL_LOAD_SYNC_TASK_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
 
     public static final String VIRAL_LOAD_SYNC_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
     public static final String VL_PROGRAM_DATA_SYNC_TYPE_UUID = "f9b2fa5d-5d37-4fd9-b20a-a0cab664f520";
     public static final String FHIRSERVER_SYNC_TASK_TYPE_UUID = "3c1ce940-8ade-11ea-bc55-0242ac130003";
     public static final String VIRAL_LOAD_RESULT_PULL_TYPE_UUID = "3396dcf0-2106-4e73-9b90-c63978c3a8b4";
 
-	public static final String LAB_RESULT_PULL_TYPE_UUID = "f947128e-93d7-46d5-aa32-645e38a125fe";
+	public static final String LAB_RESULT_PULL_SYNC_TASK_TYPE_UUID = "d4a3ebbb-e793-4e56-867c-0cf998e51f56";
 
     public static final String SEND_MER_REPORTS_SYNC_TASK_TYPE_UUID = "6ebd85c8-127b-4c88-8a40-27defef367a9";
     public static final String SEND_HMIS_REPORTS_SYNC_TASK_TYPE_UUID = "c5f00f18-c0f6-4917-b973-2b7c1d2d4a81";
@@ -468,7 +468,7 @@ public class SyncConstant {
 
     public static final String VIRAL_LOAD_ENCOUNTER_QUERY = "select * from encounter inner join encounter_type on (encounter.encounter_type=encounter_type.encounter_type_id) where encounter_type.uuid='077c43ee-9745-11e9-bc42-526af7764f64'";
 
-    public static final String VIRAL_LOAD_ORDERS_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) inner JOIN concept ON (orders.concept_id = concept.concept_id) inner join concept_reference_map on (concept.concept_id = concept_reference_map.concept_id) inner join concept_reference_term on (concept_reference_map.concept_reference_term_id = concept_reference_term.concept_reference_term_id) where accession_number!=\"\" AND specimen_source!=\"\" AND orders.instructions=\"REFER TO cphl\" AND code=\"" + VIRAL_LOAD_SYNC_TASK_TYPE_IDENTIFIER + "\"";
+    public static final String VIRAL_LOAD_ORDERS_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) inner JOIN concept ON (orders.concept_id = concept.concept_id) inner join concept_reference_map on (concept.concept_id = concept_reference_map.concept_id) inner join concept_reference_term on (concept_reference_map.concept_reference_term_id = concept_reference_term.concept_reference_term_id) where accession_number!=\"\" AND specimen_source!=\"\" AND orders.instructions=\"REFER TO cphl\" AND code=\"" + VIRAL_LOAD_SYNC_TASK_TYPE_UUID + "\"";
 
     public static final String VIRAL_LOAD_ORDER_QUERY = "select orders.order_id from orders  inner join test_order on (test_order.order_id=orders.order_id) where accession_number=\"%s\"";
 

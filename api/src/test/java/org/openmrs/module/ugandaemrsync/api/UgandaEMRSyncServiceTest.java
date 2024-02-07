@@ -174,7 +174,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     public void getSyncT_shouldReturnSyncTaskTypeThatMatchesUUID() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
-        List<SyncTask> syncTasks = ugandaEMRSyncService.getIncompleteActionSyncTask(syncTaskType.getDataTypeId());
+        List<SyncTask> syncTasks = ugandaEMRSyncService.getIncompleteActionSyncTask(syncTaskType.getUuid());
 
         Assert.assertNotEquals(0, syncTasks.size());
         Assert.assertEquals(VIRAL_LOAD_SYNC_TYPE_UUID, syncTasks.get(0).getSyncTaskType().getUuid());

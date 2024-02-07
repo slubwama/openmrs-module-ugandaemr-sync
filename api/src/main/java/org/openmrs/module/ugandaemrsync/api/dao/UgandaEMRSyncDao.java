@@ -125,7 +125,9 @@ public class UgandaEMRSyncDao {
     public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) {
         SQLQuery sqlQuery = getSession()
                 .createSQLQuery(
-                        "select sync_task.* from sync_task where sync_task_type="+syncTaskTypeIdentifier+ "and  require_action=true and action_completed=false;");
+                        "select sync_task.* from sync_task inner join sync_task_type on (sync_task_type.sync_task_type_id=sync_task.sync_task_type) where sync_task_type.uuid='"
+                                + syncTaskTypeIdentifier
+                                + "' and  require_action=true and action_completed=false;");
         sqlQuery.addEntity(SyncTask.class);
         return sqlQuery.list();
     }

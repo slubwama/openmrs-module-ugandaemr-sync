@@ -81,12 +81,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     /**
      * Gets a list of sync task that require an action yet the action is not complete
-     * @param syncTaskTypeIdentifier the sync task type identifier for the sync tasks that need to be checked
+     * @param syncTaskTypeUuid the sync task type uuid for the sync tasks that need to be checked
      * @return List<SyncTask> that are have an action that is not completed
      * @throws APIException
      */
     @Transactional
-    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) throws APIException;
+    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeUuid) throws APIException;
 
     /**
      * Get all sync task
