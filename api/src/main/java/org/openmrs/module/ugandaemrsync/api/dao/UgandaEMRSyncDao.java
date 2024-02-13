@@ -122,11 +122,11 @@ public class UgandaEMRSyncDao {
      *
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getIncompleteActionSyncTask(java.lang.String)
      */
-    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) {
+    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeUuid) {
         SQLQuery sqlQuery = getSession()
                 .createSQLQuery(
                         "select sync_task.* from sync_task inner join sync_task_type on (sync_task_type.sync_task_type_id=sync_task.sync_task_type) where sync_task_type.uuid='"
-                                + syncTaskTypeIdentifier
+                                + syncTaskTypeUuid
                                 + "' and  require_action=true and action_completed=false;");
         sqlQuery.addEntity(SyncTask.class);
         return sqlQuery.list();
