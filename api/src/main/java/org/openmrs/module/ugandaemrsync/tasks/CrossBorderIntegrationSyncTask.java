@@ -29,16 +29,6 @@ public class CrossBorderIntegrationSyncTask extends AbstractTask {
         SyncFhirProfile syncFhirProfile = ugandaEMRSyncService.getSyncFhirProfileByScheduledTaskName(this.taskDefinition.getName());
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
         if (syncFhirProfile.getProfileEnabled()) {
-            log.info("Transfering  patients from Facility SHR" + syncFhirProfile.getName());
-            String results = null;
-            try {
-                Map resultMap = ugandaEMRHttpURLConnection.getByWithBasicAuth(syncFhirProfile.getUrl(), syncFhirProfile.getUrlUserName(), syncFhirProfile.getUrlPassword(), "String");
-                results = (String) resultMap.get("result");
-                updatePatientWithCBI(results);
-            } catch (Exception e) {
-                log.error("Failed to fetch results", e);
-            }
-
             log.info("Generating Resources and cases for Profile " + syncFhirProfile.getName());
             syncFHIRRecord.generateCaseBasedFHIRResourceBundles(syncFhirProfile);
             syncFHIRRecord.sendFhirResourcesTo(syncFhirProfile);
