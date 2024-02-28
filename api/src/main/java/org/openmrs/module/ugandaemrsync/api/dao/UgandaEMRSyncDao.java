@@ -122,11 +122,11 @@ public class UgandaEMRSyncDao {
      *
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getIncompleteActionSyncTask(java.lang.String)
      */
-    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) {
+    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeUuid) {
         SQLQuery sqlQuery = getSession()
                 .createSQLQuery(
-                        "select sync_task.* from sync_task inner join sync_task_type on (sync_task_type.sync_task_type_id=sync_task.sync_task_type) where sync_task_type.data_type_id='"
-                                + syncTaskTypeIdentifier
+                        "select sync_task.* from sync_task inner join sync_task_type on (sync_task_type.sync_task_type_id=sync_task.sync_task_type) where sync_task_type.uuid='"
+                                + syncTaskTypeUuid
                                 + "' and  require_action=true and action_completed=false;");
         sqlQuery.addEntity(SyncTask.class);
         return sqlQuery.list();
@@ -434,6 +434,7 @@ public class UgandaEMRSyncDao {
     }
 
     public List<SyncFhirResource> getSyncResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String from, String to) {
+        to =to +" 23:59:59";
         String query ="select resource_id, synced, date_synced, expiry_date, generator_profile, NULL as resource, sfr.creator, sfr.date_created, sfr.changed_by, sfr.date_changed, sfr.voided, sfr.date_voided, sfr.voided_by, sfr.void_reason, sfr.uuid, sfr.statusCode, status_code_detail, patient_id from sync_fhir_resource sfr inner join sync_fhir_profile sfp on sfr.generator_profile = sfp.sync_fhir_profile_id where sfp.uuid='" + syncFhirProfile.getUuid()
                 + "' and sfr.date_created >='"+from +"'"+"and sfr.date_created <='"+to +"';" ;
         SQLQuery sqlQuery = getSession()

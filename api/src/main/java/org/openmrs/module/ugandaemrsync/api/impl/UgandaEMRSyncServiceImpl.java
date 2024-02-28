@@ -150,8 +150,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getIncompleteActionSyncTask(java.lang.String)
      */
     @Override
-    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeIdentifier) throws APIException {
-        return dao.getIncompleteActionSyncTask(syncTaskTypeIdentifier);
+    public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeUuid) throws APIException {
+        return dao.getIncompleteActionSyncTask(syncTaskTypeUuid);
     }
 
     /**
@@ -875,8 +875,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
                 for (Order resultedOrder : activeOrdersWithResults) {
                     try {
-                        Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
-                        logResultsRecieved(order);
+                        Context.getOrderService().discontinueOrder(resultedOrder, "Completed", new Date(), resultedOrder.getOrderer(), resultedOrder.getEncounter());
+                        logResultsRecieved(resultedOrder);
                     } catch (Exception e) {
                         log.error(e);
                     }
@@ -989,14 +989,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientService.savePatient(patient);
     }
 
-    public void updatePatientsFromFHIR(JSONObject bundle) {
+    public Patient updatePatientsFromFHIR(JSONObject bundle, String identifierUUID, String identifierName) {
+        Patient patient = null;
         PatientService patientService = Context.getPatientService();
         if (bundle.has("resourceType") && bundle.getString("resourceType").equals("Bundle") && bundle.getJSONArray("entry").length() > 0) {
             JSONArray bundleResourceObjects = bundle.getJSONArray("entry");
 
             for (int i = 0; i < bundleResourceObjects.length(); i++) {
                 JSONObject patientResource = bundleResourceObjects.getJSONObject(i).getJSONObject("resource");
-                Patient patient = patientService.getPatientByUuid(patientResource.getString("id"));
+                patient = patientService.getPatientByUuid(patientResource.getString("id"));
 
 
                 if (patient != null && patient.getPatientIdentifiers(patientService.getPatientIdentifierTypeByUuid(PATIENT_ID_TYPE_UIC_UUID)).size() > 0) {
@@ -1007,6 +1008,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 patientService.savePatient(patient);
             }
         }
+        return patient;
     }
 
     @Override

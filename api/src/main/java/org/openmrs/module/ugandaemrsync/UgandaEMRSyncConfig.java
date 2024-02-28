@@ -99,6 +99,12 @@ public class UgandaEMRSyncConfig {
 
 	public static final String PATIENT_ID_TYPE_NIN_NAME = "National ID No.";
 
-	public static final String PATIENT_ID_TYPE_PATIENT_POIN_UUID = "5ddcb840-e1d3-11ed-b5ea-0242ac120002";
-	public static final String FSHR_SYNC_FHIR_PROFILE_UUID = "0b7eb397-4488-4a88-9967-a054b3c26d6f";
+	public static final String CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID = "f2190cf4-2236-11ee-be56-0242ac120002";
+
+	public static final String PATIENT_ID_TYPE_CROSS_BORDER_UUID = "877169c4-92c6-4cc9-bf45-1ab95faea242";
+
+	public static final String PATIENT_ID_TYPE_CROSS_BORDER_NAME = "Patient Unique  ID Code (UIC)";
+	public static final String FSHR_SYNC_FHIR_PROFILE_UUID = "f2190cf4-2236-11ee-be56-0242ac120002";
+
+
 }

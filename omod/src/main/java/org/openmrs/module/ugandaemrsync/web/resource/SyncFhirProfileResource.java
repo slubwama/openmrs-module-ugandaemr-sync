@@ -6,6 +6,7 @@ import io.swagger.models.properties.StringProperty;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.BooleanProperty;
 import io.swagger.models.properties.IntegerProperty;
+import io.swagger.models.properties.DateProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -84,7 +85,7 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("numberOfResourcesInBundle");
 			description.addProperty("durationToKeepSyncedResources");
 			description.addProperty("generateBundle");
-			description.addProperty("caseBasedProfile");
+			description.addProperty("isCaseBasedProfile");
 			description.addProperty("caseBasedPrimaryResourceType");
 			description.addProperty("caseBasedPrimaryResourceTypeId");
 			description.addProperty("caseBasedPrimaryResourceType");
@@ -95,6 +96,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
+			description.addProperty("syncDataEverSince");
+			description.addProperty("isCaseBasedProfile");
+			description.addProperty("dataToSyncStartDate");
+			description.addProperty("searchable");
+			description.addProperty("searchURL");
 			description.addSelfLink();
 			return description;
 		} else if (rep instanceof FullRepresentation) {
@@ -107,7 +113,7 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("numberOfResourcesInBundle");
 			description.addProperty("durationToKeepSyncedResources");
 			description.addProperty("generateBundle");
-			description.addProperty("caseBasedProfile");
+			description.addProperty("isCaseBasedProfile");
 			description.addProperty("caseBasedPrimaryResourceType");
 			description.addProperty("caseBasedPrimaryResourceTypeId");
 			description.addProperty("caseBasedPrimaryResourceType");
@@ -125,6 +131,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("voidedBy", Representation.REF);
 			description.addProperty("dateVoided");
 			description.addProperty("voidReason");
+			description.addProperty("syncDataEverSince");
+			description.addProperty("isCaseBasedProfile");
+			description.addProperty("dataToSyncStartDate");
+			description.addProperty("searchable");
+			description.addProperty("searchURL");
 			description.addSelfLink();
 			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
 			return description;
@@ -138,7 +149,7 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("numberOfResourcesInBundle");
 			description.addProperty("durationToKeepSyncedResources");
 			description.addProperty("generateBundle");
-			description.addProperty("caseBasedProfile");
+			description.addProperty("isCaseBasedProfile");
 			description.addProperty("caseBasedPrimaryResourceType");
 			description.addProperty("caseBasedPrimaryResourceTypeId");
 			description.addProperty("resourceSearchParameter");
@@ -148,6 +159,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
+			description.addProperty("syncDataEverSince");
+			description.addProperty("isCaseBasedProfile");
+			description.addProperty("dataToSyncStartDate");
+			description.addProperty("searchable");
+			description.addProperty("searchURL");
 			description.addSelfLink();
 			return description;
 		}
@@ -174,7 +190,7 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		description.addProperty("numberOfResourcesInBundle");
 		description.addProperty("numberOfResourcesInBundle");
 		description.addProperty("generateBundle");
-		description.addProperty("caseBasedProfile");
+		description.addProperty("isCaseBasedProfile");
 		description.addProperty("caseBasedPrimaryResourceType");
 		description.addProperty("caseBasedPrimaryResourceTypeId");
 		description.addProperty("resourceSearchParameter");
@@ -184,6 +200,11 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		description.addProperty("urlToken");
 		description.addProperty("urlUserName");
 		description.addProperty("urlPassword");
+		description.addProperty("syncDataEverSince");
+		description.addProperty("isCaseBasedProfile");
+		description.addProperty("dataToSyncStartDate");
+		description.addProperty("searchable");
+		description.addProperty("searchURL");
 
 		return description;
 	}
@@ -206,12 +227,23 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 	public Model getGETModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("uuid", new StringProperty()).property("name", new StringProperty())
-			        .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-			        .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-			        .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-			        .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
+			model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+			        .property("resourceTypes", new StringProperty())
+					.property("profileEnabled", new BooleanProperty())
+			        .property("patientIdentifierType", new StringProperty())
+					.property("numberOfResourcesInBundle", new IntegerProperty())
+			        .property("durationToKeepSyncedResources", new IntegerProperty())
+					.property("generateBundle", new BooleanProperty())
+					.property("dataToSyncStartDate", new DateProperty())
+					.property("isCaseBasedProfile", new BooleanProperty())
+					.property("syncDataEverSince", new BooleanProperty())
+			        .property("isCaseBasedProfile", new BooleanProperty())
+					.property("caseBasedPrimaryResourceType", new StringProperty())
+                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+					.property("resourceSearchParameter", new StringProperty())
+					.property("searchable", new BooleanProperty())
+					.property("searchURL", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
 			model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -234,12 +266,24 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 	public Model getCREATEModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-            model.property("uuid", new StringProperty()).property("name", new StringProperty())
-                    .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-                    .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-                    .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-                    .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty());
+            model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+                    .property("resourceTypes", new StringProperty())
+					.property("profileEnabled", new BooleanProperty())
+                    .property("patientIdentifierType", new StringProperty())
+					.property("numberOfResourcesInBundle", new IntegerProperty())
+                    .property("durationToKeepSyncedResources", new IntegerProperty())
+					.property("generateBundle", new BooleanProperty())
+                    .property("isCaseBasedProfile", new BooleanProperty())
+                    .property("syncDataEverSince", new BooleanProperty())
+					.property("dataToSyncStartDate", new DateProperty())
+                    .property("isCaseBasedProfile", new BooleanProperty())
+					.property("caseBasedPrimaryResourceType", new StringProperty())
+                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+					.property("resourceSearchParameter", new StringProperty())
+					.property("searchable", new BooleanProperty())
+					.property("searchURL", new StringProperty());
+
 		}
 		if (rep instanceof DefaultRepresentation) {
             model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -260,12 +304,23 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 
 	@Override
 	public Model getUPDATEModel(Representation rep) {
-		return new ModelImpl().property("uuid", new StringProperty()).property("name", new StringProperty())
-                .property("resourceTypes", new StringProperty()).property("profileEnabled", new BooleanProperty())
-                .property("patientIdentifierType", new StringProperty()).property("numberOfResourcesInBundle", new IntegerProperty())
-                .property("durationToKeepSyncedResources", new IntegerProperty()).property("generateBundle", new BooleanProperty())
-                .property("caseBasedProfile", new BooleanProperty()).property("caseBasedPrimaryResourceType", new StringProperty())
-                .property("caseBasedPrimaryResourceTypeId", new StringProperty()) .property("resourceSearchParameter", new StringProperty())
+		return new ModelImpl().property("uuid", new StringProperty())
+				.property("name", new StringProperty())
+                .property("resourceTypes", new StringProperty())
+				.property("profileEnabled", new BooleanProperty())
+                .property("patientIdentifierType", new StringProperty())
+				.property("numberOfResourcesInBundle", new IntegerProperty())
+                .property("durationToKeepSyncedResources", new IntegerProperty())
+                .property("dataToSyncStartDate", new DateProperty())
+				.property("generateBundle", new BooleanProperty())
+				.property("isCaseBasedProfile", new BooleanProperty())
+				.property("syncDataEverSince", new BooleanProperty())
+                .property("isCaseBasedProfile", new BooleanProperty())
+				.property("caseBasedPrimaryResourceType", new StringProperty())
+                .property("caseBasedPrimaryResourceTypeId", new StringProperty())
+				.property("resourceSearchParameter", new StringProperty())
+				.property("searchable", new BooleanProperty())
+				.property("searchURL", new StringProperty())
                 .property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
                 .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))

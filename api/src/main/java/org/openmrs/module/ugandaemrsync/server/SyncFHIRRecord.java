@@ -74,6 +74,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.FSHR_SYNC_FHIR_PROFILE_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_NAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_ENABLE_SYNC_CBS_FHIR_DATA;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PERSON_UUID_QUERY;
@@ -358,7 +361,7 @@ public class SyncFHIRRecord {
     public Collection<SyncFhirResource> generateCaseBasedFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
         this.profile = syncFhirProfile;
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        if (syncFhirProfile != null && (!syncFhirProfile.getCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
+        if (syncFhirProfile != null && (!syncFhirProfile.getIsCaseBasedProfile() || syncFhirProfile.getCaseBasedPrimaryResourceType() == null)) {
             return null;
         }
 
@@ -817,6 +820,7 @@ public class SyncFHIRRecord {
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addUseOfficialToName(jsonString, "name");
                 jsonString = removeAttribute(jsonString, "contained");
+                jsonString = addAttributeToObject(jsonString, "telecom","system","phone");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
             }
 
@@ -888,6 +892,16 @@ public class SyncFHIRRecord {
         return jsonObject.toString();
     }
 
+    private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
+        JSONObject jsonObject = new JSONObject(payload);
+        if (jsonObject.getJSONArray(targetObject) != null) {
+            for (int i = 0; i < jsonObject.getJSONArray(targetObject).length(); i++) {
+                jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
+                i++;
+            }
+        }
+        return jsonObject.toString();
+    }
     public String addCodingToSystemToPrimaryIdentifier(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
         int identifierCount = 0;
@@ -988,7 +1002,7 @@ public class SyncFHIRRecord {
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getCaseBasedProfile()) {
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
             } else if (syncFhirCase != null) {
@@ -1010,7 +1024,6 @@ public class SyncFHIRRecord {
         PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
-
         return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
@@ -1024,7 +1037,7 @@ public class SyncFHIRRecord {
         }
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
-        if (providerUUIDs.size() == 0 && !syncFhirProfile.getCaseBasedProfile()) {
+        if (providerUUIDs.size() == 0 && !syncFhirProfile.getIsCaseBasedProfile()) {
             DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
 
             iBaseResources = getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(null, null, null, null, null,
@@ -1043,7 +1056,7 @@ public class SyncFHIRRecord {
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getCaseBasedProfile()) {
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
             if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                 lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
             } else {
@@ -1060,7 +1073,7 @@ public class SyncFHIRRecord {
             Collection<String> personListUUID = personList.stream().map(org.openmrs.Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
             iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
 
-        } else if (!syncFhirProfile.getCaseBasedProfile()) {
+        } else if (!syncFhirProfile.getIsCaseBasedProfile()) {
             iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(null, null, null, null,
                     null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
         }
@@ -1212,6 +1225,9 @@ public class SyncFHIRRecord {
                         syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
                         syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
+                        if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
+                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")),PATIENT_ID_TYPE_CROSS_BORDER_UUID,PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                        }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     } else {
                         syncFhirResource.setStatusCode(Integer.parseInt(map.get("responseCode").toString()));
