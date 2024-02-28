@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+ 
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
@@ -1711,6 +1711,70 @@
             <column name="uuid" value="d4a3ebbb-e793-4e56-867c-0cf998e51f56" />
         </insert>
     </changeSet>
+
+    <changeSet id="20240111-1607" author="solema" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '4b7cfab5-4e32-4988-bd40-a76a7b9b5454'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  Mortality Surveillance  Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="MORTALITY SURVEILLANCE" />
+            <column name="description" value="The Mortality Surveillance task" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.MortalitySurveillanceTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2024-01-11 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="c9576dbb-9d10-4522-b9c6-9434cfef99b8" />
+        </insert>
+    </changeSet>
+<!--Mortality surveillance profile-->
+    <changeSet id="ugandaemrsync-20240112-0901" author="solema">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6acc9390-1049-41a5-979b-c57d895ca674'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating Mortality Surveillance</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="Mortality Surveillance"/>
+            <column name="resource_types" value="Patient,Person,EpisodeOfCare,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="4"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Encounter"/>
+            <column name="case_based_primary_resource_type_id" value="e75c856a-9e91-4ffb-bf43-1b0450b4ff8c"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["e75c856a-9e91-4ffb-bf43-1b0450b4ff8c"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/central-server"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2024-01-12 09:09:50"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="6acc9390-1049-41a5-979b-c57d895ca674"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="20210821-1104" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = 'c9576dbb-9d10-4522-b9c6-9434cfef99b8'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='6acc9390-1049-41a5-979b-c57d895ca674';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Mortality Surveillance task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '6acc9390-1049-41a5-979b-c57d895ca674', (select task_config_id from scheduler_task_config where uuid="c9576dbb-9d10-4522-b9c6-9434cfef99b8"));
+        </sql>
+    </changeSet>
+
 
     <changeSet id="ugandaemrsync-202312-03-1247" author="slubwama">
         <addColumn tableName="sync_task_type">
