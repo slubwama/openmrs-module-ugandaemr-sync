@@ -41,11 +41,13 @@
                 modal.find("#dataToSyncStartDate").val("");
                 modal.find("#durationToKeepSyncedResources").val("");
                 modal.find("#noOfResourcesInBundle").val("");
+                modal.find("#searchURL").val("");
 
                 modal.find("#dataType select").find().val("");
                 modal.find("#caseBasedPrimaryResourceType select").find().val("");
                 modal.find("#patientIdentifierType select").find().val("");
                 modal.find("isCaseBasedProfile").checked = false;
+                modal.find("searchable").checked = false;
                 modal.find("generateBundle").checked = false;
                 modal.find("syncDataEverSince").checked = false;
                 modal.find("resourceTypeEncounter").checked = false;
@@ -78,18 +80,18 @@
                 modal.find("#generateBundle").attr('checked', syncFhirProfile.generateBundle);
                 modal.find("#syncDataEverSince").attr('checked', syncFhirProfile.syncDataEverSince);
                 modal.find("#noOfResourcesInBundle").val(syncFhirProfile.numberOfResourcesInBundle);
-
                 modal.find("#durationToKeepSyncedResources").val(syncFhirProfile.durationToKeepSyncedResources);
-
                 modal.find("#isCaseBasedProfile").attr('checked', syncFhirProfile.isCaseBasedProfile);
+                modal.find("#searchable").attr('checked', syncFhirProfile.searchable);
                 if (syncFhirProfile.dataToSyncStartDate !== "") {
                     modal.find("#dataToSyncStartDate").val(formatDateForDisplay(new Date(syncFhirProfile.dataToSyncStartDate)));
                 }
 
                 modal.find("#caseBasedPrimaryResourceType").val(syncFhirProfile.caseBasedPrimaryResourceType);
                 modal.find("#caseBasedPrimaryResourceTypeId").val(syncFhirProfile.caseBasedPrimaryResourceTypeId);
+                modal.find("#searchURL").val(syncFhirProfile.searchURL);
 
-                modal.find("#patientIdentifierType").val(syncFhirProfile.patientIdentifierType);
+                modal.find("#patientIdentifierType").val(syncFhirProfile.patientIdentifierType.uuid);
 
                 var resourceType = syncFhirProfile.resourceTypes.split(",");
 
@@ -118,6 +120,15 @@
 
                 if (!syncFhirProfile) {
                     ${ ui.message("coreapps.none ") }
+                }
+            });
+
+            jq('#searchable').click(function () {
+                if (jq('#searchable').is(':checked')) {
+                    jq('#searchURL').show();
+                }
+                else {
+                    jq('#searchURL').hide();
                 }
             });
         });
@@ -649,6 +660,18 @@
                                                     <label>Auth Token</label>
                                                     <input type="text" class="form-control" id="token"
                                                            placeholder="token" name="token">
+                                                </div>
+
+                                                <div class="form-check form-switch">
+                                                    <input type="checkbox" id="searchable" name="searchable" value="true">
+                                                    <label class="form-check-label" for="searchable">
+                                                        Is Profile Searchable
+                                                    </label>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Search URL</label>
+                                                    <input type="text" class="form-control" id="searchURL" placeholder="Search URL" name="searchURL">
                                                 </div>
                                             </div>
                                         </div>
