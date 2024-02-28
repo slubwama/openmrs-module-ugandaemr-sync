@@ -1760,7 +1760,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="20240212-0902" author="solema" dbms="mysql">
+    <changeSet id="ugandaemrsync-20240228-0901" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = 'c9576dbb-9d10-4522-b9c6-9434cfef99b8'
