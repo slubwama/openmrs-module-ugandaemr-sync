@@ -99,6 +99,8 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("syncDataEverSince");
 			description.addProperty("isCaseBasedProfile");
 			description.addProperty("dataToSyncStartDate");
+			description.addProperty("searchable");
+			description.addProperty("searchURL");
 			description.addSelfLink();
 			return description;
 		} else if (rep instanceof FullRepresentation) {
@@ -132,6 +134,8 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("syncDataEverSince");
 			description.addProperty("isCaseBasedProfile");
 			description.addProperty("dataToSyncStartDate");
+			description.addProperty("searchable");
+			description.addProperty("searchURL");
 			description.addSelfLink();
 			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
 			return description;
@@ -158,6 +162,8 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("syncDataEverSince");
 			description.addProperty("isCaseBasedProfile");
 			description.addProperty("dataToSyncStartDate");
+			description.addProperty("searchable");
+			description.addProperty("searchURL");
 			description.addSelfLink();
 			return description;
 		}
@@ -197,6 +203,8 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		description.addProperty("syncDataEverSince");
 		description.addProperty("isCaseBasedProfile");
 		description.addProperty("dataToSyncStartDate");
+		description.addProperty("searchable");
+		description.addProperty("searchURL");
 
 		return description;
 	}
@@ -233,7 +241,9 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			        .property("isCaseBasedProfile", new BooleanProperty())
 					.property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty())
-					.property("resourceSearchParameter", new StringProperty());
+					.property("resourceSearchParameter", new StringProperty())
+					.property("searchable", new BooleanProperty())
+					.property("searchURL", new StringProperty());
 		}
 		if (rep instanceof DefaultRepresentation) {
 			model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -270,7 +280,10 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
                     .property("isCaseBasedProfile", new BooleanProperty())
 					.property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty())
-					.property("resourceSearchParameter", new StringProperty());
+					.property("resourceSearchParameter", new StringProperty())
+					.property("searchable", new BooleanProperty())
+					.property("searchURL", new StringProperty());
+
 		}
 		if (rep instanceof DefaultRepresentation) {
             model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
@@ -306,6 +319,8 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 				.property("caseBasedPrimaryResourceType", new StringProperty())
                 .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 				.property("resourceSearchParameter", new StringProperty())
+				.property("searchable", new BooleanProperty())
+				.property("searchURL", new StringProperty())
                 .property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
                 .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))

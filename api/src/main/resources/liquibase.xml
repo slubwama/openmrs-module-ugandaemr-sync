@@ -1853,4 +1853,16 @@
             update sync_fhir_profile  SET resource_search_parameter = '{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[160741,166421,159367,165043],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["8d5b2be0-c2cc-11de-8d13-0010c6dffd0f"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}' where uuid="2f0ef683-c988-448b-b928-e3e2cf6657af";
         </sql>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-02-21-1111" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="searchable" type="TINYINT(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-02-21-1110" author="slubwama">
+        <addColumn tableName="sync_fhir_profile">
+            <column name="search_url" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

@@ -101,6 +101,13 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
     @Column(name = "token_refresh_key", length = 255)
     private String tokenRefreshKey;
 
+    @Column(name = "searchable")
+    private Boolean searchable;
+
+    @Getter
+    @Column(name = "search_url", length = 255)
+    private String searchURL;
+
     public int getSyncFhirProfileId() {
         return syncFhirProfileId;
     }
@@ -288,5 +295,33 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
 
     public void setTokenRefreshKey(String tokenRefreshKey) {
         this.tokenRefreshKey = tokenRefreshKey;
+    }
+
+    public Date getTokenExpiryDate() {
+        return tokenExpiryDate;
+    }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public String getTokenRefreshKey() {
+        return tokenRefreshKey;
+    }
+
+    public Boolean getSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(Boolean searchable) {
+        this.searchable = searchable;
+    }
+
+    public String getSearchURL() {
+        return searchURL;
+    }
+
+    public void setSearchURL(String searchURL) {
+        this.searchURL = searchURL;
     }
 }

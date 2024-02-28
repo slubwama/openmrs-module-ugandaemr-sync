@@ -50,6 +50,8 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "observationCodeUUIDS", required = false) ArrayList observationCodeUUIDs,
                      @RequestParam(value = "episodeOfCareUUIDS", required = false) String episodeOfCareUUIDS,
                      @RequestParam(value = "url", required = false) String url,
+                     @RequestParam(value = "searchable", required = false) String searchable,
+                     @RequestParam(value = "searchURL", required = false) String searchURL,
                      @RequestParam(value = "username", required = false) String username,
                      @RequestParam(value = "password", required = false) String password,
                      @RequestParam(value = "token", required = false) String token,
@@ -98,6 +100,8 @@ public class SyncFhirProfilePageController {
         syncFhirProfile.setUrlPassword(password);
         syncFhirProfile.setUrlToken(token);
         syncFhirProfile.setSyncLimit(syncLimit);
+        syncFhirProfile.setSearchable(Boolean.parseBoolean(searchable));
+        syncFhirProfile.setSearchURL(searchURL);
         ugandaEMRSyncService.saveSyncFhirProfile(syncFhirProfile);
 
         pageModel.put("syncFhirProfiles", ugandaEMRSyncService.getAllSyncFhirProfile());
