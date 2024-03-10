@@ -2,9 +2,6 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.SQLQuery;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.api.context.Context;
@@ -17,11 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.HashMap;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Arrays;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_USERNAME;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PASSWORD;
+
 
 public class SyncDataRecord {
 

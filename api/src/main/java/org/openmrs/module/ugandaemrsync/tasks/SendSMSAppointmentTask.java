@@ -19,11 +19,15 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.server.TaskType;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.DataInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -34,7 +38,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.REPORT_RENDERER_TYPE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SMS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SMS_REPORT_CSV_DESIGN_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SMS_DATA_EXPORT_REPORT_DEFINITION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SMS_APPOINTMENT_TYPE_UUID;
 
 /**
@@ -49,10 +57,6 @@ public class SendSMSAppointmentTask extends AbstractTask {
     UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
     SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
     TaskType taskType = new TaskType();
-
-    @Autowired
-    @Qualifier("reportingReportDefinitionService")
-    protected ReportDefinitionService reportingReportDefinitionService;
 
     @Override
     public void execute() {

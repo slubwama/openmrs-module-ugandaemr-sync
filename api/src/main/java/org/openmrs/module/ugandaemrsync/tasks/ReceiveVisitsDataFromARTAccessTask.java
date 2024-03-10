@@ -40,8 +40,9 @@ import java.util.Date;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_ART_ACCESS_LAST_SYNC_DATE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ART_ACCESS_PULL_TYPE_UUID;
 
 public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
     protected final Log log = LogFactory.getLog(ReceiveVisitsDataFromARTAccessTask.class);

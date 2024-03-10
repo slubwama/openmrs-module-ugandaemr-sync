@@ -2,16 +2,13 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.*;
-import org.openmrs.api.APIException;
+import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
-import org.openmrs.module.ugandaemrsync.model.*;
-
-import java.util.Collection;
+import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+
 
 public class TaskType {
 

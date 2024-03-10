@@ -3,7 +3,9 @@ package org.openmrs.module.ugandaemrsync.server;
 import org.junit.Test;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 
 public class UgandaEMRHttpURLConnectionTest {
 	

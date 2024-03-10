@@ -12,8 +12,7 @@ package org.openmrs.module.ugandaemrsync.web.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
-import org.openmrs.api.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.openmrs.api.context.Context;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -33,9 +32,6 @@ public class UgandaEMRSyncController {
 	
 	/** Logger for this class and subclasses */
 	protected final Log log = LogFactory.getLog(getClass());
-	
-	@Autowired
-    UserService userService;
 	
 	/** Success form view name */
 	private final String VIEW = "/module/ugandaemrsync/ugandaemrsync";
@@ -76,7 +72,7 @@ public class UgandaEMRSyncController {
 	 */
 	@ModelAttribute("users")
 	protected List<User> getUsers() throws Exception {
-		List<User> users = userService.getAllUsers();
+		List<User> users = Context.getUserService().getAllUsers();
 		
 		// this object will be made available to the jsp page under the variable name
 		// that is defined in the @ModuleAttribute tag
