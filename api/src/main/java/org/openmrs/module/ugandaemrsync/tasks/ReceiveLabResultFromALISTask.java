@@ -11,9 +11,14 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
-import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAB_RESULT_PULL_SYNC_TASK_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAB_ORDER_QUERY;
 
 public class ReceiveLabResultFromALISTask extends AbstractTask {
     protected final Log log = LogFactory.getLog(ReceiveLabResultFromALISTask.class);

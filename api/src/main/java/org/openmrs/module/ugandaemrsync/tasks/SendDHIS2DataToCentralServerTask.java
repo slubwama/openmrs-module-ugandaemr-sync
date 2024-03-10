@@ -3,20 +3,15 @@ package org.openmrs.module.ugandaemrsync.tasks;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openmrs.module.reporting.report.definition.service.ReportDefinitionService;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.ui.framework.SimpleObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,7 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_SERVER_URL;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_SERVER_USERNAME;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_SERVER_PASSWORD;
 
 /**
  * Posts DHIS 2 data data to the central server
@@ -50,10 +47,6 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
 		this.data = data;
 		this.serverResponseObject= simpleObject;
 	}
-
-	@Autowired
-	@Qualifier("reportingReportDefinitionService")
-	protected ReportDefinitionService reportingReportDefinitionService;
 
 
     public void execute() {

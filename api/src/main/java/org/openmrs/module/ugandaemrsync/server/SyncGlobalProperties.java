@@ -5,7 +5,18 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PROTOCOL;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_PROTOCOL_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.INITIAL_SYNC;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.INITIAL_SYNC_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_IP;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SERVER_IP_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HEALTH_CENTER_SYNC_ID_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.MAX_NUMBER_OF_ROWS;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.MAX_NUMBER_OF_ROWS_PLACE_HOLDER;
 
 /**
  * Created by lubwamasamuel on 10/11/2016.

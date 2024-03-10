@@ -2,26 +2,45 @@ package org.openmrs.module.ugandaemrsync.tasks;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.*;
+
+import org.openmrs.Order;
+import org.openmrs.Patient;
+import org.openmrs.TestOrder;
+
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.OrderService;
-import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.impl.UgandaEMRSyncServiceImpl;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
-import org.openmrs.module.ugandaemrsync.server.SyncConstant;
-import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_PROGRAM_DATA_SYNC_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_SEND_PROGRAM_DATA_FHIR_JSON_STRING;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_IDENTIFIER_TYPE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ANC_IDENTIFIER_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PNC_IDENTIFIER_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.Latest_obs_of_Person;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.firstLineBody;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.secondLineBody;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.thirdLineBody;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_ORDERS_QUERY;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.REGIMEN_LINE_QUERY;
 
 /**
  * Posts Viral load PROGRAM data to the central server

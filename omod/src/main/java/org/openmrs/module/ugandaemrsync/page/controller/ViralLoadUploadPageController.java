@@ -2,7 +2,12 @@ package org.openmrs.module.ugandaemrsync.page.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.*;
+
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.Order;
+import org.openmrs.Patient;
+
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.parameter.EncounterSearchCriteria;
@@ -16,7 +21,11 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
-import java.util.*;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Collection;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.HIV_ENCOUNTER_PAGE_UUID;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_FACILITY_DHIS2_ID_CELL_NO;

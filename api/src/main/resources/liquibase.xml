@@ -1569,7 +1569,7 @@
             <column name="repeat_interval" value="86400" />
             <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
             <column name="created_by" value="1" />
-            <column name="start_on_startup" value="1"/>
+            <column name="start_on_startup" value="0"/>
             <column name="started" value="1"/>
             <column name="uuid" value="3201d456-9699-412d-9cff-3fec93c4bb21" />
         </insert>
@@ -1864,5 +1864,12 @@
         <addColumn tableName="sync_fhir_profile">
             <column name="search_url" type="VARCHAR(255)"/>
         </addColumn>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-03-10-1357" author="slubwama">
+        <comment>Change all UgandaEMR related Task not to run on start</comment>
+        <sql>
+            update scheduler_task_config set start_on_startup=0 where schedulable_class like "%ugandaemr%";
+        </sql>
     </changeSet>
 </databaseChangeLog>

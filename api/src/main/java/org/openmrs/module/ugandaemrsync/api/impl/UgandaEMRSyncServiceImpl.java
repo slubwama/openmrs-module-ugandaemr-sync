@@ -28,7 +28,6 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ObsService;
 import org.openmrs.api.PatientService;
-import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
@@ -48,7 +47,6 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
 import org.openmrs.scheduler.TaskDefinition;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 import java.io.FileInputStream;
@@ -61,10 +59,22 @@ import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import java.util.List;
+import java.util.Date;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.Properties;
+import java.util.Locale;
+import java.util.UUID;
+
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SYNC_METRIC_DATA;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_UIC_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_UIC_NAME;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_NIN_NAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ALIS_SYNC_TASK_TYPE_UUID;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
 
@@ -73,21 +83,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     UgandaEMRSyncDao dao;
     Log log = LogFactory.getLog(UgandaEMRSyncServiceImpl.class);
 
-    @Autowired
-    UserService userService;
 
     /**
      * Injected in moduleApplicationContext.xml
      */
     public void setDao(UgandaEMRSyncDao dao) {
         this.dao = dao;
-    }
-
-    /**
-     * Injected in moduleApplicationContext.xml
-     */
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     /**
@@ -112,7 +113,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     @Override
     public SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) throws APIException {
         if (syncTaskType.getCreator() == null) {
-            syncTaskType.setCreator(userService.getUser(1));
+            syncTaskType.setCreator(Context.getUserService().getUser(1));
         }
         return dao.saveSyncTaskType(syncTaskType);
     }
@@ -140,7 +141,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     @Override
     public SyncTask saveSyncTask(SyncTask syncTask) throws APIException {
         if (syncTask.getCreator() == null) {
-            syncTask.setCreator(userService.getUser(1));
+            syncTask.setCreator(Context.getUserService().getUser(1));
         }
         return dao.saveSyncTask(syncTask);
     }

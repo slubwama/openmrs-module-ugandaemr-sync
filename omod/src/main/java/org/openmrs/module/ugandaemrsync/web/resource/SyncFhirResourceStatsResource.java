@@ -3,27 +3,23 @@ package org.openmrs.module.ugandaemrsync.web.resource;
 import org.openmrs.api.APIAuthenticationException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.reporting.common.DateUtil;
-import org.openmrs.module.reporting.dataset.DataSet;
-import org.openmrs.module.reporting.evaluation.EvaluationContext;
-import org.openmrs.module.reporting.report.ReportData;
-import org.openmrs.module.reporting.report.ReportDesign;
-import org.openmrs.module.reporting.report.definition.ReportDefinition;
-import org.openmrs.module.reporting.report.definition.service.ReportDefinitionService;
-import org.openmrs.module.reporting.report.renderer.RenderingMode;
-import org.openmrs.module.reporting.report.service.ReportService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
-import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RestConstants;
-import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
 
 @Controller
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + SyncFhirResourceStatsResource.DATASET)
