@@ -11,9 +11,18 @@ import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 
-import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TASK_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_RESULT_PULL_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_RECEIVE_RESULT_FHIR_JSON_STRING;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_ORDER_QUERY;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_IDENTIFIER_TYPE;
 
 public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
     protected final Log log = LogFactory.getLog(ReceiveViralLoadResultFromCentralServerTask.class);

@@ -18,8 +18,6 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.io.DataInputStream;
@@ -28,9 +26,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -44,7 +39,15 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_ANALYTICS_SERVER_URL;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.ANALYTICS_DATA_EXPORT_REPORT_DEFINITION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SYNC_METRIC_DATA;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.JSON_REPORT_RENDERER_TYPE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.ANALYTICS_JSON_FILE_NAME;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.ANALYTIC_REPORT_JSON_DESIGN_UUID;
 
 /**
  * Posts Analytics data to the central server
@@ -61,10 +64,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 
     SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-
-    @Autowired
-    @Qualifier("reportingReportDefinitionService")
-    protected ReportDefinitionService reportingReportDefinitionService;
 
     @Override
     public void execute() {

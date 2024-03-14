@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_NHFR_UNIQUE_IDENTIFIER;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_FACILITY_NAME;
 
 public class NationalRegistryFragmentController {
 

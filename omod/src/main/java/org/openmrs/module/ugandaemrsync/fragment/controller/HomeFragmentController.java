@@ -18,7 +18,7 @@ import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.fragment.FragmentModel;
 import org.openmrs.ui.framework.page.PageModel;
 
-import java.util.*;
+import java.util.UUID;
 
 /**
  *  * Controller for a fragment that shows all users  

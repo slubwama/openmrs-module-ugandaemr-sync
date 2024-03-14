@@ -29,8 +29,7 @@ import org.openmrs.ui.framework.SimpleObject;
 import org.openmrs.ui.framework.annotation.SpringBean;
 import org.openmrs.ui.framework.page.PageModel;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -49,16 +48,20 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SEND_NEXT_GEN_REPORTS_SERVER_REPORT_UUIDS;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SEND_NEXT_GEN_REPORTS_SERVER_URL;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SEND_HMIS_REPORTS_SERVER_URL;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SEND_HMIS_REPORTS_SERVER_REPORT_UUIDS;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.JSON_REPORT_RENDERER_TYPE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SEND_HMIS_REPORTS_SYNC_TASK_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SEND_MER_REPORTS_SYNC_TASK_TYPE_UUID;
+
 
 /**
  *  * Controller for a fragment that sends a report 
  */
 public class SendReportsFragmentController {
 
-	@Autowired
-	SendReportsTask sendReportsTask;
 
 	UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
@@ -126,7 +129,7 @@ public class SendReportsFragmentController {
 
 
 	public SimpleObject sendData(HttpServletRequest request,@RequestParam("body") String body,@RequestParam("uuid")String uuid){
-
+		SendReportsTask sendReportsTask;
 		String response="";
 		String status="";
 		String jsonData= body;

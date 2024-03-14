@@ -20,31 +20,31 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.DataInputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_RECENCY_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_RECENCY_SERVER_URL;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SUBMIT_RECENCY_DATA_ONCE_DAILY;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.RECENCY_CSV_FILE_NAME;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.RECENCY_DATA_EXPORT_REPORT_DEFINITION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.REPORT_RENDERER_TYPE;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_RECENCY_REPORT_DURATION;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.REPORT_CSV_DESIGN_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_RECENCY_SERVER_PASSWORD;
 
 /**
  * Posts recency data to the central server
@@ -58,10 +58,6 @@ public class SendRecencyDataToCentralServerTask extends AbstractTask {
 	UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 	
 	SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-	
-	@Autowired
-	@Qualifier("reportingReportDefinitionService")
-	protected ReportDefinitionService reportingReportDefinitionService;
 	
 	@Override
 	public void execute() {

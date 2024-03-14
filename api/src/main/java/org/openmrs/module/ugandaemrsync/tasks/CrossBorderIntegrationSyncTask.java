@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONObject;
-import org.openmrs.*;
+import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -14,9 +14,8 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.ui.framework.SimpleObject;
 
 
-import java.util.*;
-
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_NAME;
 
 public class CrossBorderIntegrationSyncTask extends AbstractTask {
     protected final Log log = LogFactory.getLog(CrossBorderIntegrationSyncTask.class);

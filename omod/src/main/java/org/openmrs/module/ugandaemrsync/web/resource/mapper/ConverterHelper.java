@@ -17,7 +17,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_IDENTIFIER_TYPE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_RESULT_PULL_TYPE_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.UIC_IDENTIFIER_TYPE;
 
 public class ConverterHelper {
     public static SyncTaskDetails convertSyncTaskDetails(SyncTask syncTask) {
