@@ -1744,7 +1744,7 @@
         <insert tableName="sync_fhir_profile">
             <column name="name" value="Mortality Surveillance"/>
             <column name="resource_types" value="Patient,Person,EpisodeOfCare,Encounter,Observation"/>
-            <column name="patient_identifier_type" value="4"/>
+            <column name="patient_identifier_type" value="3"/>
             <column name="number_of_resources_in_bundle" value="100"/>
             <column name="duration_to_keep_synced_resources" value="5"/>
             <column name="generate_bundle" value="1"/>

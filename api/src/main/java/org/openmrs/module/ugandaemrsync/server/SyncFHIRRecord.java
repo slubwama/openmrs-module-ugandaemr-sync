@@ -426,14 +426,13 @@ public class SyncFHIRRecord {
 
             EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(null, null, null, null, null, null, encounterTypes, null, null, null, false);
 
-            Collection<Patient> patientArrayList = Context.getEncounterService().getEncounters(encounterSearchCriteria).stream().map(Encounter::getPatient).collect(Collectors.toCollection(ArrayList::new));
 
-            for (org.openmrs.Patient patient : patientArrayList) {
+            for (Encounter encounter : Context.getEncounterService().getEncounters(encounterSearchCriteria)) {
 
-                PatientIdentifier patientIdentifier = getPatientIdentifierByType(patient, syncFhirProfile.getPatientIdentifierType());
+                PatientIdentifier patientIdentifier = getPatientIdentifierByType(encounter.getPatient(), syncFhirProfile.getPatientIdentifierType());
 
                 if (patientIdentifier != null) {
-                    saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier.getIdentifier());
+                    saveSyncFHIRCase(syncFhirProfile, currentDate, encounter.getPatient(), patientIdentifier.getIdentifier());
                 }
 
             }
