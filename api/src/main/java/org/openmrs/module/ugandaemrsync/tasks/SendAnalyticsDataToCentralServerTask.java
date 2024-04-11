@@ -4,50 +4,54 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.reporting.common.DateUtil;
+import org.openmrs.module.reporting.common.MessageUtil;
+import org.openmrs.module.reporting.common.ObjectUtil;
 import org.openmrs.module.reporting.evaluation.EvaluationContext;
-import org.openmrs.module.reporting.evaluation.parameter.Mapped;
+import org.openmrs.module.reporting.evaluation.EvaluationException;
+import org.openmrs.module.reporting.evaluation.EvaluationUtil;
 import org.openmrs.module.reporting.report.ReportData;
-import org.openmrs.module.reporting.report.ReportRequest;
+import org.openmrs.module.reporting.report.ReportDesign;
+import org.openmrs.module.reporting.report.ReportDesignResource;
 import org.openmrs.module.reporting.report.definition.ReportDefinition;
 import org.openmrs.module.reporting.report.definition.service.ReportDefinitionService;
+import org.openmrs.module.reporting.report.renderer.RenderingException;
 import org.openmrs.module.reporting.report.renderer.RenderingMode;
+import org.openmrs.module.reporting.report.renderer.TextTemplateRenderer;
+import org.openmrs.module.reporting.report.renderer.template.TemplateEngine;
+import org.openmrs.module.reporting.report.renderer.template.TemplateEngineManager;
+import org.openmrs.module.reporting.report.service.ReportService;
 import org.openmrs.module.reporting.report.util.ReportUtil;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
+
 import org.springframework.stereotype.Component;
 
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Writer;
+import java.io.OutputStreamWriter;
+
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_ANALYTICS_SERVER_URL;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.ANALYTICS_DATA_EXPORT_REPORT_DEFINITION_UUID;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SYNC_METRIC_DATA;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.JSON_REPORT_RENDERER_TYPE;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.ANALYTICS_JSON_FILE_NAME;
-import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.ANALYTIC_REPORT_JSON_DESIGN_UUID;
+import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
 
 /**
  * Posts Analytics data to the central server
@@ -65,16 +69,21 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
     SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 
+
     @Override
     public void execute() {
         Date todayDate = new Date();
 
-        Properties properties=Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
+        Properties properties = Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
         DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-        LocalDate today = LocalDate.parse(dateFormat.format(todayDate));
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_YEAR, 1);
+        startDate= todayDate;
+        endDate = cal.getTime();
         if (!isGpAnalyticsServerUrlSet()) {
             return;
         }
@@ -89,55 +98,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 .getGlobalPropertyObject(GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE).getPropertyValue();
 
 
-        if (!isBlank(strSubmissionDate)) {
-            LocalDate gpSubmissionDate = null;
-
-            try {
-                gpSubmissionDate = LocalDate.parse(strSubmissionDate, dateFormatter);
-            } catch (Exception e) {
-                log.info("Error parsing last successful submission date " + strSubmissionDate + e);
-                e.printStackTrace();
-            }
-            if (gpSubmissionDate.getMonth() == (today.getMonth()) && gpSubmissionDate.getYear() == today.getYear()) {
-                log.info("Last successful submission was on" + strSubmissionDate
-                        + "so this task will not run again today. If you need to send data, run the task manually."
-                        + System.lineSeparator());
-                return;
-            } else {
-
-                Period diff = Period.between(
-                        gpSubmissionDate.withDayOfMonth(1), today.withDayOfMonth(1));
-                if (diff.getMonths() >= 1) {
-
-                    //setting start and end date for least month data to be generated
-                    int monthsBetween = diff.getMonths();
-                    Calendar cal = Calendar.getInstance();
-                    cal.add(Calendar.MONTH, -monthsBetween);
-                    cal.set(Calendar.DATE, 1);
-                    startDate = cal.getTime();
-                    cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DATE));
-
-                    endDate = cal.getTime();
-
-                    //setting last submission month to be the next month
-                    Calendar lastSubmissionDate = Calendar.getInstance();
-                    lastSubmissionDate.add(Calendar.MONTH, -(monthsBetween - 1));
-                    lastSubmissionDate.set(Calendar.DATE, 1);
-                    lastSubmissionDateSet = lastSubmissionDate.getTime();
-                }
-            }
-        } else {
-            //Formatting start and end dates of the report for first time running
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.MONTH, -1);
-            cal.set(Calendar.DATE, 1);
-            startDate = cal.getTime();
-
-            cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DATE));
-
-            endDate = cal.getTime();
-            lastSubmissionDateSet = todayDate;
-        }
         //Check internet connectivity
         if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
             return;
@@ -148,10 +108,23 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
             return;
         }
 
-        if (properties.getProperty(SYNC_METRIC_DATA).equalsIgnoreCase("true") && properties.getProperty(GP_DHIS2_ORGANIZATION_UUID).equalsIgnoreCase(syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID))) {
+
             log.info("Sending analytics data to central server ");
-            String bodyText = getAnalyticsDataExport();
-            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, bodyText, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+            String facilityMetadata = null;
+            try {
+                facilityMetadata = getAnalyticsDataExport();
+            } catch (EvaluationException e) {
+                throw new RuntimeException(e);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            String dataEntryData = extractDataEntryStats(DateUtil.formatDate(startDate, "yyyy-MM-dd"),DateUtil.formatDate(endDate, "yyyy-MM-dd"));
+
+            String jsonObject = "{"+ "\"metadata\":"  +facilityMetadata+ ",\"dataentry\":" +dataEntryData+"}";
+
+            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, jsonObject, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
             if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
 
                 ReportUtil.updateGlobalProperty(GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
@@ -161,69 +134,65 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
                         + httpResponse.getStatusLine().getReasonPhrase());
             }
-        } else {
-            log.info("Analytics data has not been sent to central server. Check whether you have a ugandaemr-settings.properties file and syncmetrictsdata is set to true");
-        }
+
     }
 
-    private String getAnalyticsDataExport() {
-        ReportDefinitionService reportDefinitionService = Context.getService(ReportDefinitionService.class);
-        String strOutput = new String();
+    private String extractDataEntryStats(String dateToday,String dateTmro) {
+        String baseUrl = "http://localhost:8080";
+        String baseUrl1 = "http://localhost:8081";
+        String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate="+dateToday+"&toDate="+dateTmro+"&encUserColumn=creator&groupBy=creator";
+        String url1 = baseUrl1 + endpoint;
 
-        try {
-            ReportDefinition rd = reportDefinitionService.getDefinitionByUuid(ANALYTICS_DATA_EXPORT_REPORT_DEFINITION_UUID);
-            if (rd == null) {
-                throw new IllegalArgumentException("unable to find Analytics Data Export report with uuid "
-                        + ANALYTICS_DATA_EXPORT_REPORT_DEFINITION_UUID);
-            }
-            String reportRendergingMode = JSON_REPORT_RENDERER_TYPE + "!" + ANALYTIC_REPORT_JSON_DESIGN_UUID;
+        String url = baseUrl + endpoint;
+        String response = getDataFromEndpoint(url1);
+        if (response == "") {
+            response = getDataFromEndpoint(url);
+        }
+        return response;
+    }
+
+    private String getAnalyticsDataExport() throws EvaluationException, IOException {
+        EvaluationContext context = new EvaluationContext();
+        ReportDefinitionService service = Context.getService(ReportDefinitionService.class);
+        ReportDefinition rd = service.getDefinitionByUuid(ANALYTICS_DATA_EXPORT_REPORT_DEFINITION_UUID);
+        ReportData reportData = null;
+        if (rd != null) {
+
+            Map<String, Object> parameterValues = new HashMap<String, Object>();
+            context.setParameterValues(parameterValues);
+            context.addParameterValue("endDate", endDate);
+            context.addParameterValue("startDate", startDate);
+            reportData = service.evaluate(rd, context);
+
+        }
+
+
+        List<ReportDesign> reportDesigns = Context.getService(ReportService.class).getReportDesigns(rd, null, false);
+
+        ReportDesign reportDesign = reportDesigns.stream().filter(p -> "JSON".equals(p.getName())).findAny().orElse(null);
+
+
+            String reportRendergingMode = JSON_REPORT_RENDERER_TYPE + "!" + reportDesign.getUuid();
             RenderingMode renderingMode = new RenderingMode(reportRendergingMode);
             if (!renderingMode.getRenderer().canRender(rd)) {
-                throw new IllegalArgumentException("Unable to render Analytics Data Export with " + reportRendergingMode);
+                throw new IllegalArgumentException("Unable to render Report with " + reportRendergingMode);
             }
-            Map<String, Object> parameterValues = new HashMap<String, Object>();
 
-            parameterValues.put("startDate", startDate);
-            parameterValues.put("endDate", endDate);
-            EvaluationContext context = new EvaluationContext();
-            context.setParameterValues(parameterValues);
-            ReportData reportData = reportDefinitionService.evaluate(rd, context);
-            ReportRequest reportRequest = new ReportRequest();
-            reportRequest.setReportDefinition(new Mapped<ReportDefinition>(rd, context.getParameterValues()));
-            reportRequest.setRenderingMode(renderingMode);
-            File file = new File(OpenmrsUtil.getApplicationDataDirectory() + ANALYTICS_JSON_FILE_NAME);
+            File file = new File(OpenmrsUtil.getApplicationDataDirectory() + "analytics");
             FileOutputStream fileOutputStream = new FileOutputStream(file);
-            renderingMode.getRenderer().render(reportData, renderingMode.getArgument(), fileOutputStream);
 
-            strOutput = this.readOutputFile(strOutput);
-            log.info(strOutput);
-        } catch (Exception e) {
-            log.info("Error rendering the contents of the Analytics data export report to"
-                    + OpenmrsUtil.getApplicationDataDirectory() + ANALYTICS_JSON_FILE_NAME + e.toString());
-            e.printStackTrace();
-        }
+            Writer pw = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8);
+            TextTemplateRenderer textTemplateRenderer = new TextTemplateRenderer();
+            ReportDesignResource reportDesignResource = textTemplateRenderer.getTemplate(reportDesign);
+            String templateContents = new String(reportDesignResource.getContents(), StandardCharsets.UTF_8);
+            templateContents = fillTemplateWithReportData(pw, templateContents, reportData, reportDesign, fileOutputStream);
 
-        return strOutput;
+
+            return templateContents;
     }
 
 
-    public String readOutputFile(String strOutput) throws Exception {
-        FileInputStream fstreamItem = new FileInputStream(OpenmrsUtil.getApplicationDataDirectory() + ANALYTICS_JSON_FILE_NAME);
-        DataInputStream inItem = new DataInputStream(fstreamItem);
-        BufferedReader brItem = new BufferedReader(new InputStreamReader(inItem));
-        String phraseItem;
 
-        if (!(phraseItem = brItem.readLine()).isEmpty()) {
-            strOutput = strOutput + phraseItem + System.lineSeparator();
-            while ((phraseItem = brItem.readLine()) != null) {
-                strOutput = strOutput + phraseItem + System.lineSeparator();
-            }
-        }
-
-        fstreamItem.close();
-
-        return strOutput;
-    }
 
     public boolean isGpAnalyticsServerUrlSet() {
         if (isBlank(syncGlobalProperties.getGlobalProperty(GP_ANALYTICS_SERVER_URL))) {
@@ -240,4 +209,54 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         }
         return true;
     }
+
+    public String getDataFromEndpoint(String url) {
+
+        try {
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet(url);
+            CloseableHttpResponse response = httpClient.execute(httpGet);
+
+            if (response.getStatusLine().getStatusCode() == 200 || response.getStatusLine().getStatusCode() == 200)
+                return EntityUtils.toString(response.getEntity());
+            else
+                return "";
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String fillTemplateWithReportData(Writer pw, String templateContents, ReportData reportData, ReportDesign reportDesign, FileOutputStream fileOutputStream) throws IOException, RenderingException {
+
+        try {
+            TextTemplateRenderer textTemplateRenderer = new TextTemplateRenderer();
+            Map<String, Object> replacements = textTemplateRenderer.getBaseReplacementData(reportData, reportDesign);
+            String templateEngineName = reportDesign.getPropertyValue("templateType", (String) null);
+            TemplateEngine engine = TemplateEngineManager.getTemplateEngineByName(templateEngineName);
+            if (engine != null) {
+                Map<String, Object> bindings = new HashMap();
+                bindings.put("reportData", reportData);
+                bindings.put("reportDesign", reportDesign);
+                bindings.put("data", replacements);
+                bindings.put("util", new ObjectUtil());
+                bindings.put("dateUtil", new DateUtil());
+                bindings.put("msg", new MessageUtil());
+                templateContents = engine.evaluate(templateContents, bindings);
+            }
+
+            String prefix = textTemplateRenderer.getExpressionPrefix(reportDesign);
+            String suffix = textTemplateRenderer.getExpressionSuffix(reportDesign);
+            templateContents = EvaluationUtil.evaluateExpression(templateContents, replacements, prefix, suffix).toString();
+            pw.write(templateContents.toString());
+            return templateContents;
+
+        } catch (RenderingException var17) {
+            throw var17;
+        } catch (Throwable var18) {
+            throw new RenderingException("Unable to render results due to: " + var18, var18);
+        }
+    }
+
+
+
 }
