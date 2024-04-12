@@ -70,6 +70,16 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     @Transactional
     SyncTask getSyncTaskBySyncTaskId(String syncTaskId) throws APIException;
 
+
+    /**
+     * Gets a list of SyncTasks that matches the sync task parameter
+     * @param syncTaskId a string containing an id or uuid of the sync task
+     * @return List<SyncTask> that matches the sync task id or uuid in the parameter set
+     * @throws APIException
+     */
+    @Transactional
+    List<SyncTask> getSyncTasksBySyncTaskId(String syncTaskId) throws APIException;
+
     /**
      * Saves or updates the sync task set or given
      * @param syncTask the sync task that is to be saved

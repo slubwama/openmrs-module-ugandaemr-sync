@@ -72,12 +72,11 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
         SyncTaskType firstMessageSyncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
 
         for (Order order : orderList) {
-            List<SyncTask> allSyncTasks = ugandaEMRSyncService.getAllSyncTask();
-            List<SyncTask> syncTasks = allSyncTasks.stream().filter(p -> order.getAccessionNumber().equals(p.getSyncTask()) && syncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
-            List<SyncTask> firstSyncTaskToRun = allSyncTasks.stream().filter(p -> order.getAccessionNumber().equals(p.getSyncTask()) && firstMessageSyncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
+            List<SyncTask> allSyncTasks =  ugandaEMRSyncService.getSyncTasksBySyncTaskId(order.getAccessionNumber());
+            List<SyncTask> successfullVLProgramSyncTasks = allSyncTasks.stream().filter(p -> syncTaskType.getId().equals(p.getSyncTaskType().getId()) && (p.getStatusCode()==200 || p.getStatusCode()==201)).collect(Collectors.toList());
+            List<SyncTask> firstSyncTaskToRun = allSyncTasks.stream().filter(p -> firstMessageSyncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
 
-
-            if (syncTasks.size()<1 && firstSyncTaskToRun.size()>0) {
+            if (successfullVLProgramSyncTasks.size()<1 && firstSyncTaskToRun.size()>0) {
                 Map<String, String> dataOutput = generateVLProgramDataFHIRBody((TestOrder) order, VL_SEND_PROGRAM_DATA_FHIR_JSON_STRING);
                 String json = dataOutput.get("json");
 
@@ -253,7 +252,7 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             Date artStartDate = null;
             if(artStartList.size()>0){
                 ArrayList myList = (ArrayList) artStartList.get(0);
-                artStartDate = (Date) myList.get(0);
+                artStartDate = Context.getService(UgandaEMRSyncService.class).convertStringToDate(myList.get(0).toString(),"","yyyy-MM-dd'T'HH:mm");
             }
 
             List obs_indication_for_VL = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,168689,date_activated),true);
