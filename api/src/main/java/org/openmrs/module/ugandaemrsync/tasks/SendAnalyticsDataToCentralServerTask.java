@@ -63,7 +63,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     protected Log log = LogFactory.getLog(getClass());
     Date startDate;
     Date endDate;
-    Date lastSubmissionDateSet;
 
     UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 
@@ -73,12 +72,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     @Override
     public void execute() {
         Date todayDate = new Date();
-
-        Properties properties = Context.getService(UgandaEMRSyncService.class).getUgandaEMRProperties();
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss");
-        DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_YEAR, 1);
@@ -126,9 +119,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
             HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, jsonObject, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
             if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
-
-                ReportUtil.updateGlobalProperty(GP_ANALYTICS_TASK_LAST_SUCCESSFUL_SUBMISSION_DATE,
-                        dateTimeFormat.format(lastSubmissionDateSet));
                 log.info("Analytics data has been sent to central server");
             } else {
                 log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
@@ -137,17 +127,23 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
     }
 
-    private String extractDataEntryStats(String dateToday,String dateTmro) {
+    private String extractDataEntryStats(String dateToday, String dateTmro) {
         String baseUrl = "http://localhost:8080";
         String baseUrl1 = "http://localhost:8081";
-        String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate="+dateToday+"&toDate="+dateTmro+"&encUserColumn=creator&groupBy=creator";
+        String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate=" + dateToday + "&toDate=" + dateTmro + "&encUserColumn=creator&groupBy=creator";
         String url1 = baseUrl1 + endpoint;
-
         String url = baseUrl + endpoint;
-        String response = getDataFromEndpoint(url1);
-        if (response == "") {
-            response = getDataFromEndpoint(url);
+        String response = "";
+        try {
+            response = getDataFromEndpoint(url1);
+        } catch (Exception e) {
+            try {
+                response = getDataFromEndpoint(url);
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
         }
+
         return response;
     }
 
@@ -190,8 +186,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
             return templateContents;
     }
-
-
 
 
     public boolean isGpAnalyticsServerUrlSet() {
@@ -256,7 +250,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
             throw new RenderingException("Unable to render results due to: " + var18, var18);
         }
     }
-
 
 
 }
