@@ -75,6 +75,14 @@ public class UgandaEMRSyncDao {
                 .uniqueResult();
     }
 
+
+    /**
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTasksBySyncTaskId(java.lang.String)
+     */
+    public List<SyncTask> getSyncTasks(String syncTask) {
+        return (List<SyncTask>) getSession().createCriteria(SyncTask.class).add(Restrictions.eq("syncTask", syncTask)).list();
+    }
+
     /**
      * /**
      *

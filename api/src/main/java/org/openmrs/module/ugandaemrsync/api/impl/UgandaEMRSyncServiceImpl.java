@@ -126,6 +126,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return dao.getSyncTask(syncTaskId);
     }
 
+    @Override
+    public List<SyncTask> getSyncTasksBySyncTaskId(String syncTaskId) throws APIException {
+        return dao.getSyncTasks(syncTaskId);
+    }
+
     /**
      * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTask()
      */
