@@ -218,6 +218,13 @@
 
             <dependency>
                 <groupId>org.openmrs.module</groupId>
+                <artifactId>reportingcompatibility-api</artifactId>
+                <version>${reportingCompatibilityVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
                 <artifactId>idgen-api</artifactId>
                 <version>${idgenVersion}</version>
                 <scope>provided</scope>
@@ -380,14 +387,14 @@
         <repository>
             <id>openmrs-repo</id>
             <name>OpenMRS Nexus Repository</name>
-            <url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
+            <url>https://mavenrepo.openmrs.org/public</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>openmrs-repo</id>
             <name>OpenMRS Nexus Repository</name>
-            <url>https://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
+            <url>https://mavenrepo.openmrs.org/public</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -395,11 +402,12 @@
     </pluginRepositories>
 
     <properties>
-        <openMRSVersion>2.0.6</openMRSVersion>
+        <openMRSVersion>2.0.5</openMRSVersion>
         <appuiVersion>1.7</appuiVersion>
         <uiframeworkVersion>3.22.0</uiframeworkVersion>
         <ugandaemrReportsVersion>2.0.38-SNAPSHOT</ugandaemrReportsVersion>
         <reportingVersion>1.20.0</reportingVersion>
+        <reportingCompatibilityVersion>2.0.9</reportingCompatibilityVersion>
         <calculationVersion>1.1</calculationVersion>
         <serialization.xstreamVersion>0.2.14</serialization.xstreamVersion>
         <metadatadeployVersion>1.10.0</metadatadeployVersion>

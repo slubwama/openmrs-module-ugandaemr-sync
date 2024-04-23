@@ -208,36 +208,46 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 viralLOadTestGroupConcept = Context.getConceptService().getConcept(165412);
             }
 
-            Obs dateSampleTakenObs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
-            Obs viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
-            Obs viralLoadQuantitativeObs = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
-
+            // Creating Obs group and adding test Date
             Obs viralLoadTestGroupObs = createObs(encounter, order, viralLOadTestGroupConcept, null, null, null);
+            Obs dateSampleTakenObs = createObs(encounter, order, dateSampleTaken, null, convertStringToDate(vlDate, "00:00:00", dateFormat), null);
             viralLoadTestGroupObs.addGroupMember(dateSampleTakenObs);
-            viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
-            viralLoadTestGroupObs.addGroupMember(viralLoadQuantitativeObs);
+
+            Obs viralLoadQualitativeObs = null;
+            Obs viralLoadQuantitativeObs = null;
+
+            if (viralLoadQualitative != null && valueCoded != null) {
+                viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
+                viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
+            }
+            if (vlQuantitative != null) {
+                Double quantitativeValue = 1.0;
+                quantitativeValue = Double.valueOf(vlQuantitative);
+                try {
+                    quantitativeValue = Double.valueOf(vlQuantitative);
+                } catch (Exception exception) {
+                    log.error("failed to get quantitative value due to " + exception.getMessage() + " will be assigned 1 as the default value");
+                }
+
+                viralLoadQuantitativeObs = createObs(encounter, order, viralLoadQuantitative, null, null, Double.valueOf(vlQuantitative));
+                viralLoadTestGroupObs.addGroupMember(viralLoadQuantitativeObs);
+            }
+
+            if (viralLoadQualitativeObs == null && viralLoadQuantitativeObs == null)
+                return null;
+
 
             //Void Similar observation
             voidObsFound(encounter, dateSampleTaken);
             voidObsFound(encounter, viralLoadQualitative);
             voidObsFound(encounter, viralLoadQuantitative);
 
-            encounter.addObs(dateSampleTakenObs);
-            encounter.addObs(viralLoadQualitativeObs);
-            encounter.addObs(viralLoadQuantitativeObs);
             encounter.addObs(viralLoadTestGroupObs);
+            Context.getEncounterService().saveEncounter(encounter);
 
-            try {
-                if (order != null) {
-                    Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
-                }
-            } catch (Exception e) {
-                log.error("Failed to discontinue order", e);
-            }
-            Context.getObsService().saveObs(viralLoadTestGroupObs, "Adding Viral Load Data");
             return encounter;
         } else {
-            if (order != null) {
+            if (order != null && order.isActive()) {
                 try {
                     Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
                 } catch (Exception e) {
@@ -1123,39 +1133,31 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return dao.getSyncTaskTypeByName(name);
     }
 
-    ;
-
     @Override
     public SyncTaskType getSyncTaskTypeById(Integer id) {
         return dao.getSyncTaskTypeById(id);
     }
-
-    ;
 
     @Override
     public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType, Date synceDateFrom, Date synceDateTo) {
         return dao.getSyncTasksByType(syncTaskType, synceDateFrom, synceDateTo);
     }
 
-    ;
-
-    public SyncTask getSyncTaskByUUID(String uniqueId){
+    public SyncTask getSyncTaskByUUID(String uniqueId) {
         return dao.getSyncTaskByUUID(uniqueId);
-    };
+    }
 
-    public SyncTask getSyncTaskById(Integer uniqueId){
+    public SyncTask getSyncTaskById(Integer uniqueId) {
         return dao.getSyncTaskById(uniqueId);
     }
 
     @Override
     public List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String synceDateFrom, String synceDateTo) {
-        return dao.getSyncResourceBySyncFhirProfile(syncFhirProfile, synceDateFrom,synceDateTo);
+        return dao.getSyncResourceBySyncFhirProfile(syncFhirProfile, synceDateFrom, synceDateTo);
     }
 
-    ;
-
-    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType){
+    public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType) {
         return dao.getSyncTasksByType(syncTaskType);
-    };
+    }
 }
 

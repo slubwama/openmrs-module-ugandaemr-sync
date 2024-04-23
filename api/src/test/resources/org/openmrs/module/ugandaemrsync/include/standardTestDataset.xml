@@ -381,6 +381,7 @@
 	<scheduler_task_config_property  name="syncFhirProfileUUID"  value="c91b12c3-65fe-4b1c-aba4-99e3a7e58cfa"  task_config_id="1"/>
 
 	<orders  order_id="15"  order_type_id="3"  concept_id="1019"  orderer="1"  encounter_id="6" date_activated="2008-08-19 12:34:40.0"   creator="1"  date_created="2008-08-19 12:34:40.0"  voided="0"  patient_id="2"   uuid="04c1c2d7-d496-449f-b502-889507a1fb8d"  urgency="STAT"  order_number="ORD-24908" order_action="NEW"  care_setting="1" />
+	<orders  order_id="16"  order_type_id="3"  concept_id="163023"  orderer="1"  encounter_id="1000" date_activated="2010-08-01 00:00:00.0"   creator="1"  date_created="2010-08-01 00:00:00.0"  voided="0"  patient_id="2"   uuid="b3230032-00c4-11ef-bce1-4725e612a60b"  urgency="STAT"  order_number="ORD-24909" order_action="NEW"  care_setting="1" />
 
 
 	<test_order  order_id="15"/>
