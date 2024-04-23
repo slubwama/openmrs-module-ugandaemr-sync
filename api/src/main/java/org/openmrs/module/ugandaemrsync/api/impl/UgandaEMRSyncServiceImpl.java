@@ -242,22 +242,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             voidObsFound(encounter, viralLoadQualitative);
             voidObsFound(encounter, viralLoadQuantitative);
 
-            encounter.addObs(dateSampleTakenObs);
-            encounter.addObs(viralLoadQualitativeObs);
-            encounter.addObs(viralLoadQuantitativeObs);
             encounter.addObs(viralLoadTestGroupObs);
             Context.getEncounterService().saveEncounter(encounter);
 
-            try {
-                if (order != null) {
-                    Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
-                }
-            } catch (Exception e) {
-                log.error("Failed to discontinue order", e);
-            }
             return encounter;
         } else {
-            if (order != null) {
+            if (order != null && order.isActive()) {
                 try {
                     Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
                 } catch (Exception e) {

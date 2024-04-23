@@ -209,7 +209,8 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     public void addVLToEncounter_shouldSaveViralLoadResultToSelectedEncounter() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         Encounter encounter = Context.getEncounterService().getEncounter(1000);
-        ugandaEMRSyncService.addVLToEncounter("Not detected", "400", "2009-08-01 00:00:00.0", encounter, null);
+        Order order = Context.getOrderService().getOrderByUuid("b3230032-00c4-11ef-bce1-4725e612a60b");
+        ugandaEMRSyncService.addVLToEncounter("Not detected", "400", "2009-08-01 00:00:00.0", encounter, order);
         Context.getObsService().getObservations("Anet Test Oloo");
 
         Assert.assertEquals(encounter, Context.getObsService().getObservations("Anet Test Oloo").get(1).getEncounter());
