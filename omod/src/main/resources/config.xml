@@ -260,6 +260,22 @@
             This is the national Health facility Registry url to get facilities
         </description>
     </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.api.baseurl</property>
+        <defaultValue>http://localhost:8081</defaultValue>
+        <description>
+            Base url used for making API Calls internally in java
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.api.baseurlAlternative</property>
+        <defaultValue>http://localhost:8080</defaultValue>
+        <description>
+            Alternative Base url used for making API Calls internally in java
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
     <messages>
