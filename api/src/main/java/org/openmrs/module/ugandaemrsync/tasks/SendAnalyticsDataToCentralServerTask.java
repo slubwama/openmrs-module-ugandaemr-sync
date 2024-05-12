@@ -128,11 +128,11 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     }
 
     private String extractDataEntryStats(String dateToday, String dateTmro) {
-        String baseUrl = "http://localhost:8080";
-        String baseUrl1 = "http://localhost:8081";
+        String baseurl=Context.getAdministrationService().getGlobalProperty("ugandaemrsync.api.baseurl");
+        String alternativeBaseurl=Context.getAdministrationService().getGlobalProperty("ugandaemrsync.api.baseurlAlternative");
         String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate=" + dateToday + "&toDate=" + dateTmro + "&encUserColumn=creator&groupBy=creator";
-        String url1 = baseUrl1 + endpoint;
-        String url = baseUrl + endpoint;
+        String url1 = alternativeBaseurl + endpoint;
+        String url = baseurl + endpoint;
         String response = "";
         try {
             response = getDataFromEndpoint(url1);
