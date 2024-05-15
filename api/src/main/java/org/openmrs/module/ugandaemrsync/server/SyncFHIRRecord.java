@@ -746,15 +746,20 @@ public class SyncFHIRRecord {
             jsonString = iParser.encodeResourceToString(iBaseResource);
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
+
                 if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
-                    jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
+                    try {
+                        jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
+                        jsonString = addCodingToIdentifier(jsonString, "identifier");
+                        jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
+                    } catch (Exception exception) {
+                        log.error(exception);
+                    }
                 }
-                jsonString = addCodingToIdentifier(jsonString, "identifier");
-                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
+                jsonString = addAttributeToObject(jsonString, "telecom", "system", "phone");
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addUseOfficialToName(jsonString, "name");
                 jsonString = removeAttribute(jsonString, "contained");
-                jsonString = addAttributeToObject(jsonString, "telecom","system","phone");
                 jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
             }
 
@@ -828,7 +833,7 @@ public class SyncFHIRRecord {
 
     private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
         JSONObject jsonObject = new JSONObject(payload);
-        if (jsonObject.getJSONArray(targetObject) != null) {
+        if (jsonObject.has("telecom") && jsonObject.getJSONArray(targetObject).length()>0) {
             for (int i = 0; i < jsonObject.getJSONArray(targetObject).length(); i++) {
                 jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
                 i++;
@@ -836,6 +841,7 @@ public class SyncFHIRRecord {
         }
         return jsonObject.toString();
     }
+
     public String addCodingToSystemToPrimaryIdentifier(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
         int identifierCount = 0;
