@@ -14,23 +14,8 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import org.openmrs.*;
 import org.openmrs.module.fhir2.api.search.param.PatientSearchParams;
-import org.openmrs.PatientProgram;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.Patient;
-import org.openmrs.Encounter;
-import org.openmrs.EncounterRole;
-import org.openmrs.Obs;
-import org.openmrs.Program;
-import org.openmrs.Provider;
-import org.openmrs.Person;
-import org.openmrs.ProgramWorkflowState;
-import org.openmrs.OrderType;
-import org.openmrs.Order;
-import org.openmrs.Concept;
-import org.openmrs.ConceptMap;
-import org.openmrs.PatientState;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.PatientService;
@@ -74,21 +59,7 @@ import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.FSHR_SYNC_FHI
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_UUID;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_NAME;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_ENABLE_SYNC_CBS_FHIR_DATA;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PERSON_UUID_QUERY;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PRACTITIONER_UUID_QUERY;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_UUID_QUERY;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_UUID_QUERY;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.OBSERVATION_UUID_QUERY;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIRSERVER_SYNC_TASK_TYPE_UUID;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DHIS2;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_TRANSACTION;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_POST;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_PUT;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_ROLE;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_CODING_DATATYPE;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -847,14 +818,29 @@ public class SyncFHIRRecord {
         int identifierCount = 0;
         for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
             JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-            if (Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString()).getIdentifierType().getUuid().equals(SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID)) {
-                jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", "http://openclientregistry.org/fhir/sourceid");
+            PatientIdentifier patientIdentifier=Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
+            switch (patientIdentifier.getIdentifierType().getUuid()) {
+                case SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID:
+                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system",getIdentifierSystemURL(OPENMRS_IDENTIFIER_SYSTEM_URL_GP));
+                    break;
+                case SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID:
+                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system",getIdentifierSystemURL(NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP));
+                    break;
+                case SyncConstant.PASSPORT_IDENTIFIER_TYPE_UUID:
+                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(PASSPORT_IDENTIFIER_SYSTEM_URL_GP));
+                    break;
+                case SyncConstant.NHPI_IDENTIFIER_TYPE_TYPE_UUID:
+                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NHPI_IDENTIFIER_SYSTEM_URL_GP));
+                    break;
             }
-
             identifierCount++;
         }
         return jsonObject.toString();
 
+    }
+
+    private String getIdentifierSystemURL(String propertyName){
+       return Context.getAdministrationService().getGlobalProperty(propertyName);
     }
 
     public String wrapResourceInPostRequest(String payload) {
