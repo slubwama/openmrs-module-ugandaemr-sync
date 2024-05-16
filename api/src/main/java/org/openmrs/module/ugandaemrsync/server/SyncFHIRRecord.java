@@ -13,7 +13,7 @@ import org.hibernate.SessionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import org.openmrs.module.fhir2.api.search.param.PatientSearchParams;
 import org.openmrs.PatientProgram;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
@@ -30,7 +30,6 @@ import org.openmrs.Order;
 import org.openmrs.Concept;
 import org.openmrs.ConceptMap;
 import org.openmrs.PatientState;
-import org.openmrs.module.fhir2.api.search.param.PatientSearchParams;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.PatientService;
