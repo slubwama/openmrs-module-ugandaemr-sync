@@ -440,8 +440,8 @@ public class SyncFHIRRecord {
             String uuid = syncFhirProfile.getCaseBasedPrimaryResourceTypeId();
 
             List<Patient> patientList = getPatientByCohortType(uuid);
-            if(patientList.size()>0){
-                for(Patient patient:patientList){
+            if (patientList.size() > 0) {
+                for (Patient patient : patientList) {
                     String patientIdentifier = patient.getPatientId().toString();
                     saveSyncFHIRCase(syncFhirProfile, currentDate, patient, patientIdentifier);
                 }
@@ -637,9 +637,9 @@ public class SyncFHIRRecord {
                     break;
                 case "Practitioner":
                     if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Practitioner", getPractitionerResourceBundle(syncFhirProfile, encounters,null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Practitioner", syncFhirProfile, currentDate);
+                        saveSyncFHIRResources(groupInBundles("Practitioner", getPractitionerResourceBundle(syncFhirProfile, encounters, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Practitioner", syncFhirProfile, currentDate);
                     } else {
-                        saveSyncFHIRResources(groupInBundles("Practitioner", getPractitionerResourceBundle(syncFhirProfile, null,null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Practitioner", syncFhirProfile, currentDate);
+                        saveSyncFHIRResources(groupInBundles("Practitioner", getPractitionerResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Practitioner", syncFhirProfile, currentDate);
                     }
                     break;
                 case "Person":
@@ -753,12 +753,12 @@ public class SyncFHIRRecord {
                 if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
                     try {
                         jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
-                        jsonString = addCodingToIdentifier(jsonString, "identifier");
-                        jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                     } catch (Exception exception) {
                         log.error(exception);
                     }
                 }
+                jsonString = addCodingToIdentifier(jsonString, "identifier");
+                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                 jsonString = addAttributeToObject(jsonString, "telecom", "system", "phone");
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addUseOfficialToName(jsonString, "name");
@@ -822,21 +822,23 @@ public class SyncFHIRRecord {
     public String addCodingToIdentifier(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
         int identifierCount = 0;
-        for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
-            JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-            PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
-            if (patientIdentifier.getPatient().getBirthdateEstimated()) {
-                jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0", ""));
+        if (jsonObject.has(attributeName)) {
+            for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
+                JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
+                PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
+                if (patientIdentifier.getPatient().getBirthdateEstimated()) {
+                    jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0", ""));
+                }
+                jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
+                identifierCount++;
             }
-            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
-            identifierCount++;
         }
         return jsonObject.toString();
     }
 
     private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
         JSONObject jsonObject = new JSONObject(payload);
-        if (jsonObject.has("telecom") && jsonObject.getJSONArray(targetObject).length()>0) {
+        if (jsonObject.has(targetObject) && jsonObject.getJSONArray(targetObject).length() > 0) {
             for (int i = 0; i < jsonObject.getJSONArray(targetObject).length(); i++) {
                 jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
                 i++;
@@ -848,30 +850,32 @@ public class SyncFHIRRecord {
     public String addCodingToSystemToPrimaryIdentifier(String payload, String attributeName) {
         JSONObject jsonObject = new JSONObject(payload);
         int identifierCount = 0;
-        for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
-            JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-            PatientIdentifier patientIdentifier=Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
-            switch (patientIdentifier.getIdentifierType().getUuid()) {
-                case SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID:
-                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system",getIdentifierSystemURL(OPENMRS_IDENTIFIER_SYSTEM_URL_GP));
-                    break;
-                case SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID:
-                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system",getIdentifierSystemURL(NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP));
-                    break;
-                case SyncConstant.PASSPORT_IDENTIFIER_TYPE_UUID:
-                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(PASSPORT_IDENTIFIER_SYSTEM_URL_GP));
-                    break;
-                case SyncConstant.NHPI_IDENTIFIER_TYPE_TYPE_UUID:
-                    jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NHPI_IDENTIFIER_SYSTEM_URL_GP));
-                    break;
+        if (jsonObject.has(attributeName)) {
+            for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
+                JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
+                PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
+                switch (patientIdentifier.getIdentifierType().getUuid()) {
+                    case SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID:
+                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(OPENMRS_IDENTIFIER_SYSTEM_URL_GP));
+                        break;
+                    case SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID:
+                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP));
+                        break;
+                    case SyncConstant.PASSPORT_IDENTIFIER_TYPE_UUID:
+                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(PASSPORT_IDENTIFIER_SYSTEM_URL_GP));
+                        break;
+                    case SyncConstant.NHPI_IDENTIFIER_TYPE_TYPE_UUID:
+                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NHPI_IDENTIFIER_SYSTEM_URL_GP));
+                        break;
+                }
+                identifierCount++;
             }
-            identifierCount++;
         }
         return jsonObject.toString();
     }
 
-    private String getIdentifierSystemURL(String propertyName){
-       return Context.getAdministrationService().getGlobalProperty(propertyName);
+    private String getIdentifierSystemURL(String propertyName) {
+        return Context.getAdministrationService().getGlobalProperty(propertyName);
     }
 
     public String wrapResourceInPostRequest(String payload) {
@@ -1187,7 +1191,7 @@ public class SyncFHIRRecord {
                         syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
                         if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
-                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")),PATIENT_ID_TYPE_CROSS_BORDER_UUID,PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                         }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     } else {
@@ -1315,8 +1319,8 @@ public class SyncFHIRRecord {
         }
     }
 
-    private List<Patient> getPatientByCohortType(String cohortTypeUuid){
-        List list = Context.getAdministrationService().executeSQL("SELECT patient_id from cohort_member cm inner join cohort c on cm.cohort_id = c.cohort_id inner join cohort_type ct on c.cohort_type_id = ct.cohort_type_id where ct.uuid='"+cohortTypeUuid+"' and c.voided=0 and cm.voided=0;", true);
+    private List<Patient> getPatientByCohortType(String cohortTypeUuid) {
+        List list = Context.getAdministrationService().executeSQL("SELECT patient_id from cohort_member cm inner join cohort c on cm.cohort_id = c.cohort_id inner join cohort_type ct on c.cohort_type_id = ct.cohort_type_id where ct.uuid='" + cohortTypeUuid + "' and c.voided=0 and cm.voided=0;", true);
         PatientService patientService = Context.getPatientService();
         List<Patient> patientList = new ArrayList<>();
 
