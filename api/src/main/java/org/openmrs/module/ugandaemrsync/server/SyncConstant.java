@@ -21,7 +21,13 @@ import java.util.List;
 
 public class SyncConstant {
 	public static final String OPENMRS_IDENTIFIER_TYPE_UUID = "05a29f94-c0ed-11e2-94be-8c13b969e334";
+	public static final String OPENMRS_IDENTIFIER_SYSTEM_URL_GP= "ugandaemrsync.identifier.system.openmrs";
 	public static final String NATIONAL_ID_IDENTIFIER_TYPE_UUID = "f0c16a6d-dc5f-4118-a803-616d0075d282";
+	public static final String NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP = "ugandaemrsync.identifier.system.nationalId";
+	public static final String PASSPORT_IDENTIFIER_TYPE_UUID = "fd76e95a-9faa-42b8-8d88-5954fae77fba";
+	public static final String PASSPORT_IDENTIFIER_SYSTEM_URL_GP = "ugandaemrsync.identifier.system.passport";
+	public static final String NHPI_IDENTIFIER_TYPE_TYPE_UUID = "4c7d6bb2-c8a6-40d3-b70d-fffc062f3416";
+	public static final String NHPI_IDENTIFIER_SYSTEM_URL_GP = "ugandaemrsync.identifier.system.nphi";
 	public static final String ANC_IDENTIFIER_TYPE_UUID = "b0cc255e-ef57-4266-839e-0df7f5099eb9";
 	public static final String PNC_IDENTIFIER_TYPE_UUID = "758ef6e4-9ceb-4137-bc8d-9246dc7b41fe";
 
