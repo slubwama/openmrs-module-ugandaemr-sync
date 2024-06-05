@@ -4,8 +4,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.auth.AuthenticationException;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -45,9 +48,6 @@ import java.io.Writer;
 import java.io.OutputStreamWriter;
 
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -128,22 +128,16 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
     }
 
     private String extractDataEntryStats(String dateToday, String dateTmro) {
-        String baseUrl = "http://localhost:8080";
-        String baseUrl1 = "http://localhost:8081";
+        String baseurl = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.api.baseurl");
+        String alternativeBaseurl = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.api.baseurlAlternative");
         String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate=" + dateToday + "&toDate=" + dateTmro + "&encUserColumn=creator&groupBy=creator";
-        String url1 = baseUrl1 + endpoint;
-        String url = baseUrl + endpoint;
-        String response = "";
+        String url1 = alternativeBaseurl + endpoint;
+        String url = baseurl + endpoint;
+        String response = "[]";
         try {
-            response = getDataFromEndpoint(url1);
+            response = getDataFromEndpoint(url1,url);
         } catch (Exception e) {
-            try {
-                response = getDataFromEndpoint(url);
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
         }
-
         return response;
     }
 
@@ -204,18 +198,32 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         return true;
     }
 
-    public String getDataFromEndpoint(String url) {
-
+    public String getDataFromEndpoint(String url,String alternativeUrl) {
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("admin", "Admin123");
         try {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             HttpGet httpGet = new HttpGet(url);
+
+            httpGet.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
             CloseableHttpResponse response = httpClient.execute(httpGet);
 
-            if (response.getStatusLine().getStatusCode() == 200 || response.getStatusLine().getStatusCode() == 200)
+            if (response.getStatusLine().getStatusCode() == 200 || response.getStatusLine().getStatusCode() == 201)
                 return EntityUtils.toString(response.getEntity());
-            else
-                return "";
+            else if (response.getStatusLine().getStatusCode() == 404){
+                HttpGet httpGet1 = new HttpGet(alternativeUrl);
+                httpGet1.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
+                CloseableHttpResponse response1 = httpClient.execute(httpGet1);
+                if (response1.getStatusLine().getStatusCode() == 200 || response1.getStatusLine().getStatusCode() == 201){
+                    return EntityUtils.toString(response.getEntity());
+                }else{
+                    return "[]";
+                }
+            }else{
+                return "[]";
+            }
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (AuthenticationException e) {
             throw new RuntimeException(e);
         }
     }

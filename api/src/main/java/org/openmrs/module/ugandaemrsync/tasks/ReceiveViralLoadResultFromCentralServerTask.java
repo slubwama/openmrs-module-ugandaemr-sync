@@ -112,6 +112,7 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
             existingTask.setStatus(status);
             existingTask.setStatusCode(statusCode);
             existingTask.setActionCompleted(anyFurtherActionCompleted);
+            existingTask.setDateSent(new Date());
             return ugandaEMRSyncService.saveSyncTask(existingTask);
         } else {
             SyncTask newSyncTask = new SyncTask();
@@ -123,6 +124,8 @@ public class ReceiveViralLoadResultFromCentralServerTask extends AbstractTask {
             newSyncTask.setActionCompleted(anyFurtherActionCompleted);
             newSyncTask.setSyncTask(order.getAccessionNumber());
             newSyncTask.setSyncTaskType(syncTaskType);
+            newSyncTask.setSyncTaskType(syncTaskType);
+            newSyncTask.setDateSent(new Date());
             return ugandaEMRSyncService.saveSyncTask(newSyncTask);
         }
     }

@@ -260,6 +260,54 @@
             This is the national Health facility Registry url to get facilities
         </description>
     </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.api.baseurl</property>
+        <defaultValue>http://localhost:8081</defaultValue>
+        <description>
+            Base url used for making API Calls internally in java
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.api.baseurlAlternative</property>
+        <defaultValue>http://localhost:8080</defaultValue>
+        <description>
+            Alternative Base url used for making API Calls internally in java
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.identifier.system.openmrs</property>
+        <defaultValue>http://clientregistry.org/ugandaemr</defaultValue>
+        <description>
+            url system form openmrs ID
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.identifier.system.passport</property>
+        <defaultValue>http://health.go.ug/cr/passport</defaultValue>
+        <description>
+            url system form passport
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.identifier.system.nationalId</property>
+        <defaultValue>http://health.go.ug/cr/nationalid"</defaultValue>
+        <description>
+            url system form national ID
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.identifier.system.nphi</property>
+        <defaultValue>http://health.go.ug/cr/hin</defaultValue>
+        <description>
+            url system form health Identification Number
+        </description>
+    </globalProperty>
     <!-- Internationalization -->
     <!-- All message codes should start with @MODULE_ID@.* -->
     <messages>
