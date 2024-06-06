@@ -168,7 +168,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 throw new IllegalArgumentException("Unable to render Report with " + reportRendergingMode);
             }
 
-            File file = new File(OpenmrsUtil.getApplicationDataDirectory() + "analytics");
+            File file = new File(OpenmrsUtil.getApplicationDataDirectory() + "/analytics");
             FileOutputStream fileOutputStream = new FileOutputStream(file);
 
             Writer pw = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8);
