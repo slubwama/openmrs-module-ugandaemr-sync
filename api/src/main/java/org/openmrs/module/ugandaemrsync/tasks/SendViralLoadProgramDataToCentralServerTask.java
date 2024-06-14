@@ -358,8 +358,6 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             filledJsonFile = String.format(jsonFHIRMap,patientARTNO,sampleID,patientARTNO,patientOpenMRSID,patientNATIONALID,patientANCID,otherID,patientPNC_ID,gender, patient.getBirthdate(),healthCenterCode,patient.getAge(),artStartDate,who_hie_code,who_display,duration_string_hie_code,pregnant,breastfeeding,hasActiveTB,tb_phase_hie_code,adherence_hie_code,dsdm_hie_code,vl_indication_hie_code,line_body,current_regimen);
         }
         jsonMap.put("json", filledJsonFile);
-         System.out.println("--test json payload ---");
-        System.out.println(jsonMap);
         return jsonMap;
     }
 
