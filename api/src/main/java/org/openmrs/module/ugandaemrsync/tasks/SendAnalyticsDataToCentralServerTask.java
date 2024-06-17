@@ -133,7 +133,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate=" + dateToday + "&toDate=" + dateTmro + "&encUserColumn=creator&groupBy=creator";
         String url1 = alternativeBaseurl + endpoint;
         String url = baseurl + endpoint;
-        String response = "";
+        String response = "[]";
         try {
             response = getDataFromEndpoint(url,url1);
             if (!response.isEmpty() && response.charAt(0) != '[') {
