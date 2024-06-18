@@ -19,12 +19,7 @@ import org.openmrs.scheduler.tasks.AbstractTask;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Arrays;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_TYPE_UUID;
@@ -79,6 +74,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             if (successfullVLProgramSyncTasks.size()<1 && firstSyncTaskToRun.size()>0) {
                 Map<String, String> dataOutput = generateVLProgramDataFHIRBody((TestOrder) order, VL_SEND_PROGRAM_DATA_FHIR_JSON_STRING);
                 String json = dataOutput.get("json");
+                String empty_fields = dataOutput.get("empty_fields");
+                String patientARTno = dataOutput.get("patient");
 
                 try {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", json, false);
@@ -91,7 +88,11 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                         newSyncTask.setActionCompleted(true);
                         newSyncTask.setSyncTask(order.getAccessionNumber());
                         newSyncTask.setStatusCode((Integer) map.get("responseCode"));
-                        newSyncTask.setStatus((String)map.get("responseMessage"));
+                        if(empty_fields!="") {
+                            newSyncTask.setStatus((String) map.get("responseMessage") + "Patient "+ patientARTno+" empty fields: " + empty_fields);
+                        }else{
+                            newSyncTask.setStatus((String) map.get("responseMessage"));
+                        }
                         newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VL_PROGRAM_DATA_SYNC_TYPE_UUID));
                         ugandaEMRSyncService.saveSyncTask(newSyncTask);
                     }
@@ -123,7 +124,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             String sampleID = testOrder.getAccessionNumber();
             String gender = patient.getGender();
             List current_regimenList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,90315,date_activated),true);
-   
+
+            String empty_fields="";
             String current_regimen="";
             int regimen_code=0;
             if(current_regimenList.size() > 0) {
@@ -131,6 +133,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                  regimen_code = Integer.parseInt(regimenList.get(0).toString());
                 current_regimen = Context.getConceptService().getConcept(regimen_code).getName().getName();
             }
+            if(current_regimen.isEmpty())
+                empty_fields += empty_fields+", current regimen";
 
             List obs_dsdmList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,165143,date_activated),true);
 
@@ -139,10 +143,7 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             if(obs_dsdmList.size()>0) {
                 ArrayList myList = (ArrayList) obs_dsdmList.get(0);
                 int dsdm_code = Integer.parseInt(myList.get(0).toString());
-                //dsdm = Context.getConceptService().getConcept(dsdm_code).getName().getName();
-                //dsdm = Context.getConceptService().getConcept(dsdm_code);
-                //System.out.println("checkout dsdm");
-                //System.out.println(dsdm);
+
 
                 if(dsdm_code==165138){ 
                     dsdm = "FBIM";
@@ -213,6 +214,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                      duration_string_hie_code = "261773006_01";
                  }
             }
+            if(duration_string_hie_code.isEmpty())
+                empty_fields += empty_fields+", duration on art";
 
             List obs_pregnantList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,90041,date_activated),true);
 
@@ -261,10 +264,6 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             if(obs_indication_for_VL.size()>0) {
                 ArrayList myList = (ArrayList) obs_indication_for_VL.get(0);
                 int vl_indicator_code = Integer.parseInt(myList.get(0).toString());
-               // vl_testing_for = Context.getConceptService().getConcept(vl_indicator_code).getName().getName();
-                //vl_testing_for = Integer.parseInt(Context.getConceptService().getConcept(vl_indicator_code));
-
-               // NB: emr is missing repeat virla load - 315124004_08
            
                 if(vl_indicator_code==168683){ // 6 months after ART initiation
                     vl_indication_hie_code = "315124004_01";
@@ -288,6 +287,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                     vl_indication_hie_code = "315124004_07";
                 }
             }
+            if(vl_indication_hie_code.isEmpty())
+                empty_fields += empty_fields+", indication for vl";
 
             List obs_WHOList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,90203,date_activated),true);
 
@@ -344,18 +345,25 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                         break;
                 }
             }
+            if(who_hie_code.isEmpty())
+                empty_fields += empty_fields+", who code";
 
             String regimenline = getRegimenLineOfPatient(patient);
-            String line_body ="";
+            String coded_regimen_line ="";
             if(regimenline=="first"){
-               line_body= firstLineBody;
+               coded_regimen_line= firstLineBody;
             }else if (regimenline=="second"){
-               line_body=secondLineBody;
+               coded_regimen_line=secondLineBody;
             }else if(regimenline=="third"){
-               line_body=thirdLineBody;
+               coded_regimen_line=thirdLineBody;
             }
+            if(coded_regimen_line.isEmpty())
+                empty_fields += empty_fields+", regimen_line";
 
-            filledJsonFile = String.format(jsonFHIRMap,patientARTNO,sampleID,patientARTNO,patientOpenMRSID,patientNATIONALID,patientANCID,otherID,patientPNC_ID,gender, patient.getBirthdate(),healthCenterCode,patient.getAge(),artStartDate,who_hie_code,who_display,duration_string_hie_code,pregnant,breastfeeding,hasActiveTB,tb_phase_hie_code,adherence_hie_code,dsdm_hie_code,vl_indication_hie_code,line_body,current_regimen);
+            jsonMap.put("empty_fields",empty_fields);
+            jsonMap.put("patient",patientARTNO);
+
+            filledJsonFile = String.format(jsonFHIRMap,patientARTNO,sampleID,patientARTNO,patientOpenMRSID,patientNATIONALID,patientANCID,otherID,patientPNC_ID,gender, patient.getBirthdate(),healthCenterCode,patient.getAge(),artStartDate,who_hie_code,who_display,duration_string_hie_code,pregnant,breastfeeding,hasActiveTB,tb_phase_hie_code,adherence_hie_code,dsdm_hie_code,vl_indication_hie_code,coded_regimen_line,current_regimen);
         }
         jsonMap.put("json", filledJsonFile);
         return jsonMap;
