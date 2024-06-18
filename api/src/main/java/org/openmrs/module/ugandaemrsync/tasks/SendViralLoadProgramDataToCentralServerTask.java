@@ -89,7 +89,7 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                         newSyncTask.setSyncTask(order.getAccessionNumber());
                         newSyncTask.setStatusCode((Integer) map.get("responseCode"));
                         if(empty_fields!="") {
-                            newSyncTask.setStatus((String) map.get("responseMessage") + "Pateint "+ patientARTno+" empty fields: " + empty_fields);
+                            newSyncTask.setStatus((String) map.get("responseMessage") + "Patient "+ patientARTno+" empty fields: " + empty_fields);
                         }else{
                             newSyncTask.setStatus((String) map.get("responseMessage"));
                         }
