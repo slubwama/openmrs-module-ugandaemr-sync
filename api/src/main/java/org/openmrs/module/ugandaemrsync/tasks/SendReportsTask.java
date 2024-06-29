@@ -16,9 +16,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_SEND_NEXT_GEN_REPORTS_SERVER_URL;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
 
-/**
- * Posts Analytics data to the central server
- */
+
 
 @Component
 public class SendReportsTask extends AbstractTask {
@@ -64,15 +62,7 @@ public class SendReportsTask extends AbstractTask {
         }
 
         log.info("Sending Report to server ");
-
-
-        if(previewBody!="") {
-            JSONArray array = new JSONArray(previewBody);
-            for(int i =0 ; i < array.length();i++){
-                String payload = array.getJSONObject(i).toString();
-                sendPost(payload);
-            }
-        }
+        sendPost(previewBody);
     }
 
     public void sendPost(String requestBody){
