@@ -4,14 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthenticationException;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.reporting.common.DateUtil;
 import org.openmrs.module.reporting.common.MessageUtil;
@@ -30,8 +22,6 @@ import org.openmrs.module.reporting.report.renderer.TextTemplateRenderer;
 import org.openmrs.module.reporting.report.renderer.template.TemplateEngine;
 import org.openmrs.module.reporting.report.renderer.template.TemplateEngineManager;
 import org.openmrs.module.reporting.report.service.ReportService;
-import org.openmrs.module.reporting.report.util.ReportUtil;
-import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
@@ -102,43 +92,26 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         }
 
 
-            log.info("Sending analytics data to central server ");
-            String facilityMetadata = null;
-            try {
-                facilityMetadata = getAnalyticsDataExport();
-            } catch (EvaluationException e) {
-                throw new RuntimeException(e);
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            String dataEntryData = extractDataEntryStats(DateUtil.formatDate(startDate, "yyyy-MM-dd"),DateUtil.formatDate(endDate, "yyyy-MM-dd"));
-
-            String jsonObject = "{"+ "\"metadata\":"  +facilityMetadata+ ",\"dataentry\":" +dataEntryData+"}";
-
-            HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, jsonObject, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
-            if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
-                log.info("Analytics data has been sent to central server");
-            } else {
-                log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
-                        + httpResponse.getStatusLine().getReasonPhrase());
-            }
-
-    }
-
-    private String extractDataEntryStats(String dateToday, String dateTmro) {
-        String baseurl = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.api.baseurl");
-        String alternativeBaseurl = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.api.baseurlAlternative");
-        String endpoint = "/openmrs/ws/rest/v1/dataentrystatistics?fromDate=" + dateToday + "&toDate=" + dateTmro + "&encUserColumn=creator&groupBy=creator";
-        String url1 = alternativeBaseurl + endpoint;
-        String url = baseurl + endpoint;
-        String response = "[]";
+        log.info("Sending analytics data to central server ");
+        String facilityMetadata = null;
         try {
-            response = getDataFromEndpoint(url1,url);
-        } catch (Exception e) {
+            facilityMetadata = getAnalyticsDataExport();
+        } catch (EvaluationException e) {
+            throw new RuntimeException(e);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return response;
+
+        HttpResponse httpResponse = ugandaEMRHttpURLConnection.httpPost(analyticsServerUrlEndPoint, facilityMetadata, syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID), syncGlobalProperties.getGlobalProperty(GP_DHIS2_ORGANIZATION_UUID));
+        if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED) {
+            log.info("Analytics data has been sent to central server");
+        } else {
+            log.info("Http response status code: " + httpResponse.getStatusLine().getStatusCode() + ". Reason: "
+                    + httpResponse.getStatusLine().getReasonPhrase());
+        }
+
     }
 
     private String getAnalyticsDataExport() throws EvaluationException, IOException {
@@ -168,7 +141,7 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
                 throw new IllegalArgumentException("Unable to render Report with " + reportRendergingMode);
             }
 
-            File file = new File(OpenmrsUtil.getApplicationDataDirectory() + "analytics");
+            File file = new File(OpenmrsUtil.getApplicationDataDirectory() + "/analytics");
             FileOutputStream fileOutputStream = new FileOutputStream(file);
 
             Writer pw = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8);
@@ -198,35 +171,6 @@ public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
         return true;
     }
 
-    public String getDataFromEndpoint(String url,String alternativeUrl) {
-        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("admin", "Admin123");
-        try {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet(url);
-
-            httpGet.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
-            CloseableHttpResponse response = httpClient.execute(httpGet);
-
-            if (response.getStatusLine().getStatusCode() == 200 || response.getStatusLine().getStatusCode() == 201)
-                return EntityUtils.toString(response.getEntity());
-            else if (response.getStatusLine().getStatusCode() == 404){
-                HttpGet httpGet1 = new HttpGet(alternativeUrl);
-                httpGet1.addHeader(new BasicScheme().authenticate(credentials, httpGet, null));
-                CloseableHttpResponse response1 = httpClient.execute(httpGet1);
-                if (response1.getStatusLine().getStatusCode() == 200 || response1.getStatusLine().getStatusCode() == 201){
-                    return EntityUtils.toString(response.getEntity());
-                }else{
-                    return "[]";
-                }
-            }else{
-                return "[]";
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (AuthenticationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private String fillTemplateWithReportData(Writer pw, String templateContents, ReportData reportData, ReportDesign reportDesign, FileOutputStream fileOutputStream) throws IOException, RenderingException {
 
