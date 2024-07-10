@@ -1552,28 +1552,6 @@
             UPDATE sync_fhir_profile SET patient_identifier_type = (select patient_identifier_type_id from patient_identifier_type where uuid ='e1731641-30ab-102d-86b0-7a5022ba4115') WHERE uuid ='8adee026-d795-4f2a-aa29-6bafaf56b90e';
         </sql>
     </changeSet>
-    <changeSet id="ugandaemrsync-20230302-0940" author="dbaluku">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM scheduler_task_config
-                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.ComputeAndSaveAuditToolDataTask'
-            </sqlCheck>
-        </preConditions>
-        <comment>running audit sql script to save data in flat table</comment>
-        <insert tableName="scheduler_task_config">
-            <column name="name" value="Compute And Save Audit Tool Data" />
-            <column name="description" value="Compute And Save Audit Tool Data" />
-            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.ComputeAndSaveAuditToolDataTask" />
-            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
-            <column name="start_time" valueDate="2023-01-15T19:44:15" />
-            <column name="repeat_interval" value="86400" />
-            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
-            <column name="created_by" value="1" />
-            <column name="start_on_startup" value="0"/>
-            <column name="started" value="1"/>
-            <column name="uuid" value="3201d456-9699-412d-9cff-3fec93c4bb21" />
-        </insert>
-    </changeSet>
 
     <changeSet id="ugandaemrsync-20230714-1103" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">

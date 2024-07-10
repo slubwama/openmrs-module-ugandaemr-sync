@@ -131,6 +131,12 @@
             </dependency>
             <dependency>
                 <groupId>org.openmrs.module</groupId>
+                <artifactId>ugandaemrreports-omod</artifactId>
+                <version>${ugandaemrReportsVersion}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.openmrs.module</groupId>
                 <artifactId>reporting-api</artifactId>
                 <version>${reportingVersion}</version>
                 <scope>provided</scope>
@@ -186,6 +192,12 @@
                 <artifactId>webservices.rest-omod</artifactId>
                 <version>${webservices.restModuleVersion}</version>
                 <scope>provided</scope>
+                <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
