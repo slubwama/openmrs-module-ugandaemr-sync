@@ -1733,7 +1733,8 @@
             <column name="uuid" value="c9576dbb-9d10-4522-b9c6-9434cfef99b8" />
         </insert>
     </changeSet>
-<!--Mortality surveillance profile-->
+
+    <!--Mortality surveillance profile-->
     <changeSet id="ugandaemrsync-20240112-0901" author="solema">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -1870,6 +1871,77 @@
         <comment>Change all UgandaEMR related Task not to run on start</comment>
         <sql>
             update scheduler_task_config set start_on_startup=0 where schedulable_class like "%ugandaemr%";
+        </sql>
+    </changeSet>
+
+
+    <!--FSHR-->
+    <changeSet id="ugandaemrsync-2024-06-10-1001" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6a675910-8b97-43d6-8956-ec5d5e3dda9f'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating FSHR Integration</comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="FSHR Integration"/>
+            <column name="resource_types" value="Patient,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="3"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="5"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="PatientIdentifierType"/>
+            <column name="case_based_primary_resource_type_id" value="05a29f94-c0ed-11e2-94be-8c13b969e334"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["e75c856a-9e91-4ffb-bf43-1b0450b4ff8c"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="http://165.227.170.84:9091/fhir"/>
+            <column name="profile_enabled" value="false"/>
+            <column name="sync_data_ever_since" value="false"/>
+            <column name="sync_limit" value="100"/>
+            <column name="keep_profile_identifier_only" value="false"/>
+            <column name="searchable" value="true"/>
+            <column name="search_url" value="http://165.227.170.84:9091/fhir/Patient"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2024-06-10 09:09:50"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="6a675910-8b97-43d6-8956-ec5d5e3dda9f"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-06-10-1002" author="solema" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2ea451ae-b018-4003-8379-04b08fe66856'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  FSHR Integration Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="FSHR Integration" />
+            <column name="description" value="The FSHR Integration task" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendPatientsToFacilitySHRTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2024-01-11 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="2ea451ae-b018-4003-8379-04b08fe66856" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-06-10-1003" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2ea451ae-b018-4003-8379-04b08fe66856'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='6a675910-8b97-43d6-8956-ec5d5e3dda9f';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting FSHR Integration task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '6a675910-8b97-43d6-8956-ec5d5e3dda9f', (select task_config_id from scheduler_task_config where uuid="2ea451ae-b018-4003-8379-04b08fe66856"));
         </sql>
     </changeSet>
 </databaseChangeLog>
