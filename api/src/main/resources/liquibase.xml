@@ -1895,11 +1895,11 @@
             <column name="case_based_primary_resource_type_id" value="05a29f94-c0ed-11e2-94be-8c13b969e334"/>
             <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["e75c856a-9e91-4ffb-bf43-1b0450b4ff8c"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
             <column name="url_end_point" value="http://165.227.170.84:9091/fhir"/>
-            <column name="profile_enabled" value="false"/>
-            <column name="sync_data_ever_since" value="false"/>
+            <column name="profile_enabled" value="0"/>
+            <column name="sync_data_ever_since" value="0"/>
             <column name="sync_limit" value="100"/>
-            <column name="keep_profile_identifier_only" value="false"/>
-            <column name="searchable" value="true"/>
+            <column name="keep_profile_identifier_only" value="0"/>
+            <column name="searchable" value="1"/>
             <column name="search_url" value="http://165.227.170.84:9091/fhir/Patient"/>
             <column name="creator" value="1"/>
             <column name="date_created" value="2024-06-10 09:09:50"/>
