@@ -1876,7 +1876,7 @@
 
 
     <!--FSHR-->
-    <changeSet id="ugandaemrsync-2024-06-10-1001" author="slubwama">
+    <changeSet id="ugandaemrsync-2024-07-10-1001" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6a675910-8b97-43d6-8956-ec5d5e3dda9f'
@@ -1908,7 +1908,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-2024-06-10-1002" author="solema" dbms="mysql">
+    <changeSet id="ugandaemrsync-2024-07-10-1002" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2ea451ae-b018-4003-8379-04b08fe66856'
@@ -1920,17 +1920,16 @@
             <column name="description" value="The FSHR Integration task" />
             <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendPatientsToFacilitySHRTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
-            <column name="start_time" valueDate="2024-01-11 23:59:59" />
+            <column name="start_time" valueDate="2024-06-10 23:59:59" />
             <column name="repeat_interval" value="86400" />
             <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
-            <column name="created_by" value="1" />
             <column name="start_on_startup" value="1"/>
             <column name="started" value="1"/>
             <column name="uuid" value="2ea451ae-b018-4003-8379-04b08fe66856" />
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-2024-06-10-1003" author="slubwama" dbms="mysql">
+    <changeSet id="ugandaemrsync-2024-07-10-1003" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2ea451ae-b018-4003-8379-04b08fe66856'
