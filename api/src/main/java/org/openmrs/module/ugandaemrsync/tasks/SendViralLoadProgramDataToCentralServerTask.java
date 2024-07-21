@@ -72,12 +72,13 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
             List<SyncTask> firstSyncTaskToRun = allSyncTasks.stream().filter(p -> firstMessageSyncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
 
             if (successfullVLProgramSyncTasks.size()<1 && firstSyncTaskToRun.size()>0) {
-                Map<String, String> dataOutput = generateVLProgramDataFHIRBody((TestOrder) order, VL_SEND_PROGRAM_DATA_FHIR_JSON_STRING);
-                String json = dataOutput.get("json");
-                String empty_fields = dataOutput.get("empty_fields");
-                String patientARTno = dataOutput.get("patient");
+
 
                 try {
+                    Map<String, String> dataOutput = generateVLProgramDataFHIRBody((TestOrder) order, VL_SEND_PROGRAM_DATA_FHIR_JSON_STRING);
+                    String json = dataOutput.get("json");
+                    String empty_fields = dataOutput.get("empty_fields");
+                    String patientARTno = dataOutput.get("patient");
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", json, false);
                     if (map != null) {
                         SyncTask newSyncTask = new SyncTask();
@@ -89,7 +90,7 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                         newSyncTask.setSyncTask(order.getAccessionNumber());
                         newSyncTask.setStatusCode((Integer) map.get("responseCode"));
                         if(empty_fields!="") {
-                            newSyncTask.setStatus((String) map.get("responseMessage") + "Patient "+ patientARTno+" empty fields: " + empty_fields);
+                            newSyncTask.setStatus((String) map.get("responseMessage") + " Patient "+ patientARTno+" empty fields: " + empty_fields);
                         }else{
                             newSyncTask.setStatus((String) map.get("responseMessage"));
                         }
@@ -166,6 +167,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                     dsdm_hie_code = "734163000_05";
                 }
             }
+            if(dsdm_hie_code.isEmpty())
+                empty_fields += empty_fields+", dsdm";
 
             List obs_adherenceList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,90221,date_activated),true);
             String adherence="";
@@ -185,6 +188,8 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
                     adherence_hie_code = "1156699004_03";
                 }
             }
+            if(adherence_hie_code.isEmpty())
+                empty_fields += empty_fields+", adherence";
 
             List current_regimen_start_date = administrationService.executeSQL(String.format("SELECT TIMESTAMPDIFF(MONTH, obs_datetime,'%s') from obs where person_id=%s and concept_id=90315 and voided=0 and value_coded = %s ORDER BY obs_datetime ASC LIMIT 1",date_activated.toString(),patientId,regimen_code),true);
 
@@ -251,12 +256,15 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
               }
             }
 
-            List artStartList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_datetime", patientId,99161,date_activated),true);
+            List artStartList = administrationService.executeSQL(String.format(Latest_obs_of_Person,"DATE(value_datetime)", patientId,99161,date_activated),true);
             Date artStartDate = null;
             if(artStartList.size()>0){
                 ArrayList myList = (ArrayList) artStartList.get(0);
-                artStartDate = Context.getService(UgandaEMRSyncService.class).convertStringToDate(myList.get(0).toString(),"","yyyy-MM-dd'T'HH:mm");
+                artStartDate = Context.getService(UgandaEMRSyncService.class).convertStringToDate(myList.get(0).toString(),"","yyyy-MM-dd");
             }
+
+            if(artStartDate==null)
+                empty_fields += empty_fields+", ART Start Date";
 
             List obs_indication_for_VL = administrationService.executeSQL(String.format(Latest_obs_of_Person,"value_coded", patientId,168689,date_activated),true);
 
