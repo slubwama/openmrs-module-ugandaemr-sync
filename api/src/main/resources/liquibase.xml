@@ -724,10 +724,13 @@
     </changeSet>
 
 
-    <changeSet id="ugandaemrsync-20210821-11015" author="slubwama">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">
+    <changeSet id="ugandaemrsync-20240821-11015" author="slubwama">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0" >
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '0a7fff77-6ac7-416c-831e-4e3f1f2c853b'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating ART ACCESS SYNC FHIR PROFILE</comment>
@@ -751,10 +754,13 @@
     </changeSet>
 
 
-    <changeSet id="ugandaemrsync-20210904-0000" author="slubwama">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-0001" author="slubwama">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6511be5a-72f2-4638-a60b-78e31c3e2b28'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating HIV CASE BASED SURVEILLANCE SYNC FHIR PROFILE</comment>
@@ -843,10 +849,13 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-20210922-1016" author="mmwanje">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-1016" author="mmwanje">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '2f0ef683-c988-448b-b928-e3e2cf6657af'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating Lab Request to ALIS Task SYNC FHIR PROFILE</comment>
@@ -1028,10 +1037,13 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-20211116-2301" author="slubwama">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-2301" author="slubwama">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '99c4d715-4fcf-4d95-a946-257c6de05cf7'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating eCBSS Integration</comment>
@@ -1121,10 +1133,13 @@
     </changeSet>
 
     <!-- HTS Data -->
-    <changeSet id="ugandaemrsync-20220715-2304" author="iakileng">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-2304-1" author="iakileng">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'e060d3ed-9cf4-4421-94f9-6b9b3b3fe6f0'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating HTS Data</comment>
@@ -1186,10 +1201,13 @@
     </changeSet>
 
     <!-- ART Regimen Change -->
-    <changeSet id="ugandaemrsync-20220715-2310" author="iakileng">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-2310-1" author="iakileng">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '4e0d3ff6-82ac-45a8-bcf3-7367a9098d65'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating ART Regimen Change</comment>
@@ -1251,10 +1269,13 @@
     </changeSet>
 
     <!-- TB Data -->
-    <changeSet id="ugandaemrsync-20220715-2306" author="iakileng">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-2306-2" author="iakileng">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '8adee026-d795-4f2a-aa29-6bafaf56b90e'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating TB Data</comment>
@@ -1316,10 +1337,13 @@
     </changeSet>
 
     <!-- HIV Exposed Infant Data -->
-    <changeSet id="ugandaemrsync-20230406-1001" author="iakileng">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-1001-05" author="iakileng">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'e8a37e2f-6c78-476e-93a5-14aec653c406'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating HIV Exposed Infant Profile</comment>
@@ -1403,10 +1427,13 @@
     </changeSet>
 
 
-    <changeSet id="ugandaemrsync-20230220-1100" author="slubwama">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-1100-09" author="slubwama">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '84242661-aadf-42e4-9431-bf8afefb4433'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating CLIENT REGISTRY INTEGRATION PROFILE</comment>
@@ -1569,10 +1596,13 @@
     </changeSet>
 
 
-    <changeSet id="ugandaemrsync-20230425-0805" author="slubwama">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="ugandaemrsync-20240724-0805-06" author="slubwama">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'f2190cf4-2236-11ee-be56-0242ac120002'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating Cross Border Integration PROFILE</comment>
@@ -1711,7 +1741,8 @@
             <column name="uuid" value="c9576dbb-9d10-4522-b9c6-9434cfef99b8" />
         </insert>
     </changeSet>
-<!--Mortality surveillance profile-->
+
+    <!--Mortality surveillance profile-->
     <changeSet id="ugandaemrsync-20240112-0901" author="solema">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
