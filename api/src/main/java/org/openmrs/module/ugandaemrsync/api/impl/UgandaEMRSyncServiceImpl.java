@@ -243,7 +243,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
             viralLoadReturnDateObs = createObs(encounter, order, viralLoadReturnDate, null, new Date(), null);
 
-            viralLoadQuantitativeObs.addGroupMember(viralLoadReturnDateObs);
+            viralLoadTestGroupObs.addGroupMember(viralLoadReturnDateObs);
 
             //Void Similar observation
             voidObsFound(encounter, dateSampleTaken);
