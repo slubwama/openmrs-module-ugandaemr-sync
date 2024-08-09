@@ -1168,5 +1168,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     public List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType) {
         return dao.getSyncTasksByType(syncTaskType);
     }
+
+    public List<SyncTask> searchSyncTask(SyncTaskType syncTaskType,Integer statusCode,Date fromDate, Date toDate) {
+        return dao.searchSyncTask( syncTaskType, statusCode, fromDate, toDate);
+    }
 }
 

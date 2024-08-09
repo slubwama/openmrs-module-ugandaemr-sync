@@ -10,6 +10,7 @@ import io.swagger.models.properties.RefProperty;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
@@ -24,258 +25,284 @@ import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 @Resource(name = RestConstants.VERSION_1 + "/synctask", supportedClass = SyncTask.class, supportedOpenmrsVersions = {"1.9.* - 9.*"})
 public class SyncTaskResource extends DelegatingCrudResource<SyncTask> {
 
-	@Override
-	public SyncTask newDelegate() {
-		return new SyncTask();
-	}
+    @Override
+    public SyncTask newDelegate() {
+        return new SyncTask();
+    }
 
-	@Override
-	public SyncTask save(SyncTask SyncTask	) {
-		return Context.getService(UgandaEMRSyncService.class).saveSyncTask(SyncTask);
-	}
+    @Override
+    public SyncTask save(SyncTask SyncTask) {
+        return Context.getService(UgandaEMRSyncService.class).saveSyncTask(SyncTask);
+    }
 
-	@Override
-	public SyncTask getByUniqueId(String uniqueId) {
-		SyncTask SyncTask = null;
-		Integer id = null;
+    @Override
+    public SyncTask getByUniqueId(String uniqueId) {
+        SyncTask SyncTask = null;
+        Integer id = null;
 
-		SyncTask = Context.getService(UgandaEMRSyncService.class).getSyncTaskByUUID(uniqueId);
-		if (SyncTask == null && uniqueId != null) {
-			try {
-				id = Integer.parseInt(uniqueId);
-			}
-			catch (Exception e) {}
+        SyncTask = Context.getService(UgandaEMRSyncService.class).getSyncTaskByUUID(uniqueId);
+        if (SyncTask == null && uniqueId != null) {
+            try {
+                id = Integer.parseInt(uniqueId);
+            } catch (Exception e) {
+            }
 
-			if (id != null) {
-				SyncTask = Context.getService(UgandaEMRSyncService.class).getSyncTaskById(id);
-			}
-		}
+            if (id != null) {
+                SyncTask = Context.getService(UgandaEMRSyncService.class).getSyncTaskById(id);
+            }
+        }
 
-		return SyncTask;
-	}
+        return SyncTask;
+    }
 
-	@Override
-	protected void delete(SyncTask delegate, String reason, RequestContext context) throws ResponseException {
+    @Override
+    protected void delete(SyncTask delegate, String reason, RequestContext context) throws ResponseException {
 
-	}
+    }
 
-	@Override
-	public void purge(SyncTask delegate, RequestContext context) throws ResponseException {
+    @Override
+    public void purge(SyncTask delegate, RequestContext context) throws ResponseException {
 
-	}
+    }
 
-	@Override
-	public NeedsPaging<SyncTask> doGetAll(RequestContext context) throws ResponseException {
-		return new NeedsPaging<SyncTask>(new ArrayList<SyncTask>(Context.getService(UgandaEMRSyncService.class)
-		        .getAllSyncTask()), context);
-	}
+    @Override
+    public NeedsPaging<SyncTask> doGetAll(RequestContext context) throws ResponseException {
+        return new NeedsPaging<SyncTask>(new ArrayList<SyncTask>(Context.getService(UgandaEMRSyncService.class)
+                .getAllSyncTask()), context);
+    }
 
-	@Override
-	public List<Representation> getAvailableRepresentations() {
-		return Arrays.asList(Representation.DEFAULT, Representation.FULL);
-	}
+    @Override
+    public List<Representation> getAvailableRepresentations() {
+        return Arrays.asList(Representation.DEFAULT, Representation.FULL);
+    }
 
-	@Override
-	public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
-
-
-		if (rep instanceof DefaultRepresentation) {
-			DelegatingResourceDescription description = new DelegatingResourceDescription();
-			description.addProperty("syncTask");
-			description.addProperty("status");
-			description.addProperty("statusCode");
-			description.addProperty("sentToUrl");
-			description.addProperty("dateSent");
-			description.addProperty("requireAction");
-			description.addProperty("actionCompleted");
-
-			description.addSelfLink();
-			return description;
-		} else if (rep instanceof FullRepresentation) {
-			DelegatingResourceDescription description = new DelegatingResourceDescription();
-			description.addProperty("syncTaskType", Representation.REF);
-			description.addProperty("syncTask");
-			description.addProperty("status");
-			description.addProperty("statusCode");
-			description.addProperty("sentToUrl");
-			description.addProperty("dateSent");
-			description.addProperty("requireAction");
-			description.addProperty("actionCompleted");
-			description.addSelfLink();
-			description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
-			return description;
-		} else if (rep instanceof RefRepresentation) {
-			DelegatingResourceDescription description = new DelegatingResourceDescription();
-			description.addProperty("syncTaskType", Representation.REF);
-			description.addProperty("syncTask");
-			description.addProperty("status");
-			description.addProperty("statusCode");
-			description.addProperty("sentToUrl");
-			description.addProperty("dateSent");
-			description.addProperty("requireAction");
-			description.addProperty("actionCompleted");
-			description.addSelfLink();
-			return description;
-		}
-		return null;
-	}
-
-	@Override
-	public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
-		DelegatingResourceDescription description = new DelegatingResourceDescription();
-		description.addProperty("syncTaskType", Representation.REF);
-		description.addProperty("syncTask");
-		description.addProperty("status");
-		description.addProperty("statusCode");
-		description.addProperty("sentToUrl");
-		description.addProperty("dateSent");
-		description.addProperty("requireAction");
-		description.addProperty("actionCompleted");
-		return description;
-	}
+    @Override
+    public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
 
 
-	@Override
-	protected PageableResult doSearch(RequestContext context) {
-		UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        if (rep instanceof DefaultRepresentation) {
+            DelegatingResourceDescription description = new DelegatingResourceDescription();
+            description.addProperty("syncTask");
+            description.addProperty("status");
+            description.addProperty("statusCode");
+            description.addProperty("sentToUrl");
+            description.addProperty("dateSent");
+            description.addProperty("requireAction");
+            description.addProperty("actionCompleted");
 
-		String type = context.getParameter("type");
+            description.addSelfLink();
+            return description;
+        } else if (rep instanceof FullRepresentation) {
+            DelegatingResourceDescription description = new DelegatingResourceDescription();
+            description.addProperty("syncTaskType", Representation.REF);
+            description.addProperty("syncTask");
+            description.addProperty("status");
+            description.addProperty("statusCode");
+            description.addProperty("sentToUrl");
+            description.addProperty("dateSent");
+            description.addProperty("requireAction");
+            description.addProperty("actionCompleted");
+            description.addSelfLink();
+            description.addLink("full", ".?v=" + RestConstants.REPRESENTATION_FULL);
+            return description;
+        } else if (rep instanceof RefRepresentation) {
+            DelegatingResourceDescription description = new DelegatingResourceDescription();
+            description.addProperty("syncTaskType", Representation.REF);
+            description.addProperty("syncTask");
+            description.addProperty("status");
+            description.addProperty("statusCode");
+            description.addProperty("sentToUrl");
+            description.addProperty("dateSent");
+            description.addProperty("requireAction");
+            description.addProperty("actionCompleted");
+            description.addSelfLink();
+            return description;
+        }
+        return null;
+    }
 
-		List<SyncTask> SyncTasksByQuery = null;
-		if(type !=null){
-			SyncTasksByQuery = ugandaEMRSyncService.getSyncTasksByType(ugandaEMRSyncService.getSyncTaskTypeByUUID(type));
-		}
+    @Override
+    public DelegatingResourceDescription getCreatableProperties() throws ResourceDoesNotSupportOperationException {
+        DelegatingResourceDescription description = new DelegatingResourceDescription();
+        description.addProperty("syncTaskType", Representation.REF);
+        description.addProperty("syncTask");
+        description.addProperty("status");
+        description.addProperty("statusCode");
+        description.addProperty("sentToUrl");
+        description.addProperty("dateSent");
+        description.addProperty("requireAction");
+        description.addProperty("actionCompleted");
+        return description;
+    }
 
-		return new NeedsPaging<SyncTask>(SyncTasksByQuery, context);
-	}
 
-	@Override
-	public Model getGETModel(Representation rep) {
-		ModelImpl model = (ModelImpl) super.getGETModel(rep);
-		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("actionCompleted", new StringProperty());
-		}
-		if (rep instanceof DefaultRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("creator", new RefProperty("#/definitions/UserGetRef"))
-					.property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+    @Override
+    protected PageableResult doSearch(RequestContext context) {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-		} else if (rep instanceof FullRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("creator", new RefProperty("#/definitions/UserGetRef"))
-					.property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));;
-		}
-		return model;
-	}
+        SyncTaskType syncTaskType = null;
+        Date fromDate = null;
+        Date toDate = null;
+        Integer status = null;
 
-	@Override
-	public Model getCREATEModel(Representation rep) {
-		ModelImpl model = (ModelImpl) super.getGETModel(rep);
-		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty());
-		}
-		if (rep instanceof DefaultRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("creator", new RefProperty("#/definitions/UserGetRef"))
-					.property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+        if (context.getParameter("status") !=null && !context.getParameter("status").isEmpty()) {
+            status = Integer.parseInt(context.getParameter("status"));
+        }
 
-		} else if (rep instanceof FullRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("creator", new RefProperty("#/definitions/UserGetRef"))
-					.property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));;
-		}
-		return model;
-	}
+        if (context.getParameter("fromDate") !=null && !context.getParameter("fromDate").isEmpty()) {
+            String fromDateString = context.getParameter("fromDate");
+            fromDate = ugandaEMRSyncService.convertStringToDate(fromDateString, "00:00:00", ugandaEMRSyncService.getDateFormat(fromDateString));
+        }
 
-	@Override
-	public Model getUPDATEModel(Representation rep) {
-		ModelImpl model = (ModelImpl) super.getGETModel(rep);
-		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty());
-		}
-		if (rep instanceof DefaultRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("creator", new RefProperty("#/definitions/UserGetRef"))
-					.property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+        if (context.getParameter("toDate") !=null && !context.getParameter("toDate").isEmpty()) {
+            String toDateString = context.getParameter("toDate");
+            toDate = ugandaEMRSyncService.convertStringToDate(toDateString, "23:59:59", ugandaEMRSyncService.getDateFormat(toDateString));
+        }
 
-		} else if (rep instanceof FullRepresentation) {
-			model.property("syncTask", new StringProperty())
-					.property("status", new StringProperty())
-					.property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
-					.property("statusCode", new IntegerProperty())
-					.property("sentToUrl", new StringProperty())
-					.property("dateSent", new DateProperty())
-					.property("requireAction", new BooleanProperty())
-					.property("actionCompleted", new BooleanProperty())
-					.property("creator", new RefProperty("#/definitions/UserGetRef"))
-					.property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));;
-		}
-		return model;
-	}
+        if (context.getParameter("type") !=null && !context.getParameter("type").isEmpty()) {
+            syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(context.getParameter("type"));
+        }
+
+
+        List<SyncTask> SyncTasksByQuery = ugandaEMRSyncService.searchSyncTask(syncTaskType, status, fromDate, toDate);
+
+        return new NeedsPaging<SyncTask>(SyncTasksByQuery, context);
+    }
+
+    @Override
+    public Model getGETModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("actionCompleted", new StringProperty());
+        }
+        if (rep instanceof DefaultRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
+                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+
+        } else if (rep instanceof FullRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
+                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+            ;
+        }
+        return model;
+    }
+
+    @Override
+    public Model getCREATEModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty());
+        }
+        if (rep instanceof DefaultRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
+                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+
+        } else if (rep instanceof FullRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
+                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+            ;
+        }
+        return model;
+    }
+
+    @Override
+    public Model getUPDATEModel(Representation rep) {
+        ModelImpl model = (ModelImpl) super.getGETModel(rep);
+        if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty());
+        }
+        if (rep instanceof DefaultRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
+                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+
+        } else if (rep instanceof FullRepresentation) {
+            model.property("syncTask", new StringProperty())
+                    .property("status", new StringProperty())
+                    .property("syncTaskType", new RefProperty("#/definitions/SyncTaskTypeGetRef"))
+                    .property("statusCode", new IntegerProperty())
+                    .property("sentToUrl", new StringProperty())
+                    .property("dateSent", new DateProperty())
+                    .property("requireAction", new BooleanProperty())
+                    .property("actionCompleted", new BooleanProperty())
+                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
+                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
+                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+            ;
+        }
+        return model;
+    }
 }
