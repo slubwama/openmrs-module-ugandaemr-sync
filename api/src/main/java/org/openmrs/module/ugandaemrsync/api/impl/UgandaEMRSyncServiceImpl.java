@@ -188,6 +188,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
             Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
             Concept viralLoadQuantitative = Context.getConceptService().getConcept("856");
+            Concept viralLoadReturnDate= Context.getConceptService().getConcept("167944");
             Concept valueCoded = null;
 
             String dateFormat = getDateFormat(vlDate);
@@ -215,11 +216,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
             Obs viralLoadQualitativeObs = null;
             Obs viralLoadQuantitativeObs = null;
+            Obs viralLoadReturnDateObs = null;
 
             if (viralLoadQualitative != null && valueCoded != null) {
                 viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
                 viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
             }
+
+
+
             if (vlQuantitative != null) {
                 Double quantitativeValue = 1.0;
                 quantitativeValue = Double.valueOf(vlQuantitative);
@@ -236,11 +241,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             if (viralLoadQualitativeObs == null && viralLoadQuantitativeObs == null)
                 return null;
 
+            viralLoadReturnDateObs = createObs(encounter, order, viralLoadReturnDate, null, new Date(), null);
+
+            viralLoadTestGroupObs.addGroupMember(viralLoadReturnDateObs);
 
             //Void Similar observation
             voidObsFound(encounter, dateSampleTaken);
             voidObsFound(encounter, viralLoadQualitative);
             voidObsFound(encounter, viralLoadQuantitative);
+            voidObsFound(encounter, viralLoadReturnDate);
 
             encounter.addObs(viralLoadTestGroupObs);
             Context.getEncounterService().saveEncounter(encounter);
