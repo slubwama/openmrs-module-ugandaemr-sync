@@ -1884,7 +1884,7 @@
 
 
     <!--FSHR-->
-    <changeSet id="ugandaemrsync-2024-07-10-1001" author="slubwama">
+    <changeSet id="ugandaemrsync-2024-08-12-1112" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6a675910-8b97-43d6-8956-ec5d5e3dda9f'
