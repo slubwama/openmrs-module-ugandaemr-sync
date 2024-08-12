@@ -1909,7 +1909,7 @@
             <column name="keep_profile_identifier_only" value="0"/>
             <column name="searchable" value="1"/>
             <column name="search_url" value="http://165.227.170.84:9091/fhir/Patient"/>
-            <column name="created_by" value="1"/>
+            <column name="creator" value="1"/>
             <column name="date_created" value="2024-06-10 09:09:50"/>
             <column name="voided" value="0"/>
             <column name="uuid" value="6a675910-8b97-43d6-8956-ec5d5e3dda9f"/>
