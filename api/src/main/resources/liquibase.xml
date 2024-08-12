@@ -1933,7 +1933,7 @@
             <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
             <column name="start_on_startup" value="1"/>
             <column name="started" value="1"/>
-            <column name="creator" value="1"/>
+            <column name="created_by" value="1" />
             <column name="uuid" value="2ea451ae-b018-4003-8379-04b08fe66856" />
         </insert>
     </changeSet>
