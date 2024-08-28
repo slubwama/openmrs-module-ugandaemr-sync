@@ -452,4 +452,23 @@ public class UgandaEMRSyncDao {
         return sqlQuery.list();
 
     }
+
+    public List<SyncTask> searchSyncTask(SyncTaskType syncTaskType, Integer statusCode, Date fromDate, Date toDate) {
+
+        Criteria criteria = getSession().createCriteria(SyncTask.class);
+
+
+        if (syncTaskType!= null) {
+            criteria.add(Restrictions.eq("syncTaskType", syncTaskType));
+        }
+
+        if (statusCode!= null) {
+            criteria.add(Restrictions.eq("statusCode", statusCode));
+        }
+
+        if (fromDate != null && toDate != null) {
+            criteria.add(Restrictions.between("dateCreated", fromDate, toDate));
+        }
+        return criteria.list();
+    }
 }
