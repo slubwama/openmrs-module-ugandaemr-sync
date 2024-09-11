@@ -79,6 +79,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 			description.addProperty("uuid");
 			description.addProperty("name");
 			description.addProperty("dataType");
+			description.addProperty("dataTypeId");
 			description.addProperty("url");
 
 			description.addSelfLink();
@@ -88,6 +89,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 			description.addProperty("uuid");
 			description.addProperty("name");
 			description.addProperty("dataType");
+			description.addProperty("dataTypeId");
 			description.addProperty("url");
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
@@ -102,6 +104,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 			description.addProperty("uuid");
 			description.addProperty("name");
 			description.addProperty("dataType");
+			description.addProperty("dataTypeId");
 			description.addProperty("url");
 			description.addSelfLink();
 			return description;
@@ -124,6 +127,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 		DelegatingResourceDescription description = new DelegatingResourceDescription();
 		description.addProperty("name", Representation.REF);
 		description.addProperty("dataType");
+		description.addProperty("dataTypeId");
 		description.addProperty("url");
 		description.addProperty("urlUserName");
 		description.addProperty(" urlPassword");
@@ -161,35 +165,17 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	public Model getGETModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-			model.property("uuid", new StringProperty())
-					.property("name", new StringProperty())
-			        .property("resourceTypes", new StringProperty())
-					.property("profileEnabled", new BooleanProperty())
-			        .property("patientIdentifierType", new StringProperty())
-					.property("numberOfResourcesInBundle", new IntegerProperty())
-			        .property("durationToKeepSyncedResources", new IntegerProperty())
-					.property("generateBundle", new BooleanProperty())
-			        .property("isCaseBasedProfile", new BooleanProperty())
-					.property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
-					.property("resourceSearchParameter", new StringProperty());
-		}
-		if (rep instanceof DefaultRepresentation) {
-			model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
-			        .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
-			        .property("creator", new RefProperty("#/definitions/UserGetRef"))
-			        .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-			        .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
-
+			 model.property("uuid", new StringProperty())
+			.property("name", new StringProperty())
+			.property("dataType", new StringProperty())
+			.property("dataTypeId", new StringProperty())
+			.property("url", new StringProperty());
 		} else if (rep instanceof FullRepresentation) {
-            model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
-					.property("urlToken", new StringProperty())
-					.property("tokenExpiryDate", new DateProperty())
-					.property("tokenType", new StringProperty())
-                    .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
-			        .property("creator", new RefProperty("#/definitions/UserGetRef"))
-			        .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-			        .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
+			 model.property("urlToken", new StringProperty())
+			.property("urlUserName", new StringProperty())
+			.property("urlPassword", new StringProperty())
+			.property("tokenExpiryDate", new DateProperty())
+			.property("tokenType", new StringProperty());
 		}
 		return model;
 	}
@@ -198,62 +184,37 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 	public Model getCREATEModel(Representation rep) {
 		ModelImpl model = (ModelImpl) super.getGETModel(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
-            model.property("uuid", new StringProperty())
+			model.property("uuid", new StringProperty())
 					.property("name", new StringProperty())
-                    .property("resourceTypes", new StringProperty())
-					.property("profileEnabled", new BooleanProperty())
-                    .property("patientIdentifierType", new StringProperty())
-					.property("numberOfResourcesInBundle", new IntegerProperty())
-                    .property("durationToKeepSyncedResources", new IntegerProperty())
-					.property("generateBundle", new BooleanProperty())
-                    .property("isCaseBasedProfile", new BooleanProperty())
-					.property("caseBasedPrimaryResourceType", new StringProperty())
-                    .property("caseBasedPrimaryResourceTypeId", new StringProperty())
-					.property("resourceSearchParameter", new StringProperty());
-		}
-		if (rep instanceof DefaultRepresentation) {
-            model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
-                    .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
-                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
-                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
-
+					.property("dataType", new StringProperty())
+					.property("dataTypeId", new StringProperty())
+					.property("url", new StringProperty());
 		} else if (rep instanceof FullRepresentation) {
-            model.property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
-                    .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
-                    .property("creator", new RefProperty("#/definitions/UserGetRef"))
-                    .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-                    .property("voidedBy", new RefProperty("#/definitions/UserGetRef"))
-					.property("urlToken", new StringProperty())
+			model.property("urlToken", new StringProperty())
+					.property("urlUserName", new StringProperty())
+					.property("urlPassword", new StringProperty())
 					.property("tokenExpiryDate", new DateProperty())
-					.property("tokenType", new StringProperty())
-					.property("tokenRefreshKey", new StringProperty());
+					.property("tokenType", new StringProperty());
 		}
 		return model;
 	}
 
 	@Override
 	public Model getUPDATEModel(Representation rep) {
-		return new ModelImpl().property("uuid", new StringProperty())
-				.property("name", new StringProperty())
-                .property("resourceTypes", new StringProperty())
-				.property("profileEnabled", new BooleanProperty())
-                .property("patientIdentifierType", new StringProperty())
-				.property("numberOfResourcesInBundle", new IntegerProperty())
-                .property("durationToKeepSyncedResources", new IntegerProperty())
-				.property("generateBundle", new BooleanProperty())
-                .property("isCaseBasedProfile", new BooleanProperty())
-				.property("caseBasedPrimaryResourceType", new StringProperty())
-                .property("caseBasedPrimaryResourceTypeId", new StringProperty())
-				.property("resourceSearchParameter", new StringProperty())
-                .property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
-                .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
-                .property("creator", new RefProperty("#/definitions/UserGetRef"))
-                .property("changedBy", new RefProperty("#/definitions/UserGetRef"))
-                .property("voidedBy", new RefProperty("#/definitions/UserGetRef"))
-				.property("urlToken", new StringProperty())
-				.property("tokenExpiryDate", new DateProperty())
-				.property("tokenType", new StringProperty())
-				.property("tokenRefreshKey", new StringProperty());
+		ModelImpl model = (ModelImpl) super.getGETModel(rep);
+		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
+			model.property("uuid", new StringProperty())
+					.property("name", new StringProperty())
+					.property("dataType", new StringProperty())
+					.property("dataTypeId", new StringProperty())
+					.property("url", new StringProperty());
+		} else if (rep instanceof FullRepresentation) {
+			model.property("urlToken", new StringProperty())
+					.property("urlUserName", new StringProperty())
+					.property("urlPassword", new StringProperty())
+					.property("tokenExpiryDate", new DateProperty())
+					.property("tokenType", new StringProperty());
+		}
+		return model;
 	}
 }

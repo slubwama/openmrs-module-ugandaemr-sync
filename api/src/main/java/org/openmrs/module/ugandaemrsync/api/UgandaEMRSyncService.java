@@ -476,10 +476,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     List<SyncTask> getSyncTasksByType(SyncTaskType syncTaskType);
 
-    SyncTask getSyncTaskByUUID(String uniqueId);
+    public SyncTask getSyncTaskByUUID(String uniqueId);
 
-    SyncTask getSyncTaskById(Integer uniqueId);
+    public SyncTask getSyncTaskById(Integer uniqueId);
 
-    List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String synceDateFrom, String synceDateTo);
+    public List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String synceDateFrom, String synceDateTo);
+
+    public List<SyncTask> searchSyncTask(SyncTaskType syncTaskType,Integer statusCode,Date fromDate, Date toDate);
 }
 

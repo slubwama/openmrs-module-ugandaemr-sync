@@ -26,6 +26,7 @@
     });
 </script>
 
+
 <script>
     if (jQuery) {
         jq(document).ready(function () {
@@ -43,28 +44,36 @@
                 modal.find("#url").val("");
                 modal.find("#token").val("");
 
-                jq.get('${ ui.actionLink("ugandaemrsync","syncTaskType","getSyncTaskType",) }', {
-                    "syncTaskTypeId": syncTaskTypeId
-                }, function (response) {
-                    var syncTaskType=response;
-                    modal.find("#syncTaskTypeId").val(syncTaskTypeId);
-                    modal.find("#syncTaskTypeName").val(syncTaskType.syncTaskType.name);
-                    modal.find("#dataType select").find().val(syncTaskType.syncTaskType.dataType);
-                    modal.find("#dataTypeId").val(syncTaskType.syncTaskType.dataTypeId);
-                    modal.find("#username").val(syncTaskType.syncTaskType.urlUserName);
-                    modal.find("#password").val(syncTaskType.syncTaskType.urlPassword);
-                    modal.find("#url").val(syncTaskType.syncTaskType.url);
-                    modal.find("#token").val(syncTaskType.syncTaskType.urlToken);
-                    if (!response) {
-                        ${ ui.message("coreapps.none ") }
-                    }
-                });
+                var syncTaskType = queryRestData("/ws/rest/v1/synctasktype/" + syncTaskTypeId + "?v=full");
+
+                modal.find("#syncTaskTypeId").val(syncTaskTypeId);
+                modal.find("#syncTaskTypeName").val(syncTaskType.name);
+                modal.find("#dataType").val(syncTaskType.dataType);
+                modal.find("#dataTypeId").val(syncTaskType.dataTypeId);
+                modal.find("#username").val(syncTaskType.urlUserName);
+                modal.find("#password").val(syncTaskType.urlPassword);
+                modal.find("#url").val(syncTaskType.url);
+                modal.find("#token").val(syncTaskType.urlToken);
+
+                if (!syncTaskType) {
+                    ${ ui.message("coreapps.none ") }
+                }
             });
         });
-    }
 
-    function samuel() {
-
+        function queryRestData(url) {
+            var responseDate = null;
+            jq.ajax({
+                type: "GET",
+                url: '/' + OPENMRS_CONTEXT_PATH + url,
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    responseDate = data;
+                }
+            });
+            return responseDate;
+        }
     }
 </script>
 <style>
