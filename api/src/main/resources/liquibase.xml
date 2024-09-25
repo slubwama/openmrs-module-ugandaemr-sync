@@ -1742,6 +1742,30 @@
         </insert>
     </changeSet>
 
+<!--    MPOX Screening task-->
+    <changeSet id="20240829-1043" author="solema" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = 'cd29850a-6e41-4044-bcf4-6b5deb0c0b63'
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting  Mpox Screening  Task into 'schedule_task_config' table</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="MONKEY POX SCREENING" />
+            <column name="description" value="The Monkye Pox Screening task" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.MPOXScreeningTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2024-01-11 23:59:59" />
+            <column name="repeat_interval" value="86400" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="cd29850a-6e41-4044-bcf4-6b5deb0c0b63" />
+        </insert>
+    </changeSet>
+
+
     <!--Mortality surveillance profile-->
     <changeSet id="ugandaemrsync-20240112-0901" author="solema">
         <preConditions onFail="MARK_RAN">
@@ -1769,6 +1793,50 @@
         </insert>
     </changeSet>
 
+<!--    MPOX Screening Profile -->
+    <changeSet id="ugandaemrsync-20240829-1102" author="solema">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'ef2afcf1-e2f7-4bb4-aa68-b18266e0b35f'
+            </sqlCheck>
+        </preConditions>
+        <comment>Creating Mpox screening </comment>
+        <insert tableName="sync_fhir_profile">
+            <column name="name" value="MPOX Screening"/>
+            <column name="resource_types" value="Patient,Person,EpisodeOfCare,Encounter,Observation"/>
+            <column name="patient_identifier_type" value="3"/>
+            <column name="number_of_resources_in_bundle" value="100"/>
+            <column name="duration_to_keep_synced_resources" value="1"/>
+            <column name="generate_bundle" value="1"/>
+            <column name="is_case_based_profile" value="1"/>
+            <column name="case_based_primary_resource_type" value="Encounter"/>
+            <column name="case_based_primary_resource_type_id" value="09478ad9-ccc1-4cbe-9e55-473447984158"/>
+            <column name="resource_search_parameter" value='{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["09478ad9-ccc1-4cbe-9e55-473447984158"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}'/>
+            <column name="url_end_point" value="https://ugisl.mets.or.ug/central-server"/>
+            <column name="creator" value="1"/>
+            <column name="date_created" value="2024-08-29 10:09:50"/>
+            <column name="voided" value="0"/>
+            <column name="uuid" value="ef2afcf1-e2f7-4bb4-aa68-b18266e0b35f"/>
+        </insert>
+    </changeSet>
+
+<!--    MPOX Screening insertion-->
+    <changeSet id="ugandaemrsync-20240829-1150" author="solema" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = 'cd29850a-6e41-4044-bcf4-6b5deb0c0b63'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config_property WHERE name = 'syncFhirProfileUUID' and value ='ef2afcf1-e2f7-4bb4-aa68-b18266e0b35f';
+            </sqlCheck>
+        </preConditions>
+        <comment>Inserting Mortality Surveillance task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
+        <sql>
+            INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', 'ef2afcf1-e2f7-4bb4-aa68-b18266e0b35f', (select task_config_id from scheduler_task_config where uuid="cd29850a-6e41-4044-bcf4-6b5deb0c0b63"));
+        </sql>
+    </changeSet>
+
+<!--    Mortality Surveillance insertion-->
     <changeSet id="ugandaemrsync-20240228-0901" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
