@@ -10,11 +10,14 @@
 package org.openmrs.module.ugandaemrsync.api.dao;
 
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.SQLQuery;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.StringType;
 import org.openmrs.Patient;
+import org.openmrs.api.context.Context;
 import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
@@ -470,5 +473,9 @@ public class UgandaEMRSyncDao {
             criteria.add(Restrictions.between("dateCreated", fromDate, toDate));
         }
         return criteria.list();
+    }
+
+    public void deleteUnSuccessfulSyncTasks(String syncTask, SyncTaskType syncTaskType) {
+        Context.getAdministrationService().executeSQL(String.format("delete from sync_task where status_code != %s and sync_task = '%s' and sync_task_type= %s",200,syncTask,syncTaskType.getSyncTaskTypeId()),false);
     }
 }

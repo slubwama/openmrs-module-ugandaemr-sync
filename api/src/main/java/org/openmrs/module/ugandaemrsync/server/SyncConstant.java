@@ -503,5 +503,10 @@ public class SyncConstant {
     public static List<String> VL_SYNC_TASK_COLUMNS = Arrays.asList("sync_task_id", "sync_task_type", "sync_task", "status", "status_code", "sent_to_url", "require_action", "action_completed", "date_sent", "creator", "date_created", "changed_by", "date_changed", "voided", "date_voided", "voided_by ", "void_reason", "uuid");
 
 	public static final String Latest_obs_of_Person = "SELECT %s from obs where person_id=%s and concept_id=%s and obs_datetime <= '%s' and voided= 0 ORDER BY obs_datetime DESC LIMIT 1";
+	public static final String Latest_drug_order_of_person = "SELECT o.concept_id FROM orders o\n" +
+			"         INNER JOIN order_type ot ON o.order_type_id = ot.order_type_id\n" +
+			"         INNER JOIN drug_order d_o ON o.order_id = d_o.order_id\n" +
+			"where ot.uuid='131168f4-15f5-102d-96e4-000c29c2a5d7' and o.voided=0 and patient_id=%s and DATE(date_activated) <='%s'" +
+			" and o.concept_id in (SELECT answer_concept from concept_answer where concept_id=90315) ORDER BY date_activated DESC LIMIT 1\n";
 	public static final String ALIS_SYNC_TASK_TYPE_UUID = "d4a3ebbb-e793-4e56-867c-0cf998e51f56";
 }

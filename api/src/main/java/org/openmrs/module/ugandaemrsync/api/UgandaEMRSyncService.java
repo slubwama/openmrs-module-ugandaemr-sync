@@ -483,5 +483,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, String synceDateFrom, String synceDateTo);
 
     public List<SyncTask> searchSyncTask(SyncTaskType syncTaskType,Integer statusCode,Date fromDate, Date toDate);
+
+    public void deleteSyncTask(String syncTask, SyncTaskType syncTaskType);
 }
 
