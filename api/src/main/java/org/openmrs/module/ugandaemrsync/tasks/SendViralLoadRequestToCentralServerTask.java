@@ -97,6 +97,16 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         }
     }
 
+    private void handleReturnedResponses(Order order,Map response) throws Exception {
+        OrderService orderService=Context.getOrderService();
+        if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")){
+            orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+        }else if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("Duplicate")){
+            orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+        }
+    }
+
+
     /**
      * @return
      */
