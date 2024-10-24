@@ -89,6 +89,11 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                         newSyncTask.setStatus((String)map.get("responseMessage"));
                         newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
                         ugandaEMRSyncService.saveSyncTask(newSyncTask);
+                        try{
+                            handleReturnedResponses(order,map);
+                        }catch (Exception exception){
+                            log.error(exception);
+                        }
                     }
                 } catch (Exception e) {
                     log.error("Failed to create sync task",e);
@@ -97,12 +102,20 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         }
     }
 
-    private void handleReturnedResponses(Order order,Map response) throws Exception {
+    private void handleReturnedResponses(Order order,Map response) {
         OrderService orderService=Context.getOrderService();
         if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")){
-            orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
-        }else if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("Duplicate")){
-            orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+            try {
+                orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+            } catch (Exception e) {
+               log.error(e);
+            }
+        }else if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")){
+            try {
+                orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+            } catch (Exception e) {
+                log.error(e);
+            }
         }
     }
 
