@@ -71,13 +71,20 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             List<SyncTask> allSyncTasks = ugandaEMRSyncService.getAllSyncTask();
             List<SyncTask> syncTasks = allSyncTasks.stream().filter(p -> order.getAccessionNumber().equals(p.getSyncTask()) && syncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
 
-            if (syncTasks.size()<1){
+            if (syncTasks.size() < 1) {
                 Map<String, String> dataOutput = generateVLFHIROrderTestRequestBody((TestOrder) order, VL_SEND_SAMPLE_FHIR_JSON_STRING);
                 String json = dataOutput.get("json");
 
                 try {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", json, false);
                     if (map != null) {
+                        Map responseType = handleReturnedResponses(order, map);
+                        Integer response = (Integer) map.get("responseCode");
+
+                        if (map.get("responseCode").toString().equals("400") && responseType.get("responseType").toString().equals("Duplicate")) {
+                            response = 200;
+                        }
+
                         SyncTask newSyncTask = new SyncTask();
                         newSyncTask.setDateSent(new Date());
                         newSyncTask.setCreator(Context.getUserService().getUser(1));
@@ -85,38 +92,34 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                         newSyncTask.setRequireAction(true);
                         newSyncTask.setActionCompleted(false);
                         newSyncTask.setSyncTask(order.getAccessionNumber());
-                        newSyncTask.setStatusCode((Integer) map.get("responseCode"));
-                        newSyncTask.setStatus((String)map.get("responseMessage"));
+                        newSyncTask.setStatusCode((Integer) response);
+                        newSyncTask.setStatus((String) map.get("responseMessage"));
                         newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
                         ugandaEMRSyncService.saveSyncTask(newSyncTask);
-                        try{
-                            handleReturnedResponses(order,map);
-                        }catch (Exception exception){
-                            log.error(exception);
-                        }
                     }
                 } catch (Exception e) {
-                    log.error("Failed to create sync task",e);
+                    log.error("Failed to create sync task", e);
                 }
             }
         }
     }
 
-    private void handleReturnedResponses(Order order,Map response) {
-        OrderService orderService=Context.getOrderService();
-        if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")){
-            try {
+    private Map handleReturnedResponses(Order order, Map response) {
+        Map responseType = new HashMap<>();
+        OrderService orderService = Context.getOrderService();
+        try {
+            if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")) {
                 orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
-            } catch (Exception e) {
-               log.error(e);
+                responseType.put("responseType", "Not HIE compliant");
+            } else if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")) {
+               //TODO need to update openmrs version in sync in order to support updating fulfiller status
+                responseType.put("responseType", "Duplicate");
             }
-        }else if(response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")){
-            try {
-                orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
-            } catch (Exception e) {
-                log.error(e);
-            }
+        } catch (Exception e) {
+            log.error(e);
         }
+
+        return responseType;
     }
 
 
@@ -144,7 +147,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             String healthCenterCode = ugandaEMRSyncService.getHealthCenterCode();
             String requestType = encounter.getEncounterType().getName();
             String sourceSystem = "UgandaEMR";
-            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(encounter.getPatient(),PATIENT_IDENTIFIER_TYPE);
+            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(encounter.getPatient(), PATIENT_IDENTIFIER_TYPE);
             String sampleID = encounter.getEncounterId().toString();
             String sampleCollectionDate = encounter.getEncounterDatetime().toString();
             String clinicianNames = getProviderByEncounterRole(encounter, "clinician");
@@ -180,12 +183,11 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         if (testOrder != null) {
 
 
-
             String healthCenterName = ugandaEMRSyncService.getHealthCenterName();
             String healthCenterCode = ugandaEMRSyncService.getHealthCenterCode();
             String requestType = proccessMappings(testOrder.getConcept());
             String sourceSystem = "UgandaEMR";
-            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(testOrder.getPatient(),PATIENT_IDENTIFIER_TYPE);
+            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(testOrder.getPatient(), PATIENT_IDENTIFIER_TYPE);
             String sampleID = testOrder.getAccessionNumber();
             String sampleCollectionDate = testOrder.getEncounter().getEncounterDatetime().toString();
             String clinicianNames = testOrder.getOrderer().getName();
@@ -197,8 +199,8 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                 if (getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson()))) != null) {
                     labTechContact = getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson())));
                 }
-            }catch (Exception e){
-                log.error("Could not add Lab technician telephone number",e);
+            } catch (Exception e) {
+                log.error("Could not add Lab technician telephone number", e);
             }
 
             String obsSampleType = testOrder.getSpecimenSource().getName().getName();
@@ -206,7 +208,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                 ordererContact = getProviderAttributeValue(testOrder.getOrderer().getActiveAttributes());
             }
 
-            filledJsonFile = String.format(jsonFHIRMap, healthCenterCode, healthCenterName, requestType, sourceSystem, patientARTNO, sampleID, obsSampleType, sampleCollectionDate, labTechNames, labTechContact,sampleCollectionDate, clinicianNames, ordererContact, "CPHL");
+            filledJsonFile = String.format(jsonFHIRMap, healthCenterCode, healthCenterName, requestType, sourceSystem, patientARTNO, sampleID, obsSampleType, sampleCollectionDate, labTechNames, labTechContact, sampleCollectionDate, clinicianNames, ordererContact, "CPHL");
         }
         jsonMap.put("json", filledJsonFile);
         return jsonMap;
