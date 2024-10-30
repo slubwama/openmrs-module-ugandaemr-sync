@@ -2006,7 +2006,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-2024-07-10-1003" author="slubwama" dbms="mysql">
+    <changeSet id="ugandaemrsync-2024-10-19-1003" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2ea451ae-b018-4003-8379-04b08fe66856'
@@ -2018,6 +2018,13 @@
         <comment>Inserting FSHR Integration task syncFhirProfileUUID property into 'scheduler_task_config_property' table</comment>
         <sql>
             INSERT INTO scheduler_task_config_property (name, value, task_config_id) VALUES ('syncFhirProfileUUID', '6a675910-8b97-43d6-8956-ec5d5e3dda9f', (select task_config_id from scheduler_task_config where uuid="2ea451ae-b018-4003-8379-04b08fe66856"));
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2024-09-25-1003" author="slubwama" dbms="mysql">
+        <comment>Make sync fhir profile have a limit of 50 records at a time per syncing</comment>
+        <sql>
+            UPDATE sync_fhir_profile SET sync_limit=50 WHERE date_created is not null;
         </sql>
     </changeSet>
 </databaseChangeLog>
