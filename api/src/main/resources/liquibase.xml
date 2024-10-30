@@ -2006,7 +2006,7 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-2024-07-10-1003" author="slubwama" dbms="mysql">
+    <changeSet id="ugandaemrsync-2024-10-19-1003" author="slubwama" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '2ea451ae-b018-4003-8379-04b08fe66856'
