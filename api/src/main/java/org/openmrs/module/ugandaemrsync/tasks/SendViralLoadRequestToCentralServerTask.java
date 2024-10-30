@@ -71,7 +71,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             List<SyncTask> allSyncTasks = ugandaEMRSyncService.getAllSyncTask();
             List<SyncTask> syncTasks = allSyncTasks.stream().filter(p -> order.getAccessionNumber().equals(p.getSyncTask()) && syncTaskType.getId().equals(p.getSyncTaskType().getId())).collect(Collectors.toList());
 
-            if (syncTasks.size() < 1) {
+            if (syncTasks.size()<1){
                 Map<String, String> dataOutput = generateVLFHIROrderTestRequestBody((TestOrder) order, VL_SEND_SAMPLE_FHIR_JSON_STRING);
                 String json = dataOutput.get("json");
 
@@ -98,7 +98,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                         ugandaEMRSyncService.saveSyncTask(newSyncTask);
                     }
                 } catch (Exception e) {
-                    log.error("Failed to create sync task", e);
+                    log.error("Failed to create sync task",e);
                 }
             }
         }
@@ -147,7 +147,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             String healthCenterCode = ugandaEMRSyncService.getHealthCenterCode();
             String requestType = encounter.getEncounterType().getName();
             String sourceSystem = "UgandaEMR";
-            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(encounter.getPatient(), PATIENT_IDENTIFIER_TYPE);
+            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(encounter.getPatient(),PATIENT_IDENTIFIER_TYPE);
             String sampleID = encounter.getEncounterId().toString();
             String sampleCollectionDate = encounter.getEncounterDatetime().toString();
             String clinicianNames = getProviderByEncounterRole(encounter, "clinician");
@@ -183,11 +183,12 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
         if (testOrder != null) {
 
 
+
             String healthCenterName = ugandaEMRSyncService.getHealthCenterName();
             String healthCenterCode = ugandaEMRSyncService.getHealthCenterCode();
             String requestType = proccessMappings(testOrder.getConcept());
             String sourceSystem = "UgandaEMR";
-            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(testOrder.getPatient(), PATIENT_IDENTIFIER_TYPE);
+            String patientARTNO = ugandaEMRSyncService.getPatientIdentifier(testOrder.getPatient(),PATIENT_IDENTIFIER_TYPE);
             String sampleID = testOrder.getAccessionNumber();
             String sampleCollectionDate = testOrder.getEncounter().getEncounterDatetime().toString();
             String clinicianNames = testOrder.getOrderer().getName();
@@ -199,8 +200,8 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                 if (getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson()))) != null) {
                     labTechContact = getProviderAttributeValue(Objects.requireNonNull(getProviderAppributesFromPerson(testOrder.getCreator().getPerson())));
                 }
-            } catch (Exception e) {
-                log.error("Could not add Lab technician telephone number", e);
+            }catch (Exception e){
+                log.error("Could not add Lab technician telephone number",e);
             }
 
             String obsSampleType = testOrder.getSpecimenSource().getName().getName();
@@ -208,7 +209,7 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                 ordererContact = getProviderAttributeValue(testOrder.getOrderer().getActiveAttributes());
             }
 
-            filledJsonFile = String.format(jsonFHIRMap, healthCenterCode, healthCenterName, requestType, sourceSystem, patientARTNO, sampleID, obsSampleType, sampleCollectionDate, labTechNames, labTechContact, sampleCollectionDate, clinicianNames, ordererContact, "CPHL");
+            filledJsonFile = String.format(jsonFHIRMap, healthCenterCode, healthCenterName, requestType, sourceSystem, patientARTNO, sampleID, obsSampleType, sampleCollectionDate, labTechNames, labTechContact,sampleCollectionDate, clinicianNames, ordererContact, "CPHL");
         }
         jsonMap.put("json", filledJsonFile);
         return jsonMap;
