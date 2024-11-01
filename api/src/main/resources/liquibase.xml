@@ -339,27 +339,6 @@
         </insert>
     </changeSet>
 
-
-    <changeSet id="20210220-0918" author="slubwama" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM scheduler_task_config WHERE uuid = '08a36b06-7a71-11eb-9439-0242ac130002'
-            </sqlCheck>
-        </preConditions>
-        <comment>Inserting   Sync FHIR Records To Central Server into 'schedule_task_config' table</comment>
-        <insert tableName="scheduler_task_config">
-            <column name="name" value="Sync FHIR Records a given Server" />
-            <column name="description" value="Synchronises FHIR Data to given Server" />
-            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendFHIRDataToCentralServerTask" />
-            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
-            <column name="start_time" valueDate="2021-02-20 23:59:59" />
-            <column name="repeat_interval" value="86400" />
-            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
-            <column name="created_by" value="1" />
-            <column name="uuid" value="08a36b06-7a71-11eb-9439-0242ac130002" />
-        </insert>
-    </changeSet>
-
     <changeSet id="20210709-1544" author="dbaluku">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
