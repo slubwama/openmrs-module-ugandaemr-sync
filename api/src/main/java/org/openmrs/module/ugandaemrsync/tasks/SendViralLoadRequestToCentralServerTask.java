@@ -78,6 +78,13 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                 try {
                     Map map = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", json, false);
                     if (map != null) {
+                        Map responseType = handleReturnedResponses(order, map);
+                        Integer response = (Integer) map.get("responseCode");
+
+                        if (map.get("responseCode").toString().equals("400") && responseType.get("responseType").toString().equals("Duplicate")) {
+                            response = 200;
+                        }
+
                         SyncTask newSyncTask = new SyncTask();
                         newSyncTask.setDateSent(new Date());
                         newSyncTask.setCreator(Context.getUserService().getUser(1));
@@ -85,8 +92,8 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
                         newSyncTask.setRequireAction(true);
                         newSyncTask.setActionCompleted(false);
                         newSyncTask.setSyncTask(order.getAccessionNumber());
-                        newSyncTask.setStatusCode((Integer) map.get("responseCode"));
-                        newSyncTask.setStatus((String)map.get("responseMessage"));
+                        newSyncTask.setStatusCode((Integer) response);
+                        newSyncTask.setStatus((String) map.get("responseMessage"));
                         newSyncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID));
                         ugandaEMRSyncService.saveSyncTask(newSyncTask);
                     }
@@ -96,6 +103,25 @@ public class SendViralLoadRequestToCentralServerTask extends AbstractTask {
             }
         }
     }
+
+    private Map handleReturnedResponses(Order order, Map response) {
+        Map responseType = new HashMap<>();
+        OrderService orderService = Context.getOrderService();
+        try {
+            if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")) {
+                orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+                responseType.put("responseType", "Not HIE compliant");
+            } else if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")) {
+               //TODO need to update openmrs version in sync in order to support updating fulfiller status
+                responseType.put("responseType", "Duplicate");
+            }
+        } catch (Exception e) {
+            log.error(e);
+        }
+
+        return responseType;
+    }
+
 
     /**
      * @return
