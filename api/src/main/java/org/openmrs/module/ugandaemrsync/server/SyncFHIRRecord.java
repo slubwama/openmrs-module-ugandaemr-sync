@@ -574,7 +574,10 @@ public class SyncFHIRRecord {
                     }
 
                     for (Encounter encounter : encounters) {
-                        providerList.add(getProviderFromEncounter(encounter));
+                        Provider provider = getProviderFromEncounter(encounter);
+                        if (provider != null) {
+                            providerList.add(provider);
+                        }
                     }
 
                     if (providerList.size() > 0) {
