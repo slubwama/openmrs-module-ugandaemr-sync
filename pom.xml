@@ -3,7 +3,7 @@
 
     <groupId>org.openmrs.module</groupId>
     <artifactId>ugandaemrsync</artifactId>
-    <version>1.2.0</version>
+    <version>1.1.15-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>UgandaemrSync</name>
     <description>Provides data sharing capabilities from the facility level installation with other systems</description>
@@ -28,7 +28,7 @@
         <connection>scm:git:git@github.com:METS-Programme/openmrs-module-ugandaemr-sync.git</connection>
         <developerConnection>scm:git:git@github.com:METS-Programme/openmrs-module-ugandaemr-sync.git</developerConnection>
         <url>scm:git:https://github.com/METS-Programme/openmrs-module-ugandaemr-sync/</url>
-        <tag>1.2.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
