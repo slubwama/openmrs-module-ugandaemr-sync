@@ -1,10 +1,10 @@
 package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.param.DateRangeParam;
-import ca.uhn.fhir.rest.param.TokenAndListParam;
-import ca.uhn.fhir.rest.param.TokenParam;
+import ca.uhn.fhir.rest.api.SortSpec;
+import ca.uhn.fhir.rest.param.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
@@ -13,35 +13,17 @@ import org.hibernate.SessionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openmrs.*;
+import org.openmrs.module.fhir2.api.*;
+import org.openmrs.module.fhir2.api.search.param.ObservationSearchParams;
+//import org.openmrs.module.fhir2.api.search.param.PractitionerSearchParams;
 import org.openmrs.module.fhir2.api.search.param.PatientSearchParams;
-import org.openmrs.PatientProgram;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.Patient;
-import org.openmrs.Encounter;
-import org.openmrs.EncounterRole;
-import org.openmrs.Obs;
-import org.openmrs.Program;
-import org.openmrs.Provider;
-import org.openmrs.Person;
-import org.openmrs.ProgramWorkflowState;
-import org.openmrs.OrderType;
-import org.openmrs.Order;
-import org.openmrs.Concept;
-import org.openmrs.ConceptMap;
-import org.openmrs.PatientState;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
-import org.openmrs.module.fhir2.api.FhirPersonService;
-import org.openmrs.module.fhir2.api.FhirPatientService;
-import org.openmrs.module.fhir2.api.FhirPractitionerService;
-import org.openmrs.module.fhir2.api.FhirObservationService;
-import org.openmrs.module.fhir2.api.FhirEncounterService;
-import org.openmrs.module.fhir2.api.FhirServiceRequestService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -107,6 +89,8 @@ public class SyncFHIRRecord {
     String healthCenterIdentifier;
     String healthCenterName;
     String lastSyncDate;
+
+    SyncFhirCase syncFhirCase = null;
 
     private SyncFhirProfile profile;
     private List<PatientProgram> patientPrograms;
@@ -276,7 +260,7 @@ public class SyncFHIRRecord {
                 if (!mapList.isEmpty()) {
                     String newSyncDate = SyncConstant.DEFAULT_DATE_FORMAT.format(now);
 
-                    syncGlobalProperties.setGlobalProperty(SyncConstant.LAST_SYNC_DATE, newSyncDate);
+                    syncGlobalProperties.setGlobalProperty(LAST_SYNC_DATE, newSyncDate);
                 }
             } catch (Exception e) {
                 log.error("Failed to process sync records central server", e);
@@ -341,7 +325,7 @@ public class SyncFHIRRecord {
      */
     public void identifyNewCases(SyncFhirProfile syncFhirProfile, Date currentDate) {
 
-        List<org.openmrs.PatientProgram> patientProgramList;
+        List<PatientProgram> patientProgramList;
 
         if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("EpisodeOfCare")) {
             Collection<Program> programs = new ArrayList<>();
@@ -349,15 +333,15 @@ public class SyncFHIRRecord {
             patientProgramList = Context.getProgramWorkflowService().getPatientPrograms(null, program, null, null, null, null, false);
 
 
-            for (org.openmrs.PatientProgram patientProgram : patientProgramList) {
-                org.openmrs.Patient patient = patientProgram.getPatient();
+            for (PatientProgram patientProgram : patientProgramList) {
+                Patient patient = patientProgram.getPatient();
                 if (!patient.getVoided()) {
                     String caseIdentifier = patientProgram.getUuid();
                     saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
                 }
             }
         } else if (syncFhirProfile.getCaseBasedPrimaryResourceType().equals("Encounter")) {
-            List<org.openmrs.EncounterType> encounterTypes = new ArrayList<>();
+            List<EncounterType> encounterTypes = new ArrayList<>();
 
             encounterTypes.add(Context.getEncounterService().getEncounterTypeByUuid(syncFhirProfile.getCaseBasedPrimaryResourceTypeId()));
 
@@ -383,7 +367,7 @@ public class SyncFHIRRecord {
             for (PatientProgram patientProgram : patientPrograms) {
                 PatientState patientState = patientProgram.getCurrentState(programWorkflowState.getProgramWorkflow());
                 if (patientState != null && patientState.getState().equals(programWorkflowState)) {
-                    org.openmrs.Patient patient = patientProgram.getPatient();
+                    Patient patient = patientProgram.getPatient();
                     String caseIdentifier = patientProgram.getUuid();
                     saveSyncFHIRCase(syncFhirProfile, currentDate, patient, caseIdentifier);
                 }
@@ -450,7 +434,7 @@ public class SyncFHIRRecord {
         }
     }
 
-    public SyncFhirCase saveSyncFHIRCase(SyncFhirProfile syncFhirProfile, Date currentDate, org.openmrs.Patient patient, String caseIdentifier) {
+    public SyncFhirCase saveSyncFHIRCase(SyncFhirProfile syncFhirProfile, Date currentDate, Patient patient, String caseIdentifier) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncFhirCase syncFhirCase = ugandaEMRSyncService.getSyncFHIRCaseBySyncFhirProfileAndPatient(syncFhirProfile, patient, caseIdentifier);
         if (syncFhirCase == null) {
@@ -492,7 +476,7 @@ public class SyncFHIRRecord {
     private String generateFHIRCaseResource(SyncFhirProfile syncFhirProfile, SyncFhirCase syncFHIRCase) {
 
         Collection<String> resources = new ArrayList<>();
-        List<org.openmrs.Encounter> encounters = new ArrayList<>();
+        List<Encounter> encounters = new ArrayList<>();
         Date currentDate = new Date();
         Date lastUpdateDate;
         List<Order> orderList = new ArrayList<>();
@@ -509,6 +493,7 @@ public class SyncFHIRRecord {
 
 
         String[] resourceTypes = syncFhirProfile.getResourceTypes().split(",");
+        OrderService orderService = Context.getOrderService();
 
         for (String resource : resourceTypes) {
             switch (resource) {
@@ -543,7 +528,7 @@ public class SyncFHIRRecord {
                     anyOtherObject.put("episodeOfCare", patientProgramList);
                     break;
                 case "Encounter":
-                    List<org.openmrs.EncounterType> encounterTypes = new ArrayList<>();
+                    List<EncounterType> encounterTypes = new ArrayList<>();
                     DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(lastUpdateDate);
                     JSONArray encounterUUIDS = getSearchParametersInJsonObject("Encounter", syncFhirProfile.getResourceSearchParameter()).getJSONArray("type");
 
@@ -562,10 +547,18 @@ public class SyncFHIRRecord {
                     }
                     break;
                 case "ServiceRequest":
-                    OrderService orderService = Context.getOrderService();
+
                     List<Order> testOrders = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.TEST_ORDER_TYPE_UUID), null, null).stream().filter(testOrder -> testOrder.getDateActivated().compareTo(lastUpdateDate) >= 0).collect(Collectors.toList());
                     orderList = testOrders;
                     resources.addAll(groupInCaseBundle("ServiceRequest", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+                case "MedicationRequest":
+                    List<Order> drugOrder = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.DRUG_ORDER_TYPE_UUID), null, null).stream().filter(testOrder -> testOrder.getDateActivated().compareTo(lastUpdateDate) >= 0).collect(Collectors.toList());
+                    orderList = drugOrder;
+                    resources.addAll(groupInCaseBundle("MedicationRequest", getMedicationOrderResourceBundle(drugOrder), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+                case "Condition":
+                    //x resources.addAll(groupInCaseBundle("Condition", getMedicationOrderResourceBundle(drugOrder), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
                     List<Provider> providerList = new ArrayList<>();
@@ -600,7 +593,7 @@ public class SyncFHIRRecord {
 
     public Collection<String> generateFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
         Collection<String> stringCollection = new ArrayList<>();
-        List<org.openmrs.Encounter> encounters = new ArrayList<>();
+        List<Encounter> encounters = new ArrayList<>();
 
         this.syncFhirProfile = syncFhirProfile;
 
@@ -610,7 +603,7 @@ public class SyncFHIRRecord {
         for (String resource : resourceTypes) {
             switch (resource) {
                 case "Encounter":
-                    List<org.openmrs.EncounterType> encounterTypes = new ArrayList<>();
+                    List<EncounterType> encounterTypes = new ArrayList<>();
                     DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Encounter"));
                     JSONArray jsonArray = getSearchParametersInJsonObject("Encounter", syncFhirProfile.getResourceSearchParameter()).getJSONArray("type");
 
@@ -685,10 +678,10 @@ public class SyncFHIRRecord {
     }
 
 
-    private List<org.openmrs.PatientIdentifier> getPatientIdentifierFromEncounter(List<org.openmrs.Encounter> encounters, org.openmrs.PatientIdentifierType patientIdentifierType) {
-        List<org.openmrs.PatientIdentifier> patientIdentifiers = new ArrayList<>();
-        for (org.openmrs.Encounter encounter : encounters) {
-            org.openmrs.PatientIdentifier patientIdentifier = encounter.getPatient().getPatientIdentifier(patientIdentifierType);
+    private List<PatientIdentifier> getPatientIdentifierFromEncounter(List<Encounter> encounters, PatientIdentifierType patientIdentifierType) {
+        List<PatientIdentifier> patientIdentifiers = new ArrayList<>();
+        for (Encounter encounter : encounters) {
+            PatientIdentifier patientIdentifier = encounter.getPatient().getPatientIdentifier(patientIdentifierType);
             if (patientIdentifier != null) {
                 patientIdentifiers.add(patientIdentifier);
             }
@@ -696,9 +689,9 @@ public class SyncFHIRRecord {
         return patientIdentifiers;
     }
 
-    private List<org.openmrs.Person> getPersonFromEncounter(List<org.openmrs.Encounter> encounters) {
+    private List<Person> getPersonFromEncounter(List<Encounter> encounters) {
         List<Person> personList = new ArrayList<>();
-        for (org.openmrs.Encounter encounter : encounters) {
+        for (Encounter encounter : encounters) {
             personList.add(encounter.getPatient().getPerson());
         }
         return personList;
@@ -932,7 +925,7 @@ public class SyncFHIRRecord {
         return searchParamString;
     }
 
-    private Provider getProviderFromEncounter(org.openmrs.Encounter encounter) {
+    private Provider getProviderFromEncounter(Encounter encounter) {
         EncounterRole encounterRole = Context.getEncounterService().getEncounterRoleByUuid(ENCOUNTER_ROLE);
 
         Set<Provider> providers = encounter.getProvidersByRole(encounterRole);
@@ -948,13 +941,13 @@ public class SyncFHIRRecord {
         }
     }
 
-    private List<org.openmrs.Person> getPersonsFromEncounterList(List<org.openmrs.Encounter> encounters) {
+    private List<Person> getPersonsFromEncounterList(List<Encounter> encounters) {
         EncounterRole encounterClinicianRole = Context.getEncounterService().getEncounterRoleByUuid(ENCOUNTER_ROLE);
-        List<org.openmrs.Person> person = new ArrayList<>();
+        List<Person> person = new ArrayList<>();
 
-        for (org.openmrs.Encounter encounter : encounters) {
+        for (Encounter encounter : encounters) {
             person.add(encounter.getPatient().getPerson());
-            for (org.openmrs.Provider provider : encounter.getProvidersByRole(encounterClinicianRole)) {
+            for (Provider provider : encounter.getProvidersByRole(encounterClinicianRole)) {
                 person.add(provider.getPerson());
             }
         }
@@ -980,21 +973,22 @@ public class SyncFHIRRecord {
 
         TokenAndListParam patientReference = new TokenAndListParam();
         if (patientIdentifiers != null) {
-            for (org.openmrs.PatientIdentifier patientIdentifier : patientIdentifiers) {
+            for (PatientIdentifier patientIdentifier : patientIdentifiers) {
                 patientReference.addAnd(new TokenParam(patientIdentifier.getIdentifier()));
             }
         }
 
+
         PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
-        return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
+        return Context.getService(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
-    private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<org.openmrs.Encounter> encounterList, List<Order> orders) {
+    private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Order> orders) {
 
         Collection<String> providerUUIDs = new ArrayList<>();
-        for (org.openmrs.Encounter encounter : encounterList) {
+        for (Encounter encounter : encounterList) {
             if (getProviderFromEncounter(encounter).getDateChanged().after(getLastSyncDate(syncFhirProfile, "Practitioner"))) {
                 providerUUIDs.add(getProviderFromEncounter(encounter).getUuid());
             }
@@ -1004,14 +998,23 @@ public class SyncFHIRRecord {
             providerUUIDs.add(order.getOrderer().getUuid());
         }
 
+        TokenAndListParam providerReference = new TokenAndListParam();
+        if (providerUUIDs != null) {
+            for (String providerUUID : providerUUIDs) {
+                providerReference.addAnd(new TokenParam(providerUUID));
+            }
+        }
+
+        //PractitionerSearchParams practitionerSearchParams = new  PractitionerSearchParams(providerReference,null, null, null,null, null, null, null, null, null, null);
+
+
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
         if (providerUUIDs.isEmpty() && !syncFhirProfile.getIsCaseBasedProfile()) {
             DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
 
-            iBaseResources = getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(null, null, null, null, null,
-                    null, null, null, null, lastUpdated, null).getResources(0, Integer.MAX_VALUE);
+            //iBaseResources = getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(null, null, null, null, null,null, null, null, null, lastUpdated, null).getResources(0, Integer.MAX_VALUE);
         } else {
-            iBaseResources.addAll(getApplicationContext().getBean(FhirPractitionerService.class).get(providerUUIDs));
+            iBaseResources.addAll(Context.getService(FhirPractitionerService.class).get(providerUUIDs));
         }
 
 
@@ -1019,7 +1022,7 @@ public class SyncFHIRRecord {
 
     }
 
-    private Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<org.openmrs.Person> personList, SyncFhirCase syncFhirCase) {
+    private Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<Person> personList, SyncFhirCase syncFhirCase) {
 
 
         DateRangeParam lastUpdated = new DateRangeParam();
@@ -1038,39 +1041,38 @@ public class SyncFHIRRecord {
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         if (personList.size() > 0) {
-            Collection<String> personListUUID = personList.stream().map(org.openmrs.Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
-            iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
+            Collection<String> personListUUID = personList.stream().map(Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
+            // iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
 
         } else if (!syncFhirProfile.getIsCaseBasedProfile()) {
-            iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(null, null, null, null,
-                    null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
+            // iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(null, null, null, null,null, null, null, null, lastUpdated, null, null).getResources(0, Integer.MAX_VALUE);
         }
 
         return iBaseResources;
     }
 
 
-    private Collection<IBaseResource> getEncounterResourceBundle(List<org.openmrs.Encounter> encounters) {
+    private Collection<IBaseResource> getEncounterResourceBundle(List<Encounter> encounters) {
 
 
         Collection<String> encounterUUIDS = new ArrayList<>();
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
         TokenAndListParam encounterReference = new TokenAndListParam();
 
-        for (org.openmrs.Encounter encounter : encounters) {
+        for (Encounter encounter : encounters) {
             encounterUUIDS.add(encounter.getUuid());
         }
 
 
         if (encounterUUIDS.size() > 0) {
-            iBaseResources.addAll(getApplicationContext().getBean(FhirEncounterService.class).get(encounterUUIDS));
+            iBaseResources.addAll(Context.getService(FhirEncounterService.class).get(encounterUUIDS));
         }
 
 
         return iBaseResources;
     }
 
-    private Collection<IBaseResource> getObservationResourceBundle(SyncFhirProfile syncFhirProfile, List<org.openmrs.Encounter> encounterList, List<Person> personList) {
+    private Collection<IBaseResource> getObservationResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Person> personList) {
 
         JSONObject searchParams = getSearchParametersInJsonObject("Observation", syncFhirProfile.getResourceSearchParameter());
 
@@ -1092,6 +1094,49 @@ public class SyncFHIRRecord {
 
         }
 
+        DateRangeParam lastUpdated = new DateRangeParam();
+
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else if (syncFhirCase != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+            }
+        } else {
+            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Observation"));
+
+        }
+
+        ReferenceAndListParam encounterReference = new ReferenceAndListParam();
+        ReferenceAndListParam patientReference = new ReferenceAndListParam();
+
+        for (Encounter encounter1 : encounterList) {
+            ReferenceOrListParam param = new ReferenceOrListParam();
+            ReferenceParam referenceParam = new ReferenceParam();
+            referenceParam.setValue(encounter1.getUuid());
+            param.add(referenceParam);
+            encounterReference.addAnd(param);
+        }
+
+        for (Person person : personList) {
+            ReferenceOrListParam param = new ReferenceOrListParam();
+            ReferenceParam referenceParam = new ReferenceParam();
+            referenceParam.setValue(person.getUuid());
+            param.add(referenceParam);
+            patientReference.addAnd(param);
+        }
+
+
+        ReferenceAndListParam hasMemberReference = null;
+        TokenAndListParam valueConcept = null;
+        DateRangeParam valueDateParam = null;
+        QuantityAndListParam valueQuantityParam = null;
+        StringAndListParam valueStringParam = null;
+        DateRangeParam date = null;
+        TokenAndListParam code = null;
+        TokenAndListParam category = null;
+
+        ObservationSearchParams observationSearchParams = new ObservationSearchParams(encounterReference, patientReference,hasMemberReference, valueConcept, valueDateParam, valueQuantityParam, valueStringParam, date, code,  category, null, lastUpdated, null, null, null);
         List<Obs> observationList = Context.getObsService().getObservations(personList, encounterList, conceptQuestionList, null, null, null, null, null, null, getLastSyncDate(syncFhirProfile, "Observation"), new Date(), false);
 
         Collection<String> obsListUUID = observationList.stream().map(Obs::getUuid).collect(Collectors.toCollection(ArrayList::new));
@@ -1100,8 +1145,13 @@ public class SyncFHIRRecord {
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         if (obsListUUID.size() > 0) {
-            iBaseResources.addAll(getApplicationContext().getBean(FhirObservationService.class).get(obsListUUID));
+            iBaseResources.addAll(Context.getService(FhirObservationService.class).get(obsListUUID));
+
         }
+
+
+
+        iBaseResources.addAll(Context.getService(FhirObservationService.class).searchForObservations(observationSearchParams).getResources(0, Integer.MAX_VALUE));
 
 
         return iBaseResources;
@@ -1109,25 +1159,61 @@ public class SyncFHIRRecord {
     }
 
 
-    private Collection<IBaseResource> getServiceRequestResourceBundle(List<org.openmrs.Order> testOrders) {
+    private Collection<IBaseResource> getServiceRequestResourceBundle(List<Order> testOrders) {
 
         Collection<String> testOrdersUUIDS = new ArrayList<>();
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
-        for (org.openmrs.Order testOrder : testOrders) {
+        for (Order testOrder : testOrders) {
             testOrdersUUIDS.add(testOrder.getUuid());
         }
 
 
         if (testOrdersUUIDS.size() > 0) {
-            iBaseResources.addAll(getApplicationContext().getBean(FhirServiceRequestService.class).get(testOrdersUUIDS));
+            iBaseResources.addAll(Context.getService(FhirServiceRequestService.class).get(testOrdersUUIDS));
         }
 
 
         return iBaseResources;
     }
 
-    private Collection<IBaseResource> getEpisodeOfCareResourceBundle(List<org.openmrs.PatientProgram> patientPrograms) {
+    private Collection<IBaseResource> getMedicationOrderResourceBundle(List<Order> drugOrders) {
+
+        Collection<String> drugOrdersUUIDS = new ArrayList<>();
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        for (Order drugOrder : drugOrders) {
+            drugOrdersUUIDS.add(drugOrder.getUuid());
+        }
+
+
+        if (drugOrdersUUIDS.size() > 0) {
+            iBaseResources.addAll(Context.getService(FhirMedicationService.class).get(drugOrdersUUIDS));
+        }
+
+
+        return iBaseResources;
+    }
+
+    private Collection<IBaseResource> getConditionOrderResourceBundle(List<Order> drugOrders) {
+
+        Collection<String> drugOrdersUUIDS = new ArrayList<>();
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        for (Order drugOrder : drugOrders) {
+            drugOrdersUUIDS.add(drugOrder.getUuid());
+        }
+        //ConditionSearchParams conditionSearchParams=new
+
+        if (drugOrdersUUIDS.size() > 0) {
+            // iBaseResources.addAll(getApplicationContext().getBean(FhirConditionService.class).searchConditions());
+        }
+
+
+        return iBaseResources;
+    }
+
+    private Collection<IBaseResource> getEpisodeOfCareResourceBundle(List<PatientProgram> patientPrograms) {
         this.patientPrograms = patientPrograms;
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
