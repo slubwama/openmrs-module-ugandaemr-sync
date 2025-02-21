@@ -81,7 +81,7 @@ public class UgandaEMRSyncTaskResource extends DelegatingCrudResource<TaskDefini
 	}
 	@Override
 	protected PageableResult doSearch(RequestContext context) {
-		Collection<TaskDefinition> allSchedules=Context.getService(SchedulerService.class).getScheduledTasks();
+		Collection<TaskDefinition> allSchedules=Context.getService(SchedulerService.class).getRegisteredTasks();
 		List<TaskDefinition> relevantSchedules=new ArrayList<>();
 
 		String module = context.getParameter("module");
