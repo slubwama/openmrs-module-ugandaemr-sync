@@ -65,8 +65,6 @@ public class UgandaEMRSyncTaskResource extends DelegatingCrudResource<TaskDefini
 		description.addProperty("startTimePattern");
 		description.addProperty("started");
 		description.addProperty("taskClass");
-		description.addProperty("taskClass");
-
 		return description;
 	}
 
