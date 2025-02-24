@@ -442,6 +442,40 @@
                                                                         Encounter
                                                                     </label>
                                                                 </div>
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeImmunization"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="Immunization">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeImmunization">
+                                                                        Immunization
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeMedicationDispense"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="MedicationDispense">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeMedicationDispense">
+                                                                        Medication Dispense
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeMedicationRequest"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="MedicationRequest">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeMedicationRequest">
+                                                                        Medication Request
+                                                                    </label>
+                                                                </div>
                                                             </div>
                                                         </div>
 
@@ -502,7 +536,7 @@
                                                                        value="AllergyIntolerance">
                                                                 <label class="form-check-label"
                                                                        for="resourceTypeAllergyIntolerance">
-                                                                    Condition
+                                                                    Allergy
                                                                 </label>
                                                             </div>
                                                             <div class="form-check">
@@ -513,49 +547,13 @@
                                                                        value="DiagnosticReport">
                                                                 <label class="form-check-label"
                                                                        for="resourceTypeDiagnosticReport">
-                                                                    Condition
-                                                                </label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input type="checkbox"
-                                                                       id="resourceTypeImmunization"
-                                                                       name="resourceType"
-                                                                       class="resourceType"
-                                                                       value="Immunization">
-                                                                <label class="form-check-label"
-                                                                       for="resourceTypeImmunization">
-                                                                    Condition
-                                                                </label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input type="checkbox"
-                                                                       id="resourceTypeMedicationDispense"
-                                                                       name="resourceType"
-                                                                       class="resourceType"
-                                                                       value="MedicationDispense">
-                                                                <label class="form-check-label"
-                                                                       for="resourceTypeMedicationDispense">
-                                                                    Condition
-                                                                </label>
-                                                            </div>
-
-                                                            <div class="form-check">
-                                                                <input type="checkbox"
-                                                                       id="resourceTypeMedicationRequest"
-                                                                       name="resourceType"
-                                                                       class="resourceType"
-                                                                       value="MedicationRequest">
-                                                                <label class="form-check-label"
-                                                                       for="resourceTypeMedicationRequest">
-                                                                    Condition
+                                                                    Diagnostic Report
                                                                 </label>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
