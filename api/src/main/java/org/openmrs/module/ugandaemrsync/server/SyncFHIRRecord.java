@@ -980,7 +980,7 @@ public class SyncFHIRRecord {
         PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
                 null, null, null, null, null, null, null, lastUpdated, null, null);
 
-        return Context.getService(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
+        return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
     private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Order> orders) {
@@ -1114,7 +1114,7 @@ public class SyncFHIRRecord {
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         if (obsListUUID.size() > 0) {
-            iBaseResources.addAll(Context.getService(FhirObservationService.class).get(obsListUUID));
+            iBaseResources.addAll(getApplicationContext().getBean(FhirObservationService.class).get(obsListUUID));
         }
         return iBaseResources;
 
@@ -1133,7 +1133,7 @@ public class SyncFHIRRecord {
 
 
         if (testOrdersUUIDS.size() > 0) {
-            iBaseResources.addAll(Context.getService(FhirServiceRequestService.class).get(testOrdersUUIDS));
+            iBaseResources.addAll(getApplicationContext().getBean(FhirServiceRequestService.class).get(testOrdersUUIDS));
         }
 
 
@@ -1149,7 +1149,7 @@ public class SyncFHIRRecord {
         }
 
         if (drugOrdersUUIDS.size() > 0) {
-            iBaseResources.addAll(Context.getService(FhirMedicationService.class).get(drugOrdersUUIDS));
+            iBaseResources.addAll(getApplicationContext().getBean(FhirMedicationService.class).get(drugOrdersUUIDS));
         }
 
         return iBaseResources;
@@ -1196,7 +1196,7 @@ public class SyncFHIRRecord {
         conditionSearchParams.setLastUpdated(lastUpdated);
 
 
-        iBaseResources.addAll(Context.getService(FhirConditionService.class).searchConditions(conditionSearchParams).getResources(0, Integer.MAX_VALUE));
+        iBaseResources.addAll(getApplicationContext().getBean(FhirConditionService.class).searchConditions(conditionSearchParams).getResources(0, Integer.MAX_VALUE));
 
         return iBaseResources;
     }

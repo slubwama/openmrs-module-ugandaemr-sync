@@ -12,6 +12,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+@ComponentScan(basePackages = {"org.openmrs.module.fhir2"})
 public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
 
     protected static final String UGANDAEMR_GLOBAL_PROPERTY_DATASET_XML = "org/openmrs/module/ugandaemrsync/include/globalPropertiesDataSet.xml";
