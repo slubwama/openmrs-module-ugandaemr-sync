@@ -1,9 +1,7 @@
 package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.model.api.Include;
 import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.SortSpec;
 import ca.uhn.fhir.rest.param.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,10 +9,13 @@ import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.AllergyIntolerance;
+import org.hl7.fhir.r4.model.MedicationRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.*;
 import org.openmrs.module.fhir2.api.*;
+import org.openmrs.module.fhir2.api.FhirEpisodeOfCareService;
 import org.openmrs.module.fhir2.api.search.param.*;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;
@@ -49,6 +50,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.hl7.fhir.r4.model.Patient.SP_IDENTIFIER;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.FSHR_SYNC_FHIR_PROFILE_UUID;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_UUID;
@@ -550,13 +552,24 @@ public class SyncFHIRRecord {
                     orderList = testOrders;
                     resources.addAll(groupInCaseBundle("ServiceRequest", getServiceRequestResourceBundle(testOrders), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
-                case "MedicationRequest":
-                    List<Order> drugOrder = orderService.getActiveOrders(syncFHIRCase.getPatient(), orderService.getOrderTypeByUuid(OrderType.DRUG_ORDER_TYPE_UUID), null, null).stream().filter(testOrder -> testOrder.getDateActivated().compareTo(lastUpdateDate) >= 0).collect(Collectors.toList());
-                    orderList = drugOrder;
-                    resources.addAll(groupInCaseBundle("MedicationRequest", getMedicationOrderResourceBundle(drugOrder), syncFhirProfile.getPatientIdentifierType().getName()));
-                    break;
                 case "Condition":
-                    //x resources.addAll(groupInCaseBundle("Condition", getMedicationOrderResourceBundle(drugOrder), syncFhirProfile.getPatientIdentifierType().getName()));
+                    resources.addAll(groupInCaseBundle("Condition", getConditionResourceBundle(syncFHIRCase, syncFhirProfile), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+                case "AllergyIntolerance":
+                    resources.addAll(groupInCaseBundle("AllergyIntolerance", getAllergyResourceBundle(syncFHIRCase, syncFhirProfile), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+                case "Immunization":
+                    resources.addAll(groupInCaseBundle("Immunization", getImmunizationResourceBundle(syncFHIRCase, syncFhirProfile), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+                case "MedicationDispense":
+                    resources.addAll(groupInCaseBundle("MedicationDispense", getMedicationDispenseResourceBundle(syncFHIRCase, syncFhirProfile), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+                case "MedicationRequest":
+                    resources.addAll(groupInCaseBundle("MedicationRequest", getMedicationRequestResourceBundle(syncFHIRCase, syncFhirProfile), syncFhirProfile.getPatientIdentifierType().getName()));
+                    break;
+
+                case "DiagnosticReport":
+                    resources.addAll(groupInCaseBundle("DiagnosticReport", getDiagnosticReportResourceBundle(syncFHIRCase, syncFhirProfile), syncFhirProfile.getPatientIdentifierType().getName()));
                     break;
                 case "Practitioner":
                     List<Provider> providerList = new ArrayList<>();
@@ -977,14 +990,13 @@ public class SyncFHIRRecord {
         }
 
 
-        PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null,
-                null, null, null, null, null, null, null, lastUpdated, null, null);
+        PatientSearchParams patientSearchParams = new PatientSearchParams(null, null, null, patientReference, null, null, null, null, null, null, null, null, null, null, lastUpdated, null, null);
 
         return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
     private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Order> orders) {
-        PractitionerSearchParams practitionerSearchParams = new  PractitionerSearchParams();
+        PractitionerSearchParams practitionerSearchParams = new PractitionerSearchParams();
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
         Collection<String> providerUUIDs = new ArrayList<>();
 
@@ -1010,7 +1022,7 @@ public class SyncFHIRRecord {
             }
         }
 
-        if(providerReference!=null) {
+        if (providerReference != null) {
             practitionerSearchParams.setIdentifier(providerReference);
         }
 
@@ -1035,13 +1047,13 @@ public class SyncFHIRRecord {
 
         }
 
-        PersonSearchParams personSearchParams=new PersonSearchParams();
+        PersonSearchParams personSearchParams = new PersonSearchParams();
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         if (personList.size() > 0) {
             Collection<String> personListUUID = personList.stream().map(Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
-             iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
+            iBaseResources.addAll(getApplicationContext().getBean(FhirPersonService.class).get(personListUUID));
 
         } else if (!syncFhirProfile.getIsCaseBasedProfile()) {
             personSearchParams.setLastUpdated(lastUpdated);
@@ -1065,7 +1077,7 @@ public class SyncFHIRRecord {
 
 
         if (encounterUUIDS.size() > 0) {
-            iBaseResources.addAll(Context.getService(FhirEncounterService.class).get(encounterUUIDS));
+            iBaseResources.addAll(getApplicationContext().getBean(FhirEncounterService.class).get(encounterUUIDS));
         }
 
 
@@ -1140,29 +1152,14 @@ public class SyncFHIRRecord {
         return iBaseResources;
     }
 
-    private Collection<IBaseResource> getMedicationOrderResourceBundle(List<Order> drugOrders) {
-        Collection<String> drugOrdersUUIDS = new ArrayList<>();
-        Collection<IBaseResource> iBaseResources = new ArrayList<>();
-
-        for (Order drugOrder : drugOrders) {
-            drugOrdersUUIDS.add(drugOrder.getUuid());
-        }
-
-        if (drugOrdersUUIDS.size() > 0) {
-            iBaseResources.addAll(getApplicationContext().getBean(FhirMedicationService.class).get(drugOrdersUUIDS));
-        }
-
-        return iBaseResources;
-    }
-
-    private Collection<IBaseResource> getConditionOrderResourceBundle(List<Concept> drugOrders, SyncFhirCase SyncFhirCase, SyncFhirProfile syncFhirProfile) {
+    private Collection<IBaseResource> getConditionResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
         JSONObject searchParams = getSearchParametersInJsonObject("Condition", syncFhirProfile.getResourceSearchParameter());
 
         JSONArray codes = searchParams.getJSONArray("code");
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         TokenAndListParam codeReference = new TokenAndListParam();
-        ConditionSearchParams conditionSearchParams=new ConditionSearchParams();
+        ConditionSearchParams conditionSearchParams = new ConditionSearchParams();
 
         DateRangeParam lastUpdated;
 
@@ -1179,7 +1176,7 @@ public class SyncFHIRRecord {
 
         for (Object conceptUID : codes) {
             try {
-                TokenParam paramConcept=new TokenParam(conceptUID.toString());
+                TokenParam paramConcept = new TokenParam(conceptUID.toString());
                 codeReference.addAnd(paramConcept);
             } catch (Exception e) {
                 log.error("Error while adding concept with uuid " + conceptUID, e);
@@ -1187,16 +1184,185 @@ public class SyncFHIRRecord {
 
         }
 
-
-
-
-
+        ReferenceAndListParam patientReference = new ReferenceAndListParam();
+        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
 
         conditionSearchParams.setCode(codeReference);
         conditionSearchParams.setLastUpdated(lastUpdated);
-
+        conditionSearchParams.setPatientParam(patientReference);
 
         iBaseResources.addAll(getApplicationContext().getBean(FhirConditionService.class).searchConditions(conditionSearchParams).getResources(0, Integer.MAX_VALUE));
+
+        return iBaseResources;
+    }
+
+
+    private Collection<IBaseResource> getAllergyResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        FhirAllergyIntoleranceSearchParams fhirAllergyIntoleranceSearchParams = new FhirAllergyIntoleranceSearchParams();
+
+        DateRangeParam lastUpdated;
+
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+            }
+        } else {
+            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "AllergyIntolerance"));
+
+        }
+
+        ReferenceAndListParam patientReference = new ReferenceAndListParam();
+        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER,syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
+
+        fhirAllergyIntoleranceSearchParams.setLastUpdated(lastUpdated);
+        fhirAllergyIntoleranceSearchParams.setPatientReference(patientReference);
+
+        iBaseResources.addAll(getApplicationContext().getBean(FhirAllergyIntoleranceService.class).searchForAllergies(fhirAllergyIntoleranceSearchParams).getResources(0, Integer.MAX_VALUE));
+
+        return iBaseResources;
+    }
+
+    private Collection<IBaseResource> getImmunizationResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        ReferenceAndListParam param = new ReferenceAndListParam();
+        param.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
+
+        iBaseResources.addAll(getApplicationContext().getBean(FhirImmunizationService.class).searchImmunizations(param, null).getResources(0, Integer.MAX_VALUE));
+
+        return iBaseResources;
+    }
+
+
+    private Collection<IBaseResource> getMedicationDispenseResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+
+        JSONObject searchParams = getSearchParametersInJsonObject("medicationDispense", syncFhirProfile.getResourceSearchParameter());
+
+        JSONArray codes = searchParams.getJSONArray("code");
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        MedicationDispenseSearchParams medicationDispenseSearchParams = new MedicationDispenseSearchParams();
+        DateRangeParam lastUpdated;
+
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+            }
+        } else {
+            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "MedicationRequest"));
+
+        }
+
+        ReferenceAndListParam patientReference = new ReferenceAndListParam();
+        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
+
+
+        medicationDispenseSearchParams.setLastUpdated(lastUpdated);
+        medicationDispenseSearchParams.setPatient(patientReference);
+
+        iBaseResources.addAll(getApplicationContext().getBean(FhirMedicationDispenseService.class).searchMedicationDispenses(medicationDispenseSearchParams).getResources(0, Integer.MAX_VALUE));
+
+        return iBaseResources;
+    }
+
+    private Collection<IBaseResource> getMedicationRequestResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+
+        JSONObject searchParams = getSearchParametersInJsonObject("medicationRequest", syncFhirProfile.getResourceSearchParameter());
+
+
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        MedicationRequestSearchParams medicationRequestSearchParams = new MedicationRequestSearchParams();
+        TokenAndListParam codeReference = new TokenAndListParam();
+
+        DateRangeParam lastUpdated;
+
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+            }
+        } else {
+            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "MedicationRequest"));
+
+        }
+        if (!searchParams.isEmpty() && searchParams.has("code")) {
+            JSONArray codes = searchParams.getJSONArray("code");
+            for (Object conceptUID : codes) {
+                try {
+                    TokenParam paramConcept = new TokenParam(conceptUID.toString());
+                    codeReference.addAnd(paramConcept);
+                } catch (Exception e) {
+                    log.error("Error while adding concept with uuid " + conceptUID, e);
+                }
+
+            }
+        }
+
+        ReferenceAndListParam patientReference = new ReferenceAndListParam();
+        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
+
+
+        medicationRequestSearchParams.setLastUpdated(lastUpdated);
+        medicationRequestSearchParams.setCode(codeReference);
+        medicationRequestSearchParams.setPatientReference(patientReference);
+
+        iBaseResources.addAll(getApplicationContext().getBean(FhirMedicationRequestService.class).searchForMedicationRequests(medicationRequestSearchParams).getResources(0, Integer.MAX_VALUE));
+
+        return iBaseResources;
+    }
+
+    private Collection<IBaseResource> getDiagnosticReportResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+
+        JSONObject searchParams = getSearchParametersInJsonObject("diagnosticReport", syncFhirProfile.getResourceSearchParameter());
+
+
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        DiagnosticReportSearchParams diagnosticReportSearchParams = new DiagnosticReportSearchParams();
+        TokenAndListParam codeReference = new TokenAndListParam();
+
+        DateRangeParam lastUpdated;
+
+        if (syncFhirProfile.getIsCaseBasedProfile()) {
+            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+            }
+        } else {
+            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "MedicationRequest"));
+
+        }
+        if (!searchParams.isEmpty() && searchParams.has("code")) {
+            JSONArray codes = searchParams.getJSONArray("code");
+            for (Object conceptUID : codes) {
+                try {
+                    TokenParam paramConcept = new TokenParam(conceptUID.toString());
+                    codeReference.addAnd(paramConcept);
+                } catch (Exception e) {
+                    log.error("Error while adding concept with uuid " + conceptUID, e);
+                }
+
+            }
+        }
+
+        ReferenceAndListParam patientReference = new ReferenceAndListParam();
+        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
+
+
+        diagnosticReportSearchParams.setLastUpdated(lastUpdated);
+        diagnosticReportSearchParams.setCode(codeReference);
+        diagnosticReportSearchParams.setPatientReference(patientReference);
+
+        iBaseResources.addAll(getApplicationContext().getBean(FhirDiagnosticReportService.class).searchForDiagnosticReports(diagnosticReportSearchParams).getResources(0, Integer.MAX_VALUE));
 
         return iBaseResources;
     }
@@ -1207,7 +1373,7 @@ public class SyncFHIRRecord {
 
         Collection<String> patientProgramUUIDs = patientPrograms.stream().map(PatientProgram::getUuid).collect(Collectors.toCollection(ArrayList::new));
 
-        //iBaseResources.addAll(Context.getService(FhirEpisodeOfCareService.class).get(patientProgramUUIDs));
+        iBaseResources.addAll(getApplicationContext().getBean(FhirEpisodeOfCareService.class).get(patientProgramUUIDs));
         return iBaseResources;
     }
 
