@@ -537,9 +537,7 @@ public class SyncFHIRRecord {
                     }
                     EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(syncFHIRCase.getPatient(), null, encounterLastUpdated.getLowerBoundAsInstant(), encounterLastUpdated.getUpperBoundAsInstant(), null, null, encounterTypes, null, null, null, false);
                     encounters = Context.getEncounterService().getEncounters(encounterSearchCriteria);
-
                     resources.addAll(groupInCaseBundle("Encounter", getEncounterResourceBundle(encounters), syncFhirProfile.getPatientIdentifierType().getName()));
-
                     break;
                 case "Observation":
                     if (encounters.size() > 0) {

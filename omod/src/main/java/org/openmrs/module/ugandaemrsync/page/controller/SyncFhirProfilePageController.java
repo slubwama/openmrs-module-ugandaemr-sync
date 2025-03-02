@@ -48,7 +48,12 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "noOfResourcesInBundle", required = false) Integer noOfResourcesInBundle,
                      @RequestParam(value = "encounterTypeUUIDS", required = false) String encounterTypeUUIDS,
                      @RequestParam(value = "observationCodeUUIDS", required = false) ArrayList observationCodeUUIDs,
+                     @RequestParam(value = "medicationRequestCodeUUIDS", required = false) ArrayList medicationRequestCodeUUIDS,
+                     @RequestParam(value = "medicationDispenseCodeUUIDS", required = false) ArrayList medicationDispenseCodeUUIDS,
+                     @RequestParam(value = "conditionCodeUUIDS", required = false) ArrayList conditionCodeUUIDS,
+                     @RequestParam(value = "diagnosticReportCodeUUIDS", required = false) ArrayList diagnosticReportCodeUUIDS,
                      @RequestParam(value = "episodeOfCareUUIDS", required = false) String episodeOfCareUUIDS,
+                     @RequestParam(value = "serviceRequestCodeUUIDS", required = false) ArrayList serviceRequestCodeUUIDS,
                      @RequestParam(value = "url", required = false) String url,
                      @RequestParam(value = "searchable", required = false) String searchable,
                      @RequestParam(value = "searchURL", required = false) String searchURL,
@@ -69,7 +74,7 @@ public class SyncFhirProfilePageController {
             episodeOfCareArray = new JSONArray(episodeOfCareUUIDS.split(","));
         }
 
-        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterArray.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareArray.toString());
+        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterArray.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareArray.toString().replace("medicationRequestCodeUUIDS", medicationRequestCodeUUIDS.toString()).replace("medicationDispenseCodeUUIDS", medicationDispenseCodeUUIDS.toString()).replace("conditionCodeUUIDS", conditionCodeUUIDS.toString()).replace("diagnosticReportCodeUUIDS", diagnosticReportCodeUUIDS.toString()).replace("serviceRequestCodeUUIDS", serviceRequestCodeUUIDS.toString()));
         SyncFhirProfile syncFhirProfile;
 
         if (profileId.equals("")) {

@@ -36,6 +36,11 @@
 
                 modal.find("#encounterTypeUUIDS").val("");
                 modal.find("#observationCodeUUIDS").val("");
+                modal.find("#medicationRequestCodeUUIDS").val("");
+                modal.find("#medicationDispenseCodeUUIDS").val("");
+                modal.find("#conditionCodeUUIDS").val("");
+                modal.find("#diagnosticReportCodeUUIDS").val("");
+                modal.find("#serviceRequestCodeUUIDS").val("");
                 modal.find("#episodeOfCareUUIDS").val("");
                 modal.find("#caseBasedPrimaryResourceTypeId").val("");
                 modal.find("#dataToSyncStartDate").val("");
@@ -105,10 +110,23 @@
 
                 var episodeOfCareFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
 
+                var medicationRequestFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+
+                var medicationDispenseFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+
+                var conditionFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+
+                var diagnosticReportFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+
 
                 modal.find("#encounterTypeUUIDS").val(encounterFilters);
                 modal.find("#observationCodeUUIDS").val(obervationFilters);
                 modal.find("#episodeOfCareUUIDS").val(episodeOfCareFilters);
+                modal.find("#medicationRequestCodeUUIDS").val(medicationRequestFilters);
+                modal.find("#medicationDispenseCodeUUIDS").val(medicationDispenseFilters);
+                modal.find("#conditionCodeUUIDS").val(conditionFilters);
+                modal.find("#diagnosticReportCodeUUIDS").val(diagnosticReportFilters);
+                modal.find("#serviceRequestCodeUUIDS").val(serviceRequestFilters);
 
 
                 modal.find("#username").val(syncFhirProfile.urlUserName);
@@ -664,6 +682,42 @@
                                                            id="episodeOfCareUUIDS"
                                                            placeholder="comma separate program  uuids"
                                                            name="episodeOfCareUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Medication Request Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="medicationRequestCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="medicationRequestCodeUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Medication Dispense Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="medicationDispenseCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="medicationDispenseCodeUUIDS">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Condition Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="conditionCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="conditionCodeUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Diagnostic Report  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="diagnosticReportCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="diagnosticReportCodeUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Service Request Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="serviceRequestCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="serviceRequestCodeUUIDS">
                                                 </div>
                                             </div>
                                         </div>
