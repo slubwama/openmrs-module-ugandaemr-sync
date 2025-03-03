@@ -110,13 +110,15 @@
 
                 var episodeOfCareFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
 
-                var medicationRequestFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+                var medicationRequestFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).medicationrequestFilter.type;
 
-                var medicationDispenseFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+                var medicationDispenseFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).medicationdispenseFilter.type;
 
-                var conditionFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+                var conditionFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).conditionFilter.type;
 
-                var diagnosticReportFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
+                var diagnosticReportFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).diagnosticreportFilter.type;
+
+                var serviceRequestFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).servicerequestFilter.type;
 
 
                 modal.find("#encounterTypeUUIDS").val(encounterFilters);
