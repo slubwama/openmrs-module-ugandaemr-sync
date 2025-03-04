@@ -758,12 +758,12 @@ public class SyncFHIRRecord {
                 if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
                     try {
                         jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
+                        jsonString = addCodingToIdentifier(jsonString, "identifier");
+                        jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                     } catch (Exception exception) {
                         log.error(exception);
                     }
                 }
-                jsonString = addCodingToIdentifier(jsonString, "identifier");
-                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
                 jsonString = addAttributeToObject(jsonString, "telecom", "system", "phone");
                 jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
                 jsonString = addUseOfficialToName(jsonString, "name");
@@ -858,22 +858,24 @@ public class SyncFHIRRecord {
         if (jsonObject.has(attributeName)) {
             for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
                 JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-                PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
-                switch (patientIdentifier.getIdentifierType().getUuid()) {
-                    case SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID:
-                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(OPENMRS_IDENTIFIER_SYSTEM_URL_GP));
-                        break;
-                    case SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID:
-                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP));
-                        break;
-                    case SyncConstant.PASSPORT_IDENTIFIER_TYPE_UUID:
-                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(PASSPORT_IDENTIFIER_SYSTEM_URL_GP));
-                        break;
-                    case SyncConstant.NHPI_IDENTIFIER_TYPE_TYPE_UUID:
-                        jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NHPI_IDENTIFIER_SYSTEM_URL_GP));
-                        break;
+                if (jsonObject2.has("id")) {
+                    PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
+                    switch (patientIdentifier.getIdentifierType().getUuid()) {
+                        case SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID:
+                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(OPENMRS_IDENTIFIER_SYSTEM_URL_GP));
+                            break;
+                        case SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID:
+                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP));
+                            break;
+                        case SyncConstant.PASSPORT_IDENTIFIER_TYPE_UUID:
+                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(PASSPORT_IDENTIFIER_SYSTEM_URL_GP));
+                            break;
+                        case SyncConstant.NHPI_IDENTIFIER_TYPE_TYPE_UUID:
+                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NHPI_IDENTIFIER_SYSTEM_URL_GP));
+                            break;
+                    }
+                    identifierCount++;
                 }
-                identifierCount++;
             }
         }
         return jsonObject.toString();
@@ -995,35 +997,26 @@ public class SyncFHIRRecord {
 
     private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Order> orders) {
         PractitionerSearchParams practitionerSearchParams = new PractitionerSearchParams();
-        Collection<IBaseResource> iBaseResources = new ArrayList<>();
-        Collection<String> providerUUIDs = new ArrayList<>();
 
         if (!syncFhirProfile.getIsCaseBasedProfile()) {
             DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
             practitionerSearchParams.setLastUpdated(lastUpdated);
         }
-
+        TokenAndListParam providerReference = new TokenAndListParam();
         for (Encounter encounter : encounterList) {
-            if (getProviderFromEncounter(encounter).getDateChanged().after(getLastSyncDate(syncFhirProfile, "Practitioner"))) {
-                providerUUIDs.add(getProviderFromEncounter(encounter).getUuid());
+            Provider provider = getProviderFromEncounter(encounter);
+            if (provider != null) {
+                providerReference.addAnd(new TokenParam(provider.getUuid()));
             }
         }
 
         for (Order order : orders) {
-            providerUUIDs.add(order.getOrderer().getUuid());
-        }
-
-        TokenAndListParam providerReference = null;
-        if (providerUUIDs != null) {
-            for (String providerUUID : providerUUIDs) {
-                providerReference.addAnd(new TokenParam(providerUUID));
-            }
+            providerReference.addAnd(new TokenParam(order.getOrderer().getUuid()));
         }
 
         if (providerReference != null) {
             practitionerSearchParams.setIdentifier(providerReference);
         }
-
 
         return getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(practitionerSearchParams).getResources(0, Integer.MAX_VALUE);
 
@@ -1214,7 +1207,7 @@ public class SyncFHIRRecord {
         }
 
         ReferenceAndListParam patientReference = new ReferenceAndListParam();
-        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER,syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
+        patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
 
         fhirAllergyIntoleranceSearchParams.setLastUpdated(lastUpdated);
         fhirAllergyIntoleranceSearchParams.setPatientReference(patientReference);
