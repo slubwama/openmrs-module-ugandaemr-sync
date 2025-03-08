@@ -15,7 +15,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.*;
 import org.openmrs.module.fhir2.api.*;
-import org.openmrs.module.fhir2.api.FhirEpisodeOfCareService;
 import org.openmrs.module.fhir2.api.search.param.*;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;

@@ -192,7 +192,7 @@
     <dwr>
         <allow>
             <create creator="new" javascript="DWRFormEntryService">
-                <param name="class" value="org.openmrs.module.@MODULE_ID@.web.DWRFormEntryService"/>
+                <param name="class" value="org.openmrs.module.ugandaemrsync.web.DWRFormEntryService"/>
                 <include method="enterForm"/>
             </create>
         </allow>
@@ -307,8 +307,88 @@
             url system form health Identification Number
         </description>
     </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.getStockBalance</property>
+        <defaultValue>/api/medix/GetDrugStockBalance</defaultValue>
+        <description>
+            The endpoint to get Drug Balance
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.UpdateEmrPostedStatus</property>
+        <defaultValue>/api/medix/UpdateEmrPostedStatus</defaultValue>
+        <description>
+            The endpoint to Update Emr Posted Status
+        </description>
+    </globalProperty>
+    <globalProperty>
+        <property>ugandaemrsync.eafya.UsageReport</property>
+        <defaultValue>/api/medix/UsageReport</defaultValue>
+        <description>
+            The endpoint to update eafya on the usage report
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.getToken</property>
+        <defaultValue>/auth/key/my</defaultValue>
+        <description>
+            Gets the token for the eafya session
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.getIssuedStock</property>
+        <defaultValue>/api/medix/GetReceivedStock?SiteCode=%s&amp;GetDrugs=true</defaultValue>
+        <description>
+            Gets stock item that has been received
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.sendRequisitionStock</property>
+        <defaultValue>/api/medix/GetReceivedStock?SiteCode=%s&amp;GetDrugs=true</defaultValue>
+        <description>
+            Gets stock item that has been received
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.lastStockInventoryStatusSyncDate</property>
+        <defaultValue>1989-01-01 00:00:01</defaultValue>
+        <description>
+            The Last Sync Date for Stock
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.storeId</property>
+        <defaultValue></defaultValue>
+        <description>
+            The Site ID for a facility in the eafya
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.sourceStoreId</property>
+        <defaultValue></defaultValue>
+        <description>
+            The source store ID for a facility in the eafya
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.eafya.operation</property>
+        <defaultValue>Completed</defaultValue>
+        <description>
+            The Operation towards recieving of Items, options available are  (Submitted,Completed)
+        </description>
+    </globalProperty>
+    
     <!-- Internationalization -->
-    <!-- All message codes should start with @MODULE_ID@.* -->
+    <!-- All message codes should start with ugandaemrsync.* -->
     <messages>
         <lang>en</lang>
         <file>messages.properties</file>

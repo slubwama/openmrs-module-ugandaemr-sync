@@ -55,6 +55,4 @@
             </list>
         </property>
     </bean>
-
-    <bean id="locationTypeTranslator" class="org.openmrs.module.fhir2.api.translators.impl.LocationTypeTranslatorImpl"/>
 </beans>

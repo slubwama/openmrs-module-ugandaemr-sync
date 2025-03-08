@@ -1818,4 +1818,122 @@
         </sql>
     </changeSet>
 
+
+    <changeSet id="ugandaemrsync-2025-03-08" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '2def1dea-fc0b-11ef-ab84-28977ca9db4b'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="eAFYA Stock Integration"/>
+            <column name="data_type" value="org.openmrs.TestOrder" />
+            <column name="data_type_id" value="N/A" />
+            <column name="url_end_point" value="192.168.1.2" />
+            <column name="url_username" value="theusername" />
+            <column name="url_password" value="thepassword" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2025-03-08 08:20:58" />
+            <column name="uuid" value="2def1dea-fc0b-11ef-ab84-28977ca9db4b" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2025-1637" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SetEAFYAAccessTokenIntegrationTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sending Viral Load Request to Central Server Task</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Set Access Token to eAFYA" />
+            <column name="description" value="Sets access token to the eAFYA" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SetEAFYAAccessTokenIntegrationTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2025-03-08T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="82197870-fc0b-11ef-ab84-28977ca9db4b" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2025-1688" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendRequisitionStockTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Gets Received Stock from  ERP</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Get Received Stock from  ERP" />
+            <column name="description" value="Gets Received Stock from  ERP" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.api.tasks.SendRequisitionStockTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2025-03-08T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="92aa7eaa-fc0b-11ef-ab84-28977ca9db4b" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2025-1638" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.GetIssuedStockTask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Gets Received Stock from  ERP</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Get Received Stock from  ERP" />
+            <column name="description" value="Gets Received Stock from  ERP" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.GetIssuedStockTask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2025-03-08T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="1"/>
+            <column name="started" value="1"/>
+            <column name="uuid" value="92aa7eaa-fc0b-11ef-ab84-28977ca9db4b" />
+        </insert>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2025-03-08-1503" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM stockmgmt_stock_source WHERE uuid='9babcc02-fc0b-11ef-ab84-28977ca9db4b';
+            </sqlCheck>
+        </preConditions>
+        <comment>Add AHF as a Stock source </comment>
+        <sql>
+            INSERT INTO stockmgmt_stock_source (name, acronym, source_type_id, creator, date_created, uuid) VALUES ('eAFYA', 'eAFYA', 167004, 1, '2023-12-05 16:17:37','9babcc02-fc0b-11ef-ab84-28977ca9db4b');
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemrsync-2025-03-08-1504" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM stockmgmt_stock_source WHERE uuid='9babcc02-fc0b-11ef-ab84-28977ca9db4b';
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM stockmgmt_party WHERE uuid="e2097d52-fc0b-11ef-ab84-28977ca9db4b";
+            </sqlCheck>
+        </preConditions>
+        <comment>Add AHF as a Stock source </comment>
+        <sql>
+            INSERT INTO stockmgmt_party (stock_source_id, creator, date_created,voided, uuid) VALUES ((SELECT stock_source_id FROM stockmgmt_stock_source WHERE uuid='9babcc02-fc0b-11ef-ab84-28977ca9db4b'), 1, '2023-12-05 16:17:37',false,'e2097d52-fc0b-11ef-ab84-28977ca9db4b');
+        </sql>
+    </changeSet>
 </databaseChangeLog>
