@@ -50,6 +50,9 @@
         <require_module>
             org.openmrs.module.idgen
         </require_module>
+        <require_module>
+            org.openmrs.module.stockmanagement
+        </require_module>
     </require_modules>
 
     <aware_of_modules>

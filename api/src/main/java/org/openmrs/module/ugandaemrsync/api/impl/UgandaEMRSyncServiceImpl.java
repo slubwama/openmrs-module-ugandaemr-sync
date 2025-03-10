@@ -1177,11 +1177,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendRequisitionStock");
         String storeId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.storeId");
         String sourceStoreId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.sourceStoreId");
-        String stockOperation = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
+        String stockOperationCommand = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
-
+        ProviderAttributeType providerAttributeType=Context.getProviderService().getProviderAttributeTypeByUuid("d376f27c-cb93-45b4-be0a-6be88c520233");
         StockSource stockSource = stockManagementService.getStockSourceByUuid("9babcc02-fc0b-11ef-ab84-28977ca9db4b");
-        StockOperationType stockOperationType = stockManagementService.getStockOperationTypeByUuid("9babcc02-fc0b-11ef-ab84-28977ca9db4b");
+        StockOperationType stockOperationType = stockManagementService.getStockOperationTypeByUuid("7073e8f4-eb6b-11ef-80d7-730ad71afb9c");
         StockOperationSearchFilter filter = new StockOperationSearchFilter();
         filter.setStatus(new ArrayList<>(Collections.singletonList(StockOperationStatus.SUBMITTED)));
         filter.setStockSourceId(stockSource.getId());
@@ -1191,7 +1191,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         List<JSONObject> requisitions=new ArrayList<>();
         for (StockOperationDTO stockOperationDTO : results.getData()) {
             JSONObject requisition = new JSONObject();
-            if (getSyncTaskTypeByName(stockOperationDTO.getUuid()).isEmpty()) {
+            StockOperation stockOperation = stockManagementService.getStockOperationByUuid(stockOperationDTO.getUuid());
+            if (getSyncTaskTypeByName(stockOperation.getUuid()).isEmpty()) {
                 Provider provider = null;
                 try {
                     Collection<Provider> providers = Context.getProviderService().getProvidersByPerson(Context.getUserService().getUser(stockOperationDTO.getCreator()).getPerson(), false);
@@ -1201,20 +1202,27 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 } catch (Exception e) {
                     log.error(e);
                 }
-                JSONArray items = processRequisitionItems(stockOperationDTO.getStockOperationItems(), stockSource, provider);
-                if (items.length() > 0) {
-                    requisition.put("items", items);
-                    requisition.put("created_by_id", provider.getIdentifier());
-                    requisition.put("destination_store_id", storeId);
-                    requisition.put("source_store_id", sourceStoreId);
+                JSONArray items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider,providerAttributeType);
+                if (!items.isEmpty()) {
+
+                    String eaFYAID=getProviderAttributeByType(provider.getAttributes(),providerAttributeType);
+                    if(eaFYAID!=null && isInteger(eaFYAID)){
+                        requisition.put("created_by_id", Integer.parseInt(eaFYAID));
+                    }else {
+                        requisition.put("created_by_id", eaFYAID);
+                    }
+
+                    requisition.put("destination_store_id", Integer.parseInt(storeId));
+                    requisition.put("source_store_id", Integer.parseInt(sourceStoreId));
                     requisition.put("internal_requisition_no", stockOperationDTO.getOperationNumber());
+                    requisition.put("items", items);
                 }
             }
             requisitions.add(requisition);
         }
 
-        String url = String.format(syncTaskType.getUrl() + api, storeId);
-        Map response = null;
+        String url = syncTaskType.getUrl() + api;
+        Map response = new HashMap<>();
         if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
             syncTaskType = setEAFYAAccessTokenToSyncTaskType();
         }
@@ -1231,7 +1239,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     }
 
             } else if (!response.isEmpty()) {
-                logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Failed to receive send Requisition of stock operation: "+jsonObject.get("internal_requisition_no"), EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api,false);
+                logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString()+"while syncing requisition:"+jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api,false);
             }
         }
         } catch (Exception e) {
@@ -1241,18 +1249,29 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return null;
     }
 
-    private JSONArray processRequisitionItems(List<StockOperationItemDTO> stockOperationItems, StockSource stockSource, Provider provider) {
+    private JSONArray processRequisitionItems(Set<StockOperationItem> stockOperationItems, StockSource stockSource, Provider provider, ProviderAttributeType providerAttributeType) {
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
         JSONArray jsonArray = new JSONArray();
-        for (StockOperationItemDTO stockOperationItemDTO : stockOperationItems) {
-            StockItemReference stockItemReference = stockManagementService.getStockItemByUuid(stockOperationItemDTO.getStockItemUuid()).getReferences().stream().filter(reference -> reference.getReferenceSource().equals(stockSource)).collect(Collectors.toList()).get(0);
+        for (StockOperationItem stockOperationItem : stockOperationItems) {
+            StockItemReference stockItemReference = stockOperationItem.getStockItem().getReferences().stream().filter(reference -> reference.getReferenceSource().equals(stockSource)).collect(Collectors.toList()).get(0);
             if (stockItemReference != null) {
+                String eaFYAID=getProviderAttributeByType(provider.getAttributes(),providerAttributeType);
                 JSONObject jsonObject = new JSONObject();
-                stockOperationItemDTO.getQuantity();
-                jsonObject.put("quantity", stockOperationItemDTO.getQuantity());
-                jsonObject.put("expected_quantity", stockOperationItemDTO.getQuantity());
-                jsonObject.put("product_id", stockItemReference.getStockReferenceCode());
-                jsonObject.put("created_by_id", provider.getIdentifier());
+                jsonObject.put("quantity", stockOperationItem.getQuantity());
+                jsonObject.put("expected_quantity", stockOperationItem.getQuantity());
+
+                if(isInteger(stockItemReference.getStockReferenceCode())){
+                    jsonObject.put("product_id", Integer.parseInt(stockItemReference.getStockReferenceCode()));
+                }else {
+                    jsonObject.put("product_id", stockItemReference.getStockReferenceCode());
+                }
+
+                if(eaFYAID!=null && isInteger(eaFYAID)){
+                    jsonObject.put("created_by_id", Integer.parseInt(eaFYAID));
+                }else {
+                    jsonObject.put("created_by_id", eaFYAID);
+                }
+
                 jsonArray.put(jsonObject);
             }
         }
@@ -1631,6 +1650,24 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             calendar.add(Calendar.DAY_OF_MONTH, days);
         }
         return calendar.getTime();
+    }
+
+    private static boolean isInteger(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private String getProviderAttributeByType(Set<ProviderAttribute> providerAttributes, ProviderAttributeType providerAttributeType){
+        for (ProviderAttribute providerAttribute:providerAttributes){
+            if(providerAttributeType.equals(providerAttribute.getAttributeType())){
+                return providerAttribute.getValue().toString();
+            }
+        }
+        return  null;
     }
 
 }

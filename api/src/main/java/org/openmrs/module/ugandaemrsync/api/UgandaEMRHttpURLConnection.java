@@ -40,6 +40,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;

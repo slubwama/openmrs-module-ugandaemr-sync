@@ -1871,11 +1871,11 @@
                 WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendRequisitionStockTask'
             </sqlCheck>
         </preConditions>
-        <comment>Gets Received Stock from  ERP</comment>
+        <comment>Send Requisition Stock  to  eAFYA</comment>
         <insert tableName="scheduler_task_config">
-            <column name="name" value="Get Received Stock from  ERP" />
+            <column name="name" value="Send Requisition Stock  to  eAFYA" />
             <column name="description" value="Gets Received Stock from  ERP" />
-            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.api.tasks.SendRequisitionStockTask" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendRequisitionStockTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
             <column name="start_time" valueDate="2025-03-08T11:59:59" />
             <column name="repeat_interval" value="3600" />
@@ -1894,10 +1894,10 @@
                 WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.GetIssuedStockTask'
             </sqlCheck>
         </preConditions>
-        <comment>Gets Received Stock from  ERP</comment>
+        <comment>Gets Issued Stock  from  eAFYA</comment>
         <insert tableName="scheduler_task_config">
-            <column name="name" value="Get Received Stock from  ERP" />
-            <column name="description" value="Gets Received Stock from  ERP" />
+            <column name="name" value="Get Issued Stock  from  eAFYA" />
+            <column name="description" value="Gets Issued Stock  from  eAFYA" />
             <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.GetIssuedStockTask" />
             <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
             <column name="start_time" valueDate="2025-03-08T11:59:59" />
@@ -1906,7 +1906,7 @@
             <column name="created_by" value="1" />
             <column name="start_on_startup" value="1"/>
             <column name="started" value="1"/>
-            <column name="uuid" value="92aa7eaa-fc0b-11ef-ab84-28977ca9db4b" />
+            <column name="uuid" value="344ebe1a-fc48-11ef-ab84-28977ca9db4b" />
         </insert>
     </changeSet>
 
@@ -1934,6 +1934,18 @@
         <comment>Add AHF as a Stock source </comment>
         <sql>
             INSERT INTO stockmgmt_party (stock_source_id, creator, date_created,voided, uuid) VALUES ((SELECT stock_source_id FROM stockmgmt_stock_source WHERE uuid='9babcc02-fc0b-11ef-ab84-28977ca9db4b'), 1, '2023-12-05 16:17:37',false,'e2097d52-fc0b-11ef-ab84-28977ca9db4b');
+        </sql>
+    </changeSet>
+
+    <changeSet id="ugandaemr-2025-03-10-1504" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM stockmgmt_stock_operation_type WHERE uuid='7073e8f4-eb6b-11ef-80d7-730ad71afb9c';
+            </sqlCheck>
+        </preConditions>
+        <comment>Add Stock Operation  External Requisition</comment>
+        <sql>
+            INSERT INTO stockmgmt_stock_operation_type (stock_operation_type_id, name, description, operation_type, has_source, source_type, has_destination, destination_type, acronym, available_when_reserved, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid, notify_submitted, notify_approved, notify_completed, notify_cancelled, notify_rejected, notify_returned, notify_dispatched, allow_expired_batch_numbers, allow_batch_info_update) VALUES (10, 'External Requisition', 'Request for items from external Source.', 'erequisition', 1, 'Other', 1, 'Location', 'EREQ', 0, 1, '2025-02-15 10:06:30', null, null, 0, null, null, null, '7073e8f4-eb6b-11ef-80d7-730ad71afb9c', 1, 1, 1, 0, 0, 0, 0, 0, 1);
         </sql>
     </changeSet>
 </databaseChangeLog>
