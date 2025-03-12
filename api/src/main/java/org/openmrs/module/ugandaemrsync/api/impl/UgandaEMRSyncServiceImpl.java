@@ -1171,15 +1171,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
 
-    public List<String> getSendRequisitionStock() {;
-        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
-        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
-        String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendRequisitionStock");
+    private List<JSONObject> processRequisitionsToSync() {
         String storeId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.storeId");
         String sourceStoreId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.sourceStoreId");
-        String stockOperationCommand = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
-        ProviderAttributeType providerAttributeType=Context.getProviderService().getProviderAttributeTypeByUuid("d376f27c-cb93-45b4-be0a-6be88c520233");
+        ProviderAttributeType providerAttributeType = Context.getProviderService().getProviderAttributeTypeByUuid("d376f27c-cb93-45b4-be0a-6be88c520233");
         StockSource stockSource = stockManagementService.getStockSourceByUuid("9babcc02-fc0b-11ef-ab84-28977ca9db4b");
         StockOperationType stockOperationType = stockManagementService.getStockOperationTypeByUuid("7073e8f4-eb6b-11ef-80d7-730ad71afb9c");
         StockOperationSearchFilter filter = new StockOperationSearchFilter();
@@ -1188,7 +1184,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         filter.setOperationTypeId(Collections.singletonList(stockOperationType.getId()));
 
         Result<StockOperationDTO> results = stockManagementService.findStockOperations(filter);
-        List<JSONObject> requisitions=new ArrayList<>();
+        List<JSONObject> requisitions = new ArrayList<>();
         for (StockOperationDTO stockOperationDTO : results.getData()) {
             JSONObject requisition = new JSONObject();
             StockOperation stockOperation = stockManagementService.getStockOperationByUuid(stockOperationDTO.getUuid());
@@ -1202,49 +1198,58 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 } catch (Exception e) {
                     log.error(e);
                 }
-                JSONArray items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider,providerAttributeType);
+                JSONArray items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider, providerAttributeType);
                 if (!items.isEmpty()) {
 
-                    String eaFYAID=getProviderAttributeByType(provider.getAttributes(),providerAttributeType);
-                    if(eaFYAID!=null && isInteger(eaFYAID)){
-                        requisition.put("created_by_id", Integer.parseInt(eaFYAID));
-                    }else {
-                        requisition.put("created_by_id", eaFYAID);
+                    JSONObject requisitionInformation = new JSONObject();
+                    String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
+                    if (eaFYAID != null && isInteger(eaFYAID)) {
+                        requisitionInformation.put("created_by_id", Integer.parseInt(eaFYAID));
+                    } else {
+                        requisitionInformation.put("created_by_id", eaFYAID);
                     }
-
-                    requisition.put("destination_store_id", Integer.parseInt(storeId));
-                    requisition.put("source_store_id", Integer.parseInt(sourceStoreId));
-                    requisition.put("internal_requisition_no", stockOperationDTO.getOperationNumber());
+                    requisitionInformation.put("destination_store_id", Integer.parseInt(storeId));
+                    requisitionInformation.put("source_store_id", Integer.parseInt(sourceStoreId));
+                    requisitionInformation.put("requester_comment", stockOperation.getOperationNumber() + ": " + stockOperation.getRemarks());
+                    requisitionInformation.put("internal_requisition_no", stockOperation.getOperationNumber());
+                    requisition.put("requisition", requisitionInformation);
                     requisition.put("items", items);
                 }
             }
             requisitions.add(requisition);
         }
 
+        return requisitions;
+    }
+
+    public List<String> getSendRequisitionStock() {
+        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+        Map response;
+        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
+        String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendRequisitionStock");
         String url = syncTaskType.getUrl() + api;
-        Map response = new HashMap<>();
+
+
         if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
             syncTaskType = setEAFYAAccessTokenToSyncTaskType();
         }
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         try {
-            for (JSONObject jsonObject : requisitions) {
-                response = ugandaEMRHttpURLConnection.sendPostByWithBasicAuth(null,jsonObject.toString() , null, url, null, null, null);
-            if (!response.isEmpty() && response.get("responseCode").equals(200)) {
-                    if (this.stockOperation != null) {
-                        postReceivedItemsToERP(syncTaskType);
-                        JSONObject jsonResponse=new JSONObject(response);
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to sync receive " + processedItems.size() + " Stock Items", jsonResponse.getString("message"), jsonResponse.getJSONObject("data").getString("requisition_number"), new Date(), syncTaskType.getUrl() + api,true);
-                        completeStockOperation(this.stockOperation);
+            for (JSONObject jsonObject : processRequisitionsToSync()) {
+                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) != null) {
+                    response = ugandaEMRHttpURLConnection.sendPostBy(url, null, null, null, jsonObject.toString(), false);
+                    if (!response.isEmpty() && response.get("responseCode").equals(200)) {
+                        JSONObject jsonResponse = new JSONObject(response);
+                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to sync receive " + processedItems.size() + " Stock Items", jsonResponse.getString("message"), jsonResponse.getJSONObject("data").getString("requisition_number"), new Date(), syncTaskType.getUrl() + api, true,false);
+                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to sync receive " + processedItems.size() + " Stock Items", jsonResponse.getString("message"), jsonObject.getJSONObject("data").getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false,false);
+                    } else if (!response.isEmpty()) {
+                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString() + "while syncing requisition:" + jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false,false);
                     }
-
-            } else if (!response.isEmpty()) {
-                logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString()+"while syncing requisition:"+jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api,false);
+                }
             }
-        }
         } catch (Exception e) {
             log.error(e.getCause());
-            logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api,false);
+            logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false,false);
         }
         return null;
     }
@@ -1255,20 +1260,20 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         for (StockOperationItem stockOperationItem : stockOperationItems) {
             StockItemReference stockItemReference = stockOperationItem.getStockItem().getReferences().stream().filter(reference -> reference.getReferenceSource().equals(stockSource)).collect(Collectors.toList()).get(0);
             if (stockItemReference != null) {
-                String eaFYAID=getProviderAttributeByType(provider.getAttributes(),providerAttributeType);
+                String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("quantity", stockOperationItem.getQuantity());
                 jsonObject.put("expected_quantity", stockOperationItem.getQuantity());
 
-                if(isInteger(stockItemReference.getStockReferenceCode())){
+                if (isInteger(stockItemReference.getStockReferenceCode())) {
                     jsonObject.put("product_id", Integer.parseInt(stockItemReference.getStockReferenceCode()));
-                }else {
+                } else {
                     jsonObject.put("product_id", stockItemReference.getStockReferenceCode());
                 }
 
-                if(eaFYAID!=null && isInteger(eaFYAID)){
+                if (eaFYAID != null && isInteger(eaFYAID)) {
                     jsonObject.put("created_by_id", Integer.parseInt(eaFYAID));
-                }else {
+                } else {
                     jsonObject.put("created_by_id", eaFYAID);
                 }
 
@@ -1286,39 +1291,47 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String stockOperation = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
 
+        List<SyncTask> syncTasks = getIncompleteActionSyncTask(syncTaskType.getUuid());
+
         String url = String.format(syncTaskType.getUrl() + api, siteId);
         Map response = null;
         if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
             syncTaskType = setEAFYAAccessTokenToSyncTaskType();
         }
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
-        try {
-            response = ugandaEMRHttpURLConnection.sendPostByWithBasicAuth(null, null, null, url, null, null, null);
-            if (!response.isEmpty() && response.get("responseCode").equals(200)) {
-                List receivedItems = (List) response.get("receivedItems");
-                if (!receivedItems.isEmpty()) {
-                    processStockOperation(response, stockOperation);
-                    if (this.stockOperation != null) {
-                        if (stockOperation.equals("Submitted")) {
-                            submitStockOperation(this.stockOperation);
-                        } else if (stockOperation.equals("Completed")) {
-                            completeStockOperation(this.stockOperation);
+        for (SyncTask syncTask : syncTasks) {
+            this.stockOperation=null;
+            try {
+                JSONObject requisition=new JSONObject();
+                requisition.put("store_requisition_number",syncTask.getSyncTask());
+                response = ugandaEMRHttpURLConnection.sendPostBy(url, null, null, null, requisition.toString(), false);
+                if (!response.isEmpty() && response.get("responseCode").equals(200)) {
+                    List receivedItems = (List) response.get("store_requisition_items");
+                    if (!receivedItems.isEmpty()) {
+                        processStockOperation(response, stockOperation);
+                        if (this.stockOperation != null) {
+                            if (stockOperation.equals("Submitted")) {
+                                submitStockOperation(this.stockOperation);
+                            } else if (stockOperation.equals("Completed")) {
+                                completeStockOperation(this.stockOperation);
+                            }
+                            syncTask.setActionCompleted(true);
+                           saveSyncTask(syncTask);
+                            logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to stock from receive " + processedItems.size() + " Stock Items", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false,false);
                         }
-                        postReceivedItemsToERP(syncTaskType);
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to sync receive " + processedItems.size() + " Stock Items", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api,true);
                     }
+                } else if (!response.isEmpty()) {
+                    logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "failed to sync receive stock items from eAFYA", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false,false);
                 }
-            } else if (!response.isEmpty()) {
-                logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "failed to sync send stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api,false);
+            } catch (Exception e) {
+                log.error(e.getCause());
+                logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false,false);
             }
-        } catch (Exception e) {
-            log.error(e.getCause());
-            logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api,false);
         }
         return null;
     }
 
-    private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url,boolean actionRequired) {
+    private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url, boolean actionRequired,boolean actionCompleted) {
         SyncTask syncTask = new SyncTask();
         syncTask.setSyncTask(logName);
         syncTask.setStatus(status);
@@ -1326,7 +1339,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         syncTask.setDateSent(date);
         syncTask.setSyncTaskType(syncTaskType);
         syncTask.setRequireAction(actionRequired);
-        syncTask.setActionCompleted(false);
+        syncTask.setActionCompleted(actionCompleted);
         syncTask.setSentToUrl(url);
         Context.getService(UgandaEMRSyncService.class).saveSyncTask(syncTask);
     }
@@ -1358,86 +1371,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         filter.setStockOperationUuid(stockOperation.getUuid());
         Result<StockOperationDTO> result = Context.getService(StockManagementService.class).findStockOperations(filter);
         return result.getData().isEmpty() ? null : result.getData().get(0);
-    }
-
-    private Map processStockItemInventoryStatus(StockItemInventorySearchFilter filter) {
-        String siteId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".erp.siteId");
-        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
-        List<StockItemInventoryConsumption> consumptions = new ArrayList<>();
-        List<StockItemInventory> stockItemInventories = new ArrayList<>();
-        StockInventoryResult stockInventoryResult = new StockInventoryResult();
-        try {
-            stockManagementService.getStockInventory(filter, null, inventory -> {
-                StockItemInventoryConsumption consumption = (StockItemInventoryConsumption) inventory;
-                StockItemInventory stockItemInventory = (StockItemInventory) inventory;
-                consumptions.add(consumption);
-                stockItemInventories.add(stockItemInventory);
-                return true;
-            }, StockItemInventoryConsumption.class);
-        } catch (Exception e) {
-            log.error(e);
-        }
-        stockInventoryResult.setData(stockItemInventories);
-        stockManagementService.setStockItemInformation(stockInventoryResult.getData());
-        stockManagementService.postProcessInventoryResult(filter, stockInventoryResult);
-
-        stockInventoryResult.getData().forEach(p -> {
-            StockItemInventoryConsumption consumption = ((StockItemInventoryConsumption) p);
-            if (consumption.getQuantityFactor() != null) {
-                if (consumption.getClosingQuantity() != null) {
-                    consumption.setClosingQuantity(consumption.getClosingQuantity().divide(consumption.getQuantityFactor(), 5, BigDecimal.ROUND_HALF_EVEN));
-                }
-                if (consumption.getQuantityConsumed() != null) {
-                    consumption.setQuantityConsumed(consumption.getQuantityConsumed().divide(consumption.getQuantityFactor(), 5, BigDecimal.ROUND_HALF_EVEN));
-                }
-                if (consumption.getQuantityReceived() != null) {
-                    consumption.setQuantityReceived(consumption.getQuantityReceived().divide(consumption.getQuantityFactor(), 5, BigDecimal.ROUND_HALF_EVEN));
-                }
-            }
-        });
-
-        if (!consumptions.isEmpty()) {
-            List<Map> stockInventoryItems = new ArrayList<>();
-            for (StockItemInventoryConsumption consumption : consumptions) {
-                if (!consumption.getQuantityConsumed().equals(0)) {
-                    Map map = new HashMap();
-                    map.put("StockId", getStockItemReference(consumption).getStockReferenceCode());
-                    map.put("Qty", consumption.getQuantityConsumed());
-                    stockInventoryItems.add(map);
-                }
-            }
-            if (!stockInventoryItems.isEmpty()) {
-                Map stockInventoryStatus = new HashMap<>();
-                stockInventoryStatus.put("TransactionDate", dateFormtterString(filter.getEndDate(), "dd/MM/yyyy"));
-                stockInventoryStatus.put("SiteId", siteId);
-                stockInventoryStatus.put("IssuedItem", stockInventoryItems);
-                return stockInventoryStatus;
-            }
-        }
-        return null;
-    }
-
-    private void postReceivedItemsToERP(SyncTaskType syncTaskType) {
-        UgandaEMRHttpURLConnection httpURLConnection = new UgandaEMRHttpURLConnection();
-        String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".erp.UpdateEmrPostedStatus");
-        List<Map> receivedIds = new ArrayList<>();
-
-        for (Object proccessedItemObject : this.processedItems) {
-            Map proccessedItem = (HashMap) proccessedItemObject;
-            Map recievedItem = new HashMap<>();
-            recievedItem.put("ReceivedId", Integer.parseInt(proccessedItem.get("ReceiveId").toString()));
-            recievedItem.put("Type", proccessedItem.get("ItemType"));
-            receivedIds.add(recievedItem);
-        }
-
-        if (receivedIds.size() > 0) {
-            JSONArray processedItemsToSend = new JSONArray(receivedIds);
-            try {
-                httpURLConnection.sendPostByWithBasicAuth(String.valueOf(ContentType.APPLICATION_JSON), processedItemsToSend.toString(), null, syncTaskType.getUrl() + api, null, null, syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken());
-            } catch (Exception e) {
-                log.error(e);
-            }
-        }
     }
 
     public SyncTaskType setEAFYAAccessTokenToSyncTaskType() {
@@ -1475,7 +1408,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     private void processStockOperation(Map results, String operation) {
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
         StockOperationDTO stockOperationDTO = new StockOperationDTO();
-        List items = (List) results.get("receivedItems");
+        List items = (List) results.get("store_requisition_items");
         Location recieptLOcation = Context.getLocationService().getLocationByUuid(MAIN_STORE_LOCATION_UUID);
         StockSource stockSource = stockManagementService.getStockSourceByUuid(EAFYA_STOCK_SOURCE_UUID);
         Party partySource = stockManagementService.getPartyByStockSource(stockSource);
@@ -1486,12 +1419,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         stockOperationDTO.setAtLocationUuid(recieptLOcation.getUuid());
         stockOperationDTO.setAtLocationName(recieptLOcation.getName());
         stockOperationDTO.setApprovalRequired(false);
-        stockOperationDTO.setStockOperationItems(processStockOperationItems(items));
+        stockOperationDTO.setStockOperationItems(processStockOperationItems(items, stockSource));
         stockOperationDTO.setDestinationUuid(partyDestination.getUuid());
         stockOperationDTO.setDestinationName(partyDestination.getLocation().getName());
         stockOperationDTO.setSourceUuid(partySource.getUuid());
         stockOperationDTO.setSourceName(partySource.getStockSource().getName());
-        stockOperationDTO.setRemarks("Downloaded from AHF SmartERP");
+        stockOperationDTO.setRemarks("Received for  from eAFYA");
         stockOperationDTO.setLocked(true);
         stockOperationDTO.setOperationDate(new Date());
         stockOperationDTO.setResponsiblePersonUuid(Context.getAuthenticatedUser().getUuid());
@@ -1505,7 +1438,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     }
 
-    private List<StockOperationItemDTO> processStockOperationItems(List itemReceived) {
+    private List<StockOperationItemDTO> processStockOperationItems(List itemReceived, StockSource stockSource) {
         unproccesedItems = new ArrayList<>();
         processedItems = new ArrayList<>();
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
@@ -1515,8 +1448,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 Map item = ((HashMap) itemObject);
                 if (validStockItemFromERP(item)) {
                     try {
-                        StockItem stockItem = stockManagementService.getStockItemByReference(stockManagementService.getStockSourceByUuid("1266b733-14c0-437d-b856-eb05209d5275"), item.getOrDefault("ItemCode", null).toString());
-                        Concept stockItemUoMConcept = getStockItemUOM(item.get("UoM").toString());
+                        StockItem stockItem = stockManagementService.getStockItemByReference(stockSource, item.getOrDefault("product_id", null).toString());
+                        Concept stockItemUoMConcept = getStockItemUOM(item.get("unit_of_measure").toString());
 
                         StockItemPackagingUOM stockItemPackagingUOM = null;
                         if (stockItem != null && stockItemUoMConcept != null) {
@@ -1526,16 +1459,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         if (stockItem != null && stockItemPackagingUOM != null) {
                             StockOperationItemDTO stockOperationItemDTO = new StockOperationItemDTO();
 
-                            stockOperationItemDTO.setBatchNo(item.get("BatchNo").toString());
-                            stockOperationItemDTO.setQuantityReceived(BigDecimal.valueOf(Double.parseDouble(item.get("Qty").toString())));
-                            stockOperationItemDTO.setQuantity(BigDecimal.valueOf(Double.parseDouble(item.get("Qty").toString())));
+                            stockOperationItemDTO.setBatchNo(item.get("batch_no").toString());
+                            stockOperationItemDTO.setQuantityReceived(BigDecimal.valueOf(Double.parseDouble(item.get("quantity").toString())));
+                            stockOperationItemDTO.setQuantity(BigDecimal.valueOf(Double.parseDouble(item.get("quantity").toString())));
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMFactor(stockItemPackagingUOM.getFactor());
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMUuid(stockItemPackagingUOM.getUuid());
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMUoMId(stockItemPackagingUOM.getId());
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMName(stockItemPackagingUOM.getPackagingUom().getDisplayString());
-                            if (!item.get("ExpiryDate").equals("") && stockItem.getHasExpiration()) {
+                            if (!item.get("expiry_date").equals("") && stockItem.getHasExpiration()) {
                                 stockOperationItemDTO.setHasExpiration(true);
-                                stockOperationItemDTO.setExpiration(getDateFromString(item.get("ExpiryDate").toString(), "yyyy-mm-dd"));
+                                stockOperationItemDTO.setExpiration(getDateFromString(item.get("expiry_date").toString(), "yyyy-mm-dd"));
                             } else {
                                 stockOperationItemDTO.setHasExpiration(true);
                                 stockOperationItemDTO.setExpiration(addTimeToDate(300, 0, 0, 0, new Date()));
@@ -1571,7 +1504,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     private Boolean validStockItemFromERP(Map item) {
-        if (item.get("BatchNo").equals("") || item.get("ExpiryDate").equals("") || item.get("Qty").equals("") || item.get("UoM").equals("") || item.get("ItemCode").equals("") || item.get("ReceiveId").equals("")) {
+        if (item.get("batch_no").equals("") || item.get("expiry_date").equals("") || item.get("quantity").equals("") || item.get("unit_of_measure").equals("") || item.get("product_id").equals("")) {
             return false;
         }
         return true;
@@ -1661,13 +1594,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
     }
 
-    private String getProviderAttributeByType(Set<ProviderAttribute> providerAttributes, ProviderAttributeType providerAttributeType){
-        for (ProviderAttribute providerAttribute:providerAttributes){
-            if(providerAttributeType.equals(providerAttribute.getAttributeType())){
+    private String getProviderAttributeByType(Set<ProviderAttribute> providerAttributes, ProviderAttributeType providerAttributeType) {
+        for (ProviderAttribute providerAttribute : providerAttributes) {
+            if (providerAttributeType.equals(providerAttribute.getAttributeType())) {
                 return providerAttribute.getValue().toString();
             }
         }
-        return  null;
+        return null;
     }
 
 }
