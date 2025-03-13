@@ -1200,19 +1200,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 }
                 JSONArray items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider, providerAttributeType);
                 if (!items.isEmpty()) {
-
-                    JSONObject requisitionInformation = new JSONObject();
                     String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
                     if (eaFYAID != null && isInteger(eaFYAID)) {
-                        requisitionInformation.put("created_by_id", Integer.parseInt(eaFYAID));
+                        requisition.put("created_by_id", Integer.parseInt(eaFYAID));
                     } else {
-                        requisitionInformation.put("created_by_id", eaFYAID);
+                        requisition.put("created_by_id", eaFYAID);
                     }
-                    requisitionInformation.put("destination_store_id", Integer.parseInt(storeId));
-                    requisitionInformation.put("source_store_id", Integer.parseInt(sourceStoreId));
-                    requisitionInformation.put("requester_comment", stockOperation.getOperationNumber() + ": " + stockOperation.getRemarks());
-                    requisitionInformation.put("internal_requisition_no", stockOperation.getOperationNumber());
-                    requisition.put("requisition", requisitionInformation);
+                    requisition.put("destination_store_id", Integer.parseInt(storeId));
+                    requisition.put("source_store_id", Integer.parseInt(sourceStoreId));
+                    requisition.put("requester_comment", stockOperation.getOperationNumber() + ": " + stockOperation.getRemarks());
+                    requisition.put("internal_requisition_no", stockOperation.getOperationNumber());
                     requisition.put("items", items);
                 }
             }
