@@ -1233,12 +1233,17 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         try {
             for (JSONObject jsonObject : processRequisitionsToSync()) {
-                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) != null) {
+                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) == null) {
                     response = ugandaEMRHttpURLConnection.sendPostBy(url, null, null, null, jsonObject.toString(), false);
-                    if (!response.isEmpty() && response.get("responseCode").equals(200)) {
+                    if (!response.isEmpty() && (response.get("responseCode").equals(200) || response.get("responseCode").equals(201))) {
                         JSONObject jsonResponse = new JSONObject(response);
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to sync receive " + processedItems.size() + " Stock Items", jsonResponse.getString("message"), jsonResponse.getJSONObject("data").getString("requisition_number"), new Date(), syncTaskType.getUrl() + api, true,false);
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to sync receive " + processedItems.size() + " Stock Items", jsonResponse.getString("message"), jsonObject.getJSONObject("data").getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false,false);
+                        String internalRequisitionNumber=jsonObject.getString("internal_requisition_no");
+                        String externalRequisitionNumber=jsonResponse.getJSONObject("data").getString("requisition_number");
+                        String statusMessage=jsonResponse.getString("message");
+                        Integer responseCode=Integer.parseInt(response.get("responseCode").toString());
+
+                        logTransaction(syncTaskType, responseCode, null,externalRequisitionNumber, statusMessage, new Date(), syncTaskType.getUrl() + api, true,false);
+                        logTransaction(syncTaskType, responseCode, null, internalRequisitionNumber,statusMessage, new Date(), syncTaskType.getUrl() + api, false,false);
                     } else if (!response.isEmpty()) {
                         logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString() + "while syncing requisition:" + jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false,false);
                     }
@@ -1295,6 +1300,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
             syncTaskType = setEAFYAAccessTokenToSyncTaskType();
         }
+
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         for (SyncTask syncTask : syncTasks) {
             this.stockOperation=null;
@@ -1303,7 +1309,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 requisition.put("store_requisition_number",syncTask.getSyncTask());
                 response = ugandaEMRHttpURLConnection.sendPostBy(url, null, null, null, requisition.toString(), false);
                 if (!response.isEmpty() && response.get("responseCode").equals(200)) {
-                    List receivedItems = (List) response.get("store_requisition_items");
+                    List receivedItems = (List) response.get("data");
                     if (!receivedItems.isEmpty()) {
                         processStockOperation(response, stockOperation);
                         if (this.stockOperation != null) {
@@ -1405,7 +1411,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     private void processStockOperation(Map results, String operation) {
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
         StockOperationDTO stockOperationDTO = new StockOperationDTO();
-        List items = (List) results.get("store_requisition_items");
+        List items = (List) results.get("data");
         Location recieptLOcation = Context.getLocationService().getLocationByUuid(MAIN_STORE_LOCATION_UUID);
         StockSource stockSource = stockManagementService.getStockSourceByUuid(EAFYA_STOCK_SOURCE_UUID);
         Party partySource = stockManagementService.getPartyByStockSource(stockSource);
