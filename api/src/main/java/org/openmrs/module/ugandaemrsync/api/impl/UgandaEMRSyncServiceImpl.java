@@ -1208,6 +1208,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     requisition.put("source_store_id", Integer.parseInt(sourceStoreId));
                     requisition.put("requester_comment", stockOperation.getOperationNumber() + ": " + stockOperation.getRemarks());
                     requisition.put("internal_requisition_no", stockOperation.getOperationNumber());
+                    requisition.put("internal_requisition_uuid", stockOperation.getUuid());
                     requisition.put("items", items);
                 }
             }
@@ -1220,6 +1221,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     public List<String> getSendRequisitionStock() {
         UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
         Map response;
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
         String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendRequisitionStock");
         String url = syncTaskType.getUrl() + api;
@@ -1231,25 +1233,28 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         try {
             for (JSONObject jsonObject : processRequisitionsToSync()) {
-                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) == null) {
+                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) == null && jsonObject.getString("internal_requisition_uuid") != null) {
+                    StockOperation stockOperation = stockManagementService.getStockOperationByUuid(jsonObject.getString("internal_requisition_uuid"));
                     response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, jsonObject.toString(), false);
                     if (!response.isEmpty() && (response.get("responseCode").equals(200) || response.get("responseCode").equals(201))) {
                         JSONObject jsonResponse = new JSONObject(response);
-                        String internalRequisitionNumber=jsonObject.getString("internal_requisition_no");
-                        String externalRequisitionNumber=jsonResponse.getJSONObject("data").getString("requisition_number");
-                        String statusMessage=jsonResponse.getString("message");
-                        Integer responseCode=Integer.parseInt(response.get("responseCode").toString());
-
-                        logTransaction(syncTaskType, responseCode, null,externalRequisitionNumber, statusMessage, new Date(), syncTaskType.getUrl() + api, true,false);
-                        logTransaction(syncTaskType, responseCode, null, internalRequisitionNumber,statusMessage, new Date(), syncTaskType.getUrl() + api, false,false);
+                        String internalRequisitionNumber = jsonObject.getString("internal_requisition_no");
+                        String externalRequisitionNumber = jsonResponse.getJSONObject("data").getString("requisition_number");
+                        String statusMessage = jsonResponse.getString("message");
+                        Integer responseCode = Integer.parseInt(response.get("responseCode").toString());
+                        logTransaction(syncTaskType, responseCode, null, externalRequisitionNumber, statusMessage, new Date(), syncTaskType.getUrl() + api, true, false);
+                        logTransaction(syncTaskType, responseCode, null, internalRequisitionNumber, statusMessage, new Date(), syncTaskType.getUrl() + api, false, false);
+                        StockOperationDTO stockOperationDTO = generateStockOperationDTO(stockOperation);
+                        stockOperationDTO.setExternalReference(externalRequisitionNumber);
+                        stockManagementService.saveStockOperation(stockOperationDTO);
                     } else if (!response.isEmpty()) {
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString() + "while syncing requisition:" + jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false,false);
+                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString() + "while syncing requisition:" + jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false, false);
                     }
                 }
             }
         } catch (Exception e) {
             log.error(e.getCause());
-            logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false,false);
+            logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false, false);
         }
         return null;
     }
@@ -1287,7 +1292,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
         String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.getIssuedStock");
-        String siteId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.storeId");
         String stockOperation = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
 
         List<SyncTask> syncTasks = getIncompleteActionSyncTask(syncTaskType.getUuid());
@@ -1296,10 +1300,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         Map response = null;
 
         for (SyncTask syncTask : syncTasks) {
-            this.stockOperation=null;
+            this.stockOperation = null;
             try {
-                JSONObject requisition=new JSONObject();
-                requisition.put("store_requisition_number",syncTask.getSyncTask());
+                JSONObject requisition = new JSONObject();
+                requisition.put("store_requisition_number", syncTask.getSyncTask());
                 response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, requisition.toString(), false);
                 if (!response.isEmpty() && response.get("responseCode").equals(200)) {
                     List receivedItems = (List) response.get("data");
@@ -1312,22 +1316,48 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                                 completeStockOperation(this.stockOperation);
                             }
                             syncTask.setActionCompleted(true);
-                           saveSyncTask(syncTask);
-                            logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to stock from receive " + processedItems.size() + " Stock Items", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false,false);
+                            saveSyncTask(syncTask);
+                            logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to stock from receive " + processedItems.size() + " Stock Items", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false, false);
+
+                            List<StockOperation> requisitionStockOperations = getStockOperationsByExternalReference(syncTask.getSyncTask());
+                            if (requisitionStockOperations != null) {
+                                for (StockOperation requisitionStockOperation : requisitionStockOperations) {
+                                    if (requisitionStockOperation != null) {
+                                        completeStockOperation(requisitionStockOperation);
+                                    }
+                                }
+                            }
                         }
                     }
                 } else if (!response.isEmpty()) {
-                    logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "failed to sync receive stock items from eAFYA", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false,false);
+                    logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "failed to sync receive stock items from eAFYA", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false, false);
                 }
             } catch (Exception e) {
                 log.error(e.getCause());
-                logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false,false);
+                logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false, false);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
-    private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url, boolean actionRequired,boolean actionCompleted) {
+    private List<StockOperation> getStockOperationsByExternalReference(String externalReference) {
+        List<StockOperation> stockOperations = null;
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        try {
+            List list = Context.getAdministrationService().executeSQL(String.format("select uuid from stockmgmt_stock_operation where external_reference=\"%s\"", externalReference), true);
+            if (list.size() > 0) {
+                for (Object stockOperationUuid : list) {
+                    StockOperation stockOperation = stockManagementService.getStockOperationByUuid(stockOperationUuid.toString());
+                    stockOperations.add(stockOperation);
+                }
+            }
+        } catch (Exception exception) {
+            log.error(exception);
+        }
+        return stockOperations;
+    }
+
+    private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url, boolean actionRequired, boolean actionCompleted) {
         SyncTask syncTask = new SyncTask();
         syncTask.setSyncTask(logName);
         syncTask.setStatus(status);
