@@ -540,4 +540,21 @@ public class SyncConstant {
 	public final static String BLISTER = "165728";
 
 	public final static String BOX = "162396";
+	public final static String TIN="1291";
+	public final static String TAB="1513";
+	public final static String CAP="1608";
+	public final static String GRAM="161554";
+	public final static String AMPULE="162335";
+	public final static String BAR="162351";
+	public final static String CAN="162354";
+	public final static String KILOGRAM="162362";
+	public final static String TUBE="162380";
+	public final static String BAG="162395";
+	public final static String PACKET="162398";
+	public final static String ROLL="162861";
+	public final static String PESSARY="165538";
+	public final static String PACK="65728";
+	public final static String CYLINDER="166389";
+	public final static String CYCLE="166994";
+	public final static String PIECE="167040";
 }

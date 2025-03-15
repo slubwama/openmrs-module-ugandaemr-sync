@@ -490,6 +490,6 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
    public List<String> getIssuedStock();
 
-    public SyncTaskType setEAFYAAccessTokenToSyncTaskType();
+    public SyncTaskType setAccessTokenToSyncTaskType();
 }
 

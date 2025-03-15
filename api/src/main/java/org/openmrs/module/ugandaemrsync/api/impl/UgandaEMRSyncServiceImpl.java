@@ -11,7 +11,6 @@ package org.openmrs.module.ugandaemrsync.api.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.entity.ContentType;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,7 +24,6 @@ import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.dto.*;
-import org.openmrs.module.stockmanagement.api.dto.reporting.StockItemInventoryConsumption;
 import org.openmrs.module.stockmanagement.api.model.*;
 import org.openmrs.module.fhir2.api.FhirConceptSourceService;
 import org.openmrs.module.idgen.IdentifierSource;
@@ -1228,13 +1226,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
         if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
-            syncTaskType = setEAFYAAccessTokenToSyncTaskType();
+            syncTaskType = setAccessTokenToSyncTaskType();
         }
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         try {
             for (JSONObject jsonObject : processRequisitionsToSync()) {
                 if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) == null) {
-                    response = ugandaEMRHttpURLConnection.sendPostBy(url, null, null, null, jsonObject.toString(), false);
+                    response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, jsonObject.toString(), false);
                     if (!response.isEmpty() && (response.get("responseCode").equals(200) || response.get("responseCode").equals(201))) {
                         JSONObject jsonResponse = new JSONObject(response);
                         String internalRequisitionNumber=jsonObject.getString("internal_requisition_no");
@@ -1291,23 +1289,18 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.getIssuedStock");
         String siteId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.storeId");
         String stockOperation = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
-        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
 
         List<SyncTask> syncTasks = getIncompleteActionSyncTask(syncTaskType.getUuid());
 
-        String url = String.format(syncTaskType.getUrl() + api, siteId);
+        String url = syncTaskType.getUrl() + api;
         Map response = null;
-        if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
-            syncTaskType = setEAFYAAccessTokenToSyncTaskType();
-        }
 
-        String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         for (SyncTask syncTask : syncTasks) {
             this.stockOperation=null;
             try {
                 JSONObject requisition=new JSONObject();
                 requisition.put("store_requisition_number",syncTask.getSyncTask());
-                response = ugandaEMRHttpURLConnection.sendPostBy(url, null, null, null, requisition.toString(), false);
+                response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, requisition.toString(), false);
                 if (!response.isEmpty() && response.get("responseCode").equals(200)) {
                     List receivedItems = (List) response.get("data");
                     if (!receivedItems.isEmpty()) {
@@ -1376,7 +1369,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return result.getData().isEmpty() ? null : result.getData().get(0);
     }
 
-    public SyncTaskType setEAFYAAccessTokenToSyncTaskType() {
+    public SyncTaskType setAccessTokenToSyncTaskType() {
         UgandaEMRHttpURLConnection httpURLConnection = new UgandaEMRHttpURLConnection();
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
         Map results = null;
@@ -1462,16 +1455,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         if (stockItem != null && stockItemPackagingUOM != null) {
                             StockOperationItemDTO stockOperationItemDTO = new StockOperationItemDTO();
 
-                            stockOperationItemDTO.setBatchNo(item.get("batch_no").toString());
-                            stockOperationItemDTO.setQuantityReceived(BigDecimal.valueOf(Double.parseDouble(item.get("quantity").toString())));
-                            stockOperationItemDTO.setQuantity(BigDecimal.valueOf(Double.parseDouble(item.get("quantity").toString())));
+                            stockOperationItemDTO.setBatchNo(item.get("batch_number").toString());
+                            stockOperationItemDTO.setQuantityReceived(BigDecimal.valueOf(Double.parseDouble(item.get("quantity_issued").toString())));
+                            stockOperationItemDTO.setQuantity(BigDecimal.valueOf(Double.parseDouble(item.get("quantity_issued").toString())));
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMFactor(stockItemPackagingUOM.getFactor());
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMUuid(stockItemPackagingUOM.getUuid());
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMUoMId(stockItemPackagingUOM.getId());
                             stockOperationItemDTO.setQuantityReceivedPackagingUOMName(stockItemPackagingUOM.getPackagingUom().getDisplayString());
                             if (!item.get("expiry_date").equals("") && stockItem.getHasExpiration()) {
                                 stockOperationItemDTO.setHasExpiration(true);
-                                stockOperationItemDTO.setExpiration(getDateFromString(item.get("expiry_date").toString(), "yyyy-mm-dd"));
+                                stockOperationItemDTO.setExpiration(getDateFromString(item.get("expiry_date").toString(), "yyyy-MM-dd'T'HH:mm:ss.SSSX"));
                             } else {
                                 stockOperationItemDTO.setHasExpiration(true);
                                 stockOperationItemDTO.setExpiration(addTimeToDate(300, 0, 0, 0, new Date()));
@@ -1507,7 +1500,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     private Boolean validStockItemFromERP(Map item) {
-        if (item.get("batch_no").equals("") || item.get("expiry_date").equals("") || item.get("quantity").equals("") || item.get("unit_of_measure").equals("") || item.get("product_id").equals("")) {
+        if (item.get("batch_number").equals("") || item.get("expiry_date").equals("") || item.get("quantity_issued").equals("") || item.get("unit_of_measure").equals("") || item.get("product_id").equals("")) {
             return false;
         }
         return true;
@@ -1515,46 +1508,60 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     private Concept getStockItemUOM(String packageUnit) {
         ConceptService conceptService = Context.getConceptService();
-        switch (packageUnit) {
-            case "Pieces":
+        switch (packageUnit.toLowerCase()) {
+            case "pieces":
                 return conceptService.getConcept(PIECES);
             case "tablets":
+            case "tab":
                 return conceptService.getConcept(TABLETS);
-            case "Vial":
+            case "vial":
                 return conceptService.getConcept(VIAL);
-            case "Capsule":
+            case "capsule":
                 return conceptService.getConcept(CAPSULE);
-            case "Packs":
+            case "packs":
                 return conceptService.getConcept(PACKS);
-            case "Ampoule":
+            case "ampoule":
                 return conceptService.getConcept(AMPOULE);
-            case "Bottle":
+            case "bottle":
                 return conceptService.getConcept(BOTTLE);
-            case "Litres":
+            case "litres":
                 return conceptService.getConcept(LITERS);
-            case "Blister":
+            case "blister":
                 return conceptService.getConcept(BLISTER);
-            case "BOX":
+            case "box":
                 return conceptService.getConcept(BOX);
-
+            case "tin":
+                return conceptService.getConcept(TIN);
+            case "cap":
+                return conceptService.getConcept(CAP);
+            case "gram":
+                return conceptService.getConcept(GRAM);
+            case "amule":
+                return conceptService.getConcept(AMPULE);
+            case "bar":
+                return conceptService.getConcept(BAR);
+            case "can":
+                return conceptService.getConcept(CAN);
+            case "kilogram":
+                return conceptService.getConcept(KILOGRAM);
+            case "tube":
+                return conceptService.getConcept(TUBE);
+            case "bag":
+                return conceptService.getConcept(BAG);
+            case "packet":
+                return conceptService.getConcept(PACKET);
+            case "pessary":
+                return conceptService.getConcept(PESSARY);
+            case "pack":
+                return conceptService.getConcept(PACK);
+            case "cylinder":
+                return conceptService.getConcept(CYLINDER);
+            case "cycle":
+                return conceptService.getConcept(CYCLE);
             default:
                 return null;
         }
-    }
 
-    private StockItemReference getStockItemReference(StockItemInventoryConsumption consumption) {
-        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
-        Collection<Integer> integers = new ArrayList<>();
-        integers.add(consumption.getStockItemId());
-        List<StockItemReference> stockItemReferences = stockManagementService.getStockItems(integers).get(0).getReferences().stream().filter(stockItemReference -> stockItemReference.getReferenceSource().getUuid().equals(EAFYA_STOCK_SOURCE_UUID)).collect(Collectors.toList());
-        return stockItemReferences.get(0);
-    }
-
-    public static String dateFormtterString(Date date, String format) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        SimpleDateFormat formatterExt = new SimpleDateFormat(format);
-        String formattedDate = formatterExt.format(date);
-        return formattedDate;
     }
 
     private Date getDateFromString(String dateString, String format) {
