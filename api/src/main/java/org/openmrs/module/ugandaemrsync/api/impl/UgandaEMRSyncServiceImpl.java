@@ -1310,10 +1310,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     if (!receivedItems.isEmpty()) {
                         processStockOperation(response, stockOperation);
                         if (this.stockOperation != null) {
-                            if (stockOperation.equals("Submitted")) {
-                                submitStockOperation(this.stockOperation);
-                            } else if (stockOperation.equals("Completed")) {
-                                completeStockOperation(this.stockOperation);
+                            try {
+                                if (stockOperation.equals("Submitted")) {
+                                    submitStockOperation(this.stockOperation);
+                                } else if (stockOperation.equals("Completed")) {
+                                    completeStockOperation(this.stockOperation);
+                                }
+                            } catch (Exception exception) {
+                                log.error(exception);
                             }
                             syncTask.setActionCompleted(true);
                             saveSyncTask(syncTask);
@@ -1323,7 +1327,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                             if (requisitionStockOperations != null) {
                                 for (StockOperation requisitionStockOperation : requisitionStockOperations) {
                                     if (requisitionStockOperation != null) {
-                                        completeStockOperation(requisitionStockOperation);
+                                        Context.getService(StockManagementService.class).approveStockOperation(generateStockOperationDTO(requisitionStockOperation));
                                     }
                                 }
                             }
@@ -1341,13 +1345,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     private List<StockOperation> getStockOperationsByExternalReference(String externalReference) {
-        List<StockOperation> stockOperations = null;
+        List<StockOperation> stockOperations = new ArrayList<>();
         StockManagementService stockManagementService = Context.getService(StockManagementService.class);
         try {
             List list = Context.getAdministrationService().executeSQL(String.format("select uuid from stockmgmt_stock_operation where external_reference=\"%s\"", externalReference), true);
             if (list.size() > 0) {
                 for (Object stockOperationUuid : list) {
-                    StockOperation stockOperation = stockManagementService.getStockOperationByUuid(stockOperationUuid.toString());
+                    StockOperation stockOperation = stockManagementService.getStockOperationByUuid(((ArrayList) stockOperationUuid).get(0).toString());
                     stockOperations.add(stockOperation);
                 }
             }
@@ -1461,7 +1465,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         if (!stockOperationDTO.getStockOperationItems().isEmpty()) {
             this.stockOperation = stockManagementService.saveStockOperation(stockOperationDTO);
         }
-
     }
 
     private List<StockOperationItemDTO> processStockOperationItems(List itemReceived, StockSource stockSource) {
