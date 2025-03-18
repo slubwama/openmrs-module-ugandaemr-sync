@@ -1,11 +1,9 @@
 package org.openmrs.module.ugandaemrsync.model;
 
-import lombok.Getter;
 import org.hibernate.annotations.Type;
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.ConceptSource;
 import org.openmrs.PatientIdentifierType;
-import org.openmrs.logic.op.In;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -89,22 +87,18 @@ public class SyncFhirProfile extends BaseOpenmrsData implements Serializable {
     @Column(name = "sync_limit")
     private Integer syncLimit;
 
-    @Getter
     @Column(name = "token_expiry_date")
     private Date tokenExpiryDate;
 
-    @Getter
     @Column(name = "token_type", length = 255)
     private String tokenType;
 
-    @Getter
     @Column(name = "token_refresh_key", length = 255)
     private String tokenRefreshKey;
 
     @Column(name = "searchable")
     private Boolean searchable;
 
-    @Getter
     @Column(name = "search_url", length = 255)
     private String searchURL;
 

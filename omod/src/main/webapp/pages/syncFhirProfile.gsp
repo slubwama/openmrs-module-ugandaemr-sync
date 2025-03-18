@@ -36,6 +36,11 @@
 
                 modal.find("#encounterTypeUUIDS").val("");
                 modal.find("#observationCodeUUIDS").val("");
+                modal.find("#medicationRequestCodeUUIDS").val("");
+                modal.find("#medicationDispenseCodeUUIDS").val("");
+                modal.find("#conditionCodeUUIDS").val("");
+                modal.find("#diagnosticReportCodeUUIDS").val("");
+                modal.find("#serviceRequestCodeUUIDS").val("");
                 modal.find("#episodeOfCareUUIDS").val("");
                 modal.find("#caseBasedPrimaryResourceTypeId").val("");
                 modal.find("#dataToSyncStartDate").val("");
@@ -105,10 +110,25 @@
 
                 var episodeOfCareFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).episodeofcareFilter.type;
 
+                var medicationRequestFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).medicationrequestFilter.type;
+
+                var medicationDispenseFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).medicationdispenseFilter.type;
+
+                var conditionFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).conditionFilter.type;
+
+                var diagnosticReportFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).diagnosticreportFilter.type;
+
+                var serviceRequestFilters = JSON.parse(syncFhirProfile.resourceSearchParameter).servicerequestFilter.type;
+
 
                 modal.find("#encounterTypeUUIDS").val(encounterFilters);
                 modal.find("#observationCodeUUIDS").val(obervationFilters);
                 modal.find("#episodeOfCareUUIDS").val(episodeOfCareFilters);
+                modal.find("#medicationRequestCodeUUIDS").val(medicationRequestFilters);
+                modal.find("#medicationDispenseCodeUUIDS").val(medicationDispenseFilters);
+                modal.find("#conditionCodeUUIDS").val(conditionFilters);
+                modal.find("#diagnosticReportCodeUUIDS").val(diagnosticReportFilters);
+                modal.find("#serviceRequestCodeUUIDS").val(serviceRequestFilters);
 
 
                 modal.find("#username").val(syncFhirProfile.urlUserName);
@@ -442,6 +462,40 @@
                                                                         Encounter
                                                                     </label>
                                                                 </div>
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeImmunization"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="Immunization">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeImmunization">
+                                                                        Immunization
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeMedicationDispense"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="MedicationDispense">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeMedicationDispense">
+                                                                        Medication Dispense
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           id="resourceTypeMedicationRequest"
+                                                                           name="resourceType"
+                                                                           class="resourceType"
+                                                                           value="MedicationRequest">
+                                                                    <label class="form-check-label"
+                                                                           for="resourceTypeMedicationRequest">
+                                                                        Medication Request
+                                                                    </label>
+                                                                </div>
                                                             </div>
                                                         </div>
 
@@ -471,19 +525,6 @@
                                                                         ServiceRequest (Lab Orders)
                                                                     </label>
                                                                 </div>
-
-                                                                <div class="form-check">
-                                                                    <input type="checkbox"
-                                                                           id="resourceTypeMedicationRequest"
-                                                                           name="resourceType"
-                                                                           class="resourceType"
-                                                                           value="MedicationRequest">
-                                                                    <label class="form-check-label"
-                                                                           for="resourceTypeMedicationRequest">
-                                                                        MedicationRequest (Medication Orders)
-                                                                    </label>
-                                                                </div>
-
                                                                 <div class="form-check">
                                                                     <input type="checkbox"
                                                                            id="resourceTypePractitioner"
@@ -496,12 +537,43 @@
                                                                     </label>
                                                                 </div>
                                                             </div>
+                                                            <div class="form-check">
+                                                                <input type="checkbox"
+                                                                       id="resourceTypeCondition"
+                                                                       name="resourceType"
+                                                                       class="resourceType"
+                                                                       value="Condition">
+                                                                <label class="form-check-label"
+                                                                       for="resourceTypeCondition">
+                                                                    Condition
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input type="checkbox"
+                                                                       id="resourceTypeAllergyIntolerance"
+                                                                       name="resourceType"
+                                                                       class="resourceType"
+                                                                       value="AllergyIntolerance">
+                                                                <label class="form-check-label"
+                                                                       for="resourceTypeAllergyIntolerance">
+                                                                    Allergy
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input type="checkbox"
+                                                                       id="resourceTypeDiagnosticReport"
+                                                                       name="resourceType"
+                                                                       class="resourceType"
+                                                                       value="DiagnosticReport">
+                                                                <label class="form-check-label"
+                                                                       for="resourceTypeDiagnosticReport">
+                                                                    Diagnostic Report
+                                                                </label>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -612,6 +684,42 @@
                                                            id="episodeOfCareUUIDS"
                                                            placeholder="comma separate program  uuids"
                                                            name="episodeOfCareUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Medication Request Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="medicationRequestCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="medicationRequestCodeUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Medication Dispense Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="medicationDispenseCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="medicationDispenseCodeUUIDS">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label>Condition Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="conditionCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="conditionCodeUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Diagnostic Report  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="diagnosticReportCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="diagnosticReportCodeUUIDS">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Service Request Concept  IDS</label>
+                                                    <input type="text" class="form-control resourceTypeFilter"
+                                                           id="serviceRequestCodeUUIDS"
+                                                           placeholder="comma separate concept IDs eg 99046,47453"
+                                                           name="serviceRequestCodeUUIDS">
                                                 </div>
                                             </div>
                                         </div>

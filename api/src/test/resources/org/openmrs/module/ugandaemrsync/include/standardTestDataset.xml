@@ -146,7 +146,7 @@
 	<concept  concept_id="167944"   retired="0"   creator="1"  date_created="2023-02-08 14:24:38"  version="" 	datatype_id="6" 	class_id="11"	  is_set="0"  uuid="5b4037d6-a7e2-11ed-afa1-0242ac120002"/>
 
 
-    <concept_numeric  concept_id="856" precise="false" />
+    <concept_numeric  concept_id="856" allow_decimal="false" />
 
 	<concept_name concept_id="99423" name="Treatment Outcome" locale="en_GB" creator="1" date_created="2004-08-12 00:00:00.0" concept_name_id="1939" concept_name_type="FULLY_SPECIFIED" locale_preferred="1" voided="false" uuid="9bc5693a-f558-40c9-8177-145a4b119cb9"/>
 	<concept_name concept_id="90306" name="Transferred out" locale="en_GB" creator="1" date_created="2004-08-12 00:00:00.0" concept_name_id="2439" concept_name_type="FULLY_SPECIFIED" locale_preferred="1" voided="false" uuid="9bc5693a-f558-40c9-8177-145a4b119cc4"/>
@@ -277,25 +277,25 @@
 	<concept_set  concept_set_id="3031"  concept_id="1334"  concept_set="1019"  sort_weight="15"  creator="1"  date_created="2022-03-07 16:32:54"  uuid="c8bf27c2-d799-49d6-be8f-a012062073e3"/>
 
 
-	<concept_numeric  concept_id="21" hi_normal="17.8" low_critical="7"  low_normal="10.4"  units="g/dL" precise="true"/>
-	<concept_numeric  concept_id="678" hi_normal="8.2" low_critical="1.4"  low_normal="2.9"  units="10^3/Ã¯Â¿Â½L" precise="true"/>
-	<concept_numeric  concept_id="679" hi_normal="6.1" low_critical="2.3"  low_normal="4"  units="10^6/Ã¯Â¿Â½L" precise="true"/>
-	<concept_numeric  concept_id="729" hi_normal="419" low_critical="49"  low_normal="134"  units="10^3/Ã¯Â¿Â½L" precise="true"/>
-	<concept_numeric  concept_id="851" hi_normal="100"   low_normal="80"  units="fL" precise="true"/>
-	<concept_numeric  concept_id="1015" hi_normal="51.9" low_critical="21"  low_normal="32.3"  units="%" precise="true"/>
-	<concept_numeric  concept_id="1016" hi_normal="20"   low_normal="10"  units="%" precise="true"/>
-	<concept_numeric  concept_id="1017" hi_normal="37"   low_normal="33"  units="g/dL" precise="true"/>
-	<concept_numeric  concept_id="1018" hi_normal="34"   low_normal="26"  units="pg" precise="true"/>
-	<concept_numeric  concept_id="1021" units="%" precise="true" />
-	<concept_numeric  concept_id="1022" units="%" precise="true" />
-	<concept_numeric  concept_id="1023" units="%" precise="true" />
-	<concept_numeric  concept_id="1024" units="%" precise="true" />
-	<concept_numeric  concept_id="1025" units="%" precise="true" />
-	<concept_numeric  concept_id="1319" units="cells/Ã¯Â¿Â½L" precise="true" />
-	<concept_numeric  concept_id="1330" units="10^3/Ã¯Â¿Â½L" precise="true" />
-	<concept_numeric  concept_id="1331" units="10^3/Ã¯Â¿Â½L" precise="true" />
-	<concept_numeric  concept_id="1332" units="10^3/Ã¯Â¿Â½L" precise="true" />
-	<concept_numeric  concept_id="1334" units="10^3/Ã¯Â¿Â½L" precise="true" />
+	<concept_numeric  concept_id="21" hi_normal="17.8" low_critical="7"  low_normal="10.4"  units="g/dL" allow_decimal="true"/>
+	<concept_numeric  concept_id="678" hi_normal="8.2" low_critical="1.4"  low_normal="2.9"  units="10^3/Ã¯Â¿Â½L" allow_decimal="true"/>
+	<concept_numeric  concept_id="679" hi_normal="6.1" low_critical="2.3"  low_normal="4"  units="10^6/Ã¯Â¿Â½L" allow_decimal="true"/>
+	<concept_numeric  concept_id="729" hi_normal="419" low_critical="49"  low_normal="134"  units="10^3/Ã¯Â¿Â½L" allow_decimal="true"/>
+	<concept_numeric  concept_id="851" hi_normal="100"   low_normal="80"  units="fL" allow_decimal="true"/>
+	<concept_numeric  concept_id="1015" hi_normal="51.9" low_critical="21"  low_normal="32.3"  units="%" allow_decimal="true"/>
+	<concept_numeric  concept_id="1016" hi_normal="20"   low_normal="10"  units="%" allow_decimal="true"/>
+	<concept_numeric  concept_id="1017" hi_normal="37"   low_normal="33"  units="g/dL" allow_decimal="true"/>
+	<concept_numeric  concept_id="1018" hi_normal="34"   low_normal="26"  units="pg" allow_decimal="true"/>
+	<concept_numeric  concept_id="1021" units="%" allow_decimal="true" />
+	<concept_numeric  concept_id="1022" units="%" allow_decimal="true" />
+	<concept_numeric  concept_id="1023" units="%" allow_decimal="true" />
+	<concept_numeric  concept_id="1024" units="%" allow_decimal="true" />
+	<concept_numeric  concept_id="1025" units="%" allow_decimal="true" />
+	<concept_numeric  concept_id="1319" units="cells/Ã¯Â¿Â½L" allow_decimal="true" />
+	<concept_numeric  concept_id="1330" units="10^3/Ã¯Â¿Â½L" allow_decimal="true" />
+	<concept_numeric  concept_id="1331" units="10^3/Ã¯Â¿Â½L" allow_decimal="true" />
+	<concept_numeric  concept_id="1332" units="10^3/Ã¯Â¿Â½L" allow_decimal="true" />
+	<concept_numeric  concept_id="1334" units="10^3/Ã¯Â¿Â½L" allow_decimal="true" />
 
 
 

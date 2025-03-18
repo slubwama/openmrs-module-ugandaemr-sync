@@ -2,6 +2,7 @@ package org.openmrs.module.ugandaemrsync.page.controller;
 
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.appui.UiSessionContext;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -48,7 +49,12 @@ public class SyncFhirProfilePageController {
                      @RequestParam(value = "noOfResourcesInBundle", required = false) Integer noOfResourcesInBundle,
                      @RequestParam(value = "encounterTypeUUIDS", required = false) String encounterTypeUUIDS,
                      @RequestParam(value = "observationCodeUUIDS", required = false) ArrayList observationCodeUUIDs,
+                     @RequestParam(value = "medicationRequestCodeUUIDS", required = false) ArrayList medicationRequestCodeUUIDS,
+                     @RequestParam(value = "medicationDispenseCodeUUIDS", required = false) ArrayList medicationDispenseCodeUUIDS,
+                     @RequestParam(value = "conditionCodeUUIDS", required = false) ArrayList conditionCodeUUIDS,
+                     @RequestParam(value = "diagnosticReportCodeUUIDS", required = false) ArrayList diagnosticReportCodeUUIDS,
                      @RequestParam(value = "episodeOfCareUUIDS", required = false) String episodeOfCareUUIDS,
+                     @RequestParam(value = "serviceRequestCodeUUIDS", required = false) ArrayList serviceRequestCodeUUIDS,
                      @RequestParam(value = "url", required = false) String url,
                      @RequestParam(value = "searchable", required = false) String searchable,
                      @RequestParam(value = "searchURL", required = false) String searchURL,
@@ -59,17 +65,39 @@ public class SyncFhirProfilePageController {
                      UiSessionContext uiSessionContext, UiUtils uiUtils, HttpServletRequest request) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
 
-        JSONArray encounterArray = new JSONArray();
-        if (encounterTypeUUIDS.split(",").length > 0) {
-            encounterArray = new JSONArray(encounterTypeUUIDS.split(","));
+        JSONObject jsonObject=new JSONObject(FHIR_FILTER_OBJECT_STRING);
+        if(jsonObject.has("encounterFilter") && !encounterTypeUUIDS.equals("") && encounterTypeUUIDS.split(",").length > 0){
+            jsonObject.getJSONObject("encounterFilter").put("type",new JSONArray(encounterTypeUUIDS.split(",")));
         }
 
-        JSONArray episodeOfCareArray = new JSONArray();
-        if (episodeOfCareUUIDS.split(",").length > 0) {
-            episodeOfCareArray = new JSONArray(episodeOfCareUUIDS.split(","));
+        if(jsonObject.has("episodeofcareFilter") && !episodeOfCareUUIDS.equals("") && episodeOfCareUUIDS.split(",").length > 0){
+            jsonObject.getJSONObject("episodeofcareFilter").put("type",new JSONArray(episodeOfCareUUIDS.split(",")));
         }
 
-        String resourceSearchParams = FHIR_FILTER_OBJECT_STRING.replace("encounterTypeUUID", encounterArray.toString()).replace("conceptQuestionUUID", observationCodeUUIDs.toString()).replace("episodeOfCareTypeUUID", episodeOfCareArray.toString());
+        if(jsonObject.has("observationFilter") && !observationCodeUUIDs.isEmpty()){
+            jsonObject.getJSONObject("observationFilter").put("code",new JSONArray(observationCodeUUIDs));
+        }
+
+        if(jsonObject.has("medicationdispenseFilter") && !medicationDispenseCodeUUIDS.isEmpty()){
+            jsonObject.getJSONObject("medicationdispenseFilter").put("code",new JSONArray(medicationDispenseCodeUUIDS));
+        }
+
+        if(jsonObject.has("medicationrequestFilter") && !medicationRequestCodeUUIDS.isEmpty()){
+            jsonObject.getJSONObject("medicationrequestFilter").put("code",new JSONArray(medicationRequestCodeUUIDS));
+        }
+
+        if(jsonObject.has("diagnosticreportFilter") && !diagnosticReportCodeUUIDS.isEmpty()){
+            jsonObject.getJSONObject("diagnosticreportFilter").put("code",new JSONArray(diagnosticReportCodeUUIDS));
+        }
+
+        if(jsonObject.has("conditionFilter") && !conditionCodeUUIDS.isEmpty()){
+            jsonObject.getJSONObject("conditionFilter").put("code",new JSONArray(conditionCodeUUIDS));
+        }
+
+        if(jsonObject.has("servicerequestFilter") && !serviceRequestCodeUUIDS.isEmpty()){
+            jsonObject.getJSONObject("servicerequestFilter").put("code",new JSONArray(serviceRequestCodeUUIDS));
+        }
+
         SyncFhirProfile syncFhirProfile;
 
         if (profileId.equals("")) {
@@ -94,7 +122,7 @@ public class SyncFhirProfilePageController {
         syncFhirProfile.setCaseBasedPrimaryResourceType(caseBasedPrimaryResourceType);
         syncFhirProfile.setCaseBasedPrimaryResourceTypeId(caseBasedPrimaryResourceUUID);
         syncFhirProfile.setPatientIdentifierType(Context.getPatientService().getPatientIdentifierTypeByUuid(patientIdentifierType));
-        syncFhirProfile.setResourceSearchParameter(resourceSearchParams);
+        syncFhirProfile.setResourceSearchParameter(jsonObject.toString());
         syncFhirProfile.setUrl(url);
         syncFhirProfile.setUrlUserName(username);
         syncFhirProfile.setUrlPassword(password);
