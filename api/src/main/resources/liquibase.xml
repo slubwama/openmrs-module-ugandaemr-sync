@@ -1818,7 +1818,6 @@
         </sql>
     </changeSet>
 
-
     <changeSet id="ugandaemrsync-2025-03-08" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
