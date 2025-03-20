@@ -40,6 +40,7 @@ import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -47,12 +48,16 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.HostnameVerifier;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.InputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -515,5 +520,48 @@ public class UgandaEMRHttpURLConnection {
             ex.printStackTrace();
         }
         return null;
+    }
+
+    public Map getTokenFromServer(String url, String username, String password) {
+        Map map = new HashMap<>();
+        try {
+            URI uri = new URI(url);
+            URL connectionUrl = uri.toURL();
+
+            // Create a connection
+            HttpURLConnection connection = (HttpURLConnection) connectionUrl.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            connection.setDoOutput(true);
+
+            // Define the parameters
+            String parameters = "username=" + username + "&password=" + password + "&grant_type=password";
+
+            // Write the parameters to the connection
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = parameters.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            // Get the response code
+            int responseCode = connection.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            String responseMessage = connection.getResponseMessage();
+            //reading the response
+            map.put("responseCode", responseCode);
+            if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
+                InputStream inputStreamReader = connection.getInputStream();
+                map.putAll(new JSONObject(getStringOfResults(inputStreamReader)).toMap());
+            } else {
+                map.put("responseCode", responseCode);
+                log.info(responseMessage);
+            }
+            map.put("responseMessage", responseMessage);
+            connection.disconnect();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return map;
     }
 }

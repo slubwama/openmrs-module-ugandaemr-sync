@@ -14,26 +14,21 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openmrs.Obs;
-import org.openmrs.Order;
-import org.openmrs.Encounter;
-import org.openmrs.EncounterType;
-import org.openmrs.Concept;
-import org.openmrs.Patient;
-import org.openmrs.ConceptDatatype;
-import org.openmrs.ConceptSource;
-import org.openmrs.PersonName;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PatientIdentifierType;
+import org.openmrs.*;
 import org.openmrs.api.APIException;
+import org.openmrs.api.ConceptService;
 import org.openmrs.api.ObsService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
+import org.openmrs.module.stockmanagement.api.StockManagementService;
+import org.openmrs.module.stockmanagement.api.dto.*;
+import org.openmrs.module.stockmanagement.api.model.*;
 import org.openmrs.module.fhir2.api.FhirConceptSourceService;
 import org.openmrs.module.idgen.IdentifierSource;
 import org.openmrs.module.idgen.service.IdentifierSourceService;
+import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
 import org.openmrs.module.ugandaemrsync.mapper.Identifier;
@@ -56,32 +51,28 @@ import java.io.FileReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import java.util.List;
-import java.util.Date;
-import java.util.Collection;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.Properties;
-import java.util.Locale;
-import java.util.UUID;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.SYNC_METRIC_DATA;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_UIC_UUID;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_UIC_NAME;
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_NIN_NAME;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ALIS_SYNC_TASK_TYPE_UUID;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.CONNECTION_SUCCESS_200;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements UgandaEMRSyncService {
 
     UgandaEMRSyncDao dao;
     Log log = LogFactory.getLog(UgandaEMRSyncServiceImpl.class);
+    private List<Object> unproccesedItems = new ArrayList<>();
+    private List<Object> processedItems = new ArrayList<>();
+
+    private StockOperation stockOperation = null;
 
 
     /**
@@ -188,7 +179,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             Concept dateSampleTaken = Context.getConceptService().getConcept("163023");
             Concept viralLoadQualitative = Context.getConceptService().getConcept("1305");
             Concept viralLoadQuantitative = Context.getConceptService().getConcept("856");
-            Concept viralLoadReturnDate= Context.getConceptService().getConcept("167944");
+            Concept viralLoadReturnDate = Context.getConceptService().getConcept("167944");
             Concept valueCoded = null;
 
             String dateFormat = getDateFormat(vlDate);
@@ -222,7 +213,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 viralLoadQualitativeObs = createObs(encounter, order, viralLoadQualitative, valueCoded, null, null);
                 viralLoadTestGroupObs.addGroupMember(viralLoadQualitativeObs);
             }
-
 
 
             if (vlQuantitative != null) {
@@ -1169,13 +1159,488 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return dao.getSyncTasksByType(syncTaskType);
     }
 
-    public List<SyncTask> searchSyncTask(SyncTaskType syncTaskType,Integer statusCode,Date fromDate, Date toDate) {
-        return dao.searchSyncTask( syncTaskType, statusCode, fromDate, toDate);
+    public List<SyncTask> searchSyncTask(SyncTaskType syncTaskType, Integer statusCode, Date fromDate, Date toDate) {
+        return dao.searchSyncTask(syncTaskType, statusCode, fromDate, toDate);
     }
 
     @Override
     public void deleteSyncTask(String syncTask, SyncTaskType syncTaskType) {
-         dao.deleteUnSuccessfulSyncTasks(syncTask,syncTaskType);
+        dao.deleteUnSuccessfulSyncTasks(syncTask, syncTaskType);
     }
+
+
+    private List<JSONObject> processRequisitionsToSync() {
+        String storeId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.storeId");
+        String sourceStoreId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.sourceStoreId");
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        ProviderAttributeType providerAttributeType = Context.getProviderService().getProviderAttributeTypeByUuid("d376f27c-cb93-45b4-be0a-6be88c520233");
+        StockSource stockSource = stockManagementService.getStockSourceByUuid("9babcc02-fc0b-11ef-ab84-28977ca9db4b");
+        StockOperationType stockOperationType = stockManagementService.getStockOperationTypeByUuid("7073e8f4-eb6b-11ef-80d7-730ad71afb9c");
+        StockOperationSearchFilter filter = new StockOperationSearchFilter();
+        filter.setStatus(new ArrayList<>(Collections.singletonList(StockOperationStatus.SUBMITTED)));
+        filter.setStockSourceId(stockSource.getId());
+        filter.setOperationTypeId(Collections.singletonList(stockOperationType.getId()));
+
+        Result<StockOperationDTO> results = stockManagementService.findStockOperations(filter);
+        List<JSONObject> requisitions = new ArrayList<>();
+        for (StockOperationDTO stockOperationDTO : results.getData()) {
+            JSONObject requisition = new JSONObject();
+            StockOperation stockOperation = stockManagementService.getStockOperationByUuid(stockOperationDTO.getUuid());
+            if (getSyncTaskTypeByName(stockOperation.getUuid()).isEmpty()) {
+                Provider provider = null;
+                try {
+                    Collection<Provider> providers = Context.getProviderService().getProvidersByPerson(Context.getUserService().getUser(stockOperationDTO.getCreator()).getPerson(), false);
+                    if (!providers.isEmpty()) {
+                        provider = new ArrayList<>(providers).get(0);
+                    }
+                } catch (Exception e) {
+                    log.error(e);
+                }
+                JSONArray items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider, providerAttributeType);
+                if (!items.isEmpty()) {
+                    String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
+                    if (eaFYAID != null && isInteger(eaFYAID)) {
+                        requisition.put("created_by_id", Integer.parseInt(eaFYAID));
+                    } else {
+                        requisition.put("created_by_id", eaFYAID);
+                    }
+                    requisition.put("destination_store_id", Integer.parseInt(storeId));
+                    requisition.put("source_store_id", Integer.parseInt(sourceStoreId));
+                    requisition.put("requester_comment", stockOperation.getOperationNumber() + ": " + stockOperation.getRemarks());
+                    requisition.put("internal_requisition_no", stockOperation.getOperationNumber());
+                    requisition.put("internal_requisition_uuid", stockOperation.getUuid());
+                    requisition.put("items", items);
+                }
+            }
+            requisitions.add(requisition);
+        }
+
+        return requisitions;
+    }
+
+    public List<String> getSendRequisitionStock() {
+        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+        Map response;
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
+        String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendRequisitionStock");
+        String url = syncTaskType.getUrl() + api;
+
+        String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
+        try {
+            for (JSONObject jsonObject : processRequisitionsToSync()) {
+                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) == null && jsonObject.getString("internal_requisition_uuid") != null) {
+                    StockOperation stockOperation = stockManagementService.getStockOperationByUuid(jsonObject.getString("internal_requisition_uuid"));
+                    response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, jsonObject.toString(), false);
+                    if (!response.isEmpty() && (response.get("responseCode").equals(200) || response.get("responseCode").equals(201))) {
+                        JSONObject jsonResponse = new JSONObject(response);
+                        String internalRequisitionNumber = jsonObject.getString("internal_requisition_no");
+                        String externalRequisitionNumber = jsonResponse.getJSONObject("data").getString("requisition_number");
+                        String statusMessage = jsonResponse.getString("message");
+                        Integer responseCode = Integer.parseInt(response.get("responseCode").toString());
+                        logTransaction(syncTaskType, responseCode, null, externalRequisitionNumber, statusMessage, new Date(), syncTaskType.getUrl() + api, true, false);
+                        logTransaction(syncTaskType, responseCode, null, internalRequisitionNumber, statusMessage, new Date(), syncTaskType.getUrl() + api, false, false);
+                        StockOperationDTO stockOperationDTO = generateStockOperationDTO(stockOperation);
+                        stockOperationDTO.setExternalReference(externalRequisitionNumber);
+                        stockManagementService.saveStockOperation(stockOperationDTO);
+                    } else if (!response.isEmpty()) {
+                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString() + "while syncing requisition:" + jsonObject.getString("internal_requisition_no"), new Date(), syncTaskType.getUrl() + api, false, false);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getCause());
+            logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false, false);
+        }
+        return null;
+    }
+
+    private JSONArray processRequisitionItems(Set<StockOperationItem> stockOperationItems, StockSource stockSource, Provider provider, ProviderAttributeType providerAttributeType) {
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        JSONArray jsonArray = new JSONArray();
+        for (StockOperationItem stockOperationItem : stockOperationItems) {
+            StockItemReference stockItemReference = stockOperationItem.getStockItem().getReferences().stream().filter(reference -> reference.getReferenceSource().equals(stockSource)).collect(Collectors.toList()).get(0);
+            if (stockItemReference != null) {
+                String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("quantity", stockOperationItem.getQuantity());
+                jsonObject.put("expected_quantity", stockOperationItem.getQuantity());
+
+                if (isInteger(stockItemReference.getStockReferenceCode())) {
+                    jsonObject.put("product_id", Integer.parseInt(stockItemReference.getStockReferenceCode()));
+                } else {
+                    jsonObject.put("product_id", stockItemReference.getStockReferenceCode());
+                }
+
+                if (eaFYAID != null && isInteger(eaFYAID)) {
+                    jsonObject.put("created_by_id", Integer.parseInt(eaFYAID));
+                } else {
+                    jsonObject.put("created_by_id", eaFYAID);
+                }
+
+                jsonArray.put(jsonObject);
+            }
+        }
+        return jsonArray;
+    }
+
+    public List<String> getIssuedStock() {
+        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
+        String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.getIssuedStock");
+        String stockOperation = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.operation");
+
+        List<SyncTask> syncTasks = getIncompleteActionSyncTask(syncTaskType.getUuid());
+
+        String url = syncTaskType.getUrl() + api;
+        Map response = null;
+
+        for (SyncTask syncTask : syncTasks) {
+            this.stockOperation = null;
+            try {
+                JSONObject requisition = new JSONObject();
+                requisition.put("store_requisition_number", syncTask.getSyncTask());
+                response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, requisition.toString(), false);
+                if (!response.isEmpty() && response.get("responseCode").equals(200)) {
+                    List receivedItems = (List) response.get("data");
+                    if (!receivedItems.isEmpty()) {
+                        processStockOperation(response, stockOperation);
+                        if (this.stockOperation != null) {
+                            try {
+                                if (stockOperation.equals("Submitted")) {
+                                    submitStockOperation(this.stockOperation);
+                                } else if (stockOperation.equals("Completed")) {
+                                    completeStockOperation(this.stockOperation);
+                                }
+                            } catch (Exception exception) {
+                                log.error(exception);
+                            }
+                            syncTask.setActionCompleted(true);
+                            saveSyncTask(syncTask);
+                            logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "Successfully received to stock from receive " + processedItems.size() + " Stock Items", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false, false);
+
+                            List<StockOperation> requisitionStockOperations = getStockOperationsByExternalReference(syncTask.getSyncTask());
+                            if (requisitionStockOperations != null) {
+                                for (StockOperation requisitionStockOperation : requisitionStockOperations) {
+                                    if (requisitionStockOperation != null) {
+                                        Context.getService(StockManagementService.class).approveStockOperation(generateStockOperationDTO(requisitionStockOperation));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (!response.isEmpty()) {
+                    logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), "failed to sync receive stock items from eAFYA", EAFYA_SMART_ERP_RECEIVE_STOCK, response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false, false);
+                }
+            } catch (Exception e) {
+                log.error(e.getCause());
+                logTransaction(syncTaskType, 500, "Internal Server Error: failed to sync receive stock items from erp", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getCause().getMessage(), new Date(), syncTaskType.getUrl() + api, false, false);
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<StockOperation> getStockOperationsByExternalReference(String externalReference) {
+        List<StockOperation> stockOperations = new ArrayList<>();
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        try {
+            List list = Context.getAdministrationService().executeSQL(String.format("select uuid from stockmgmt_stock_operation where external_reference=\"%s\"", externalReference), true);
+            if (list.size() > 0) {
+                for (Object stockOperationUuid : list) {
+                    StockOperation stockOperation = stockManagementService.getStockOperationByUuid(((ArrayList) stockOperationUuid).get(0).toString());
+                    stockOperations.add(stockOperation);
+                }
+            }
+        } catch (Exception exception) {
+            log.error(exception);
+        }
+        return stockOperations;
+    }
+
+    private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url, boolean actionRequired, boolean actionCompleted) {
+        SyncTask syncTask = new SyncTask();
+        syncTask.setSyncTask(logName);
+        syncTask.setStatus(status);
+        syncTask.setStatusCode(statusCode);
+        syncTask.setDateSent(date);
+        syncTask.setSyncTaskType(syncTaskType);
+        syncTask.setRequireAction(actionRequired);
+        syncTask.setActionCompleted(actionCompleted);
+        syncTask.setSentToUrl(url);
+        Context.getService(UgandaEMRSyncService.class).saveSyncTask(syncTask);
+    }
+
+    private StockOperation submitStockOperation(StockOperation stockOperation) {
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        StockOperationDTO stockOperationDTO = generateStockOperationDTO(stockOperation);
+        if (stockOperationDTO != null) {
+            stockManagementService.submitStockOperation(stockOperationDTO);
+        }
+
+        return stockOperation;
+    }
+
+    private StockOperation completeStockOperation(StockOperation stockOperation) {
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        StockOperationDTO stockOperationDTO = generateStockOperationDTO(stockOperation);
+        if (stockOperationDTO != null) {
+            stockOperationDTO.setCompletedBy(Context.getAuthenticatedUser().getUserId());
+            stockOperationDTO.setCompletedDate(new Date());
+            stockManagementService.completeStockOperation(stockOperationDTO);
+        }
+
+        return stockOperation;
+    }
+
+    private StockOperationDTO generateStockOperationDTO(StockOperation stockOperation) {
+        StockOperationSearchFilter filter = new StockOperationSearchFilter();
+        filter.setStockOperationUuid(stockOperation.getUuid());
+        Result<StockOperationDTO> result = Context.getService(StockManagementService.class).findStockOperations(filter);
+        return result.getData().isEmpty() ? null : result.getData().get(0);
+    }
+
+    public SyncTaskType setAccessTokenToSyncTaskType() {
+        UgandaEMRHttpURLConnection httpURLConnection = new UgandaEMRHttpURLConnection();
+        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID(EAFYA_STOCK_SYNC_TASK_UUID);
+        Map results = null;
+        if (syncTaskType.getTokenExpiryDate() == null
+                || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
+
+            String tokenAPI = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".erp.getToken");
+
+            String username = syncTaskType.getUrlUserName();
+            String password = syncTaskType.getUrlPassword();
+            String url = syncTaskType.getUrl();
+            try {
+                results = httpURLConnection.getTokenFromServer(url + tokenAPI, username, password);
+                String access_token = results.get("access_token").toString();
+                String token_type = results.get("token_type").toString();
+                String expires_in = results.get("expires_in").toString();
+                String refresh_token = results.get("refresh_token").toString();
+                syncTaskType.setUrlToken(access_token);
+                syncTaskType.setTokenType(token_type);
+                syncTaskType.setTokenRefreshKey(refresh_token);
+                if (expires_in != null) {
+                    syncTaskType.setTokenExpiryDate(addTimeToDate(0, -1, 0, Integer.parseInt(expires_in), new Date()));
+                }
+                Context.getService(UgandaEMRSyncService.class).saveSyncTaskType(syncTaskType);
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+        return syncTaskType;
+    }
+
+    private void processStockOperation(Map results, String operation) {
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        StockOperationDTO stockOperationDTO = new StockOperationDTO();
+        List items = (List) results.get("data");
+        Location recieptLOcation = Context.getLocationService().getLocationByUuid(MAIN_STORE_LOCATION_UUID);
+        StockSource stockSource = stockManagementService.getStockSourceByUuid(EAFYA_STOCK_SOURCE_UUID);
+        Party partySource = stockManagementService.getPartyByStockSource(stockSource);
+        Party partyDestination = stockManagementService.getPartyByLocation(recieptLOcation);
+        stockOperationDTO.setOperationType(StockOperationType.RECEIPT);
+        stockOperationDTO.setOperationTypeUuid(stockManagementService.getStockOperationTypeByType(StockOperationType.RECEIPT).getUuid());
+        stockOperationDTO.setDateCreated(new Date());
+        stockOperationDTO.setAtLocationUuid(recieptLOcation.getUuid());
+        stockOperationDTO.setAtLocationName(recieptLOcation.getName());
+        stockOperationDTO.setApprovalRequired(false);
+        stockOperationDTO.setStockOperationItems(processStockOperationItems(items, stockSource));
+        stockOperationDTO.setDestinationUuid(partyDestination.getUuid());
+        stockOperationDTO.setDestinationName(partyDestination.getLocation().getName());
+        stockOperationDTO.setSourceUuid(partySource.getUuid());
+        stockOperationDTO.setSourceName(partySource.getStockSource().getName());
+        stockOperationDTO.setRemarks("Received for  from eAFYA");
+        stockOperationDTO.setLocked(true);
+        stockOperationDTO.setOperationDate(new Date());
+        stockOperationDTO.setResponsiblePersonUuid(Context.getAuthenticatedUser().getUuid());
+        stockOperationDTO.setCreator(Context.getAuthenticatedUser().getUserId());
+        stockOperationDTO.setStatus(StockOperationStatus.COMPLETED);
+        stockOperationDTO.setCompletedBy(Context.getAuthenticatedUser().getUserId());
+        stockOperationDTO.setCompletedDate(new Date());
+        if (!stockOperationDTO.getStockOperationItems().isEmpty()) {
+            this.stockOperation = stockManagementService.saveStockOperation(stockOperationDTO);
+        }
+    }
+
+    private List<StockOperationItemDTO> processStockOperationItems(List itemReceived, StockSource stockSource) {
+        unproccesedItems = new ArrayList<>();
+        processedItems = new ArrayList<>();
+        StockManagementService stockManagementService = Context.getService(StockManagementService.class);
+        List<StockOperationItemDTO> stockOperationItemDTOS = new ArrayList<>();
+        for (Object itemObject : itemReceived) {
+            try {
+                Map item = ((HashMap) itemObject);
+                if (validStockItemFromERP(item)) {
+                    try {
+                        StockItem stockItem = stockManagementService.getStockItemByReference(stockSource, item.getOrDefault("product_id", null).toString());
+                        Concept stockItemUoMConcept = getStockItemUOM(item.get("unit_of_measure").toString());
+
+                        StockItemPackagingUOM stockItemPackagingUOM = null;
+                        if (stockItem != null && stockItemUoMConcept != null) {
+                            stockItemPackagingUOM = stockManagementService.getStockItemPackagingUOMByConcept(stockItem.getId(), stockItemUoMConcept.getConceptId());
+                        }
+
+                        if (stockItem != null && stockItemPackagingUOM != null) {
+                            StockOperationItemDTO stockOperationItemDTO = new StockOperationItemDTO();
+
+                            stockOperationItemDTO.setBatchNo(item.get("batch_number").toString());
+                            stockOperationItemDTO.setQuantityReceived(BigDecimal.valueOf(Double.parseDouble(item.get("quantity_issued").toString())));
+                            stockOperationItemDTO.setQuantity(BigDecimal.valueOf(Double.parseDouble(item.get("quantity_issued").toString())));
+                            stockOperationItemDTO.setQuantityReceivedPackagingUOMFactor(stockItemPackagingUOM.getFactor());
+                            stockOperationItemDTO.setQuantityReceivedPackagingUOMUuid(stockItemPackagingUOM.getUuid());
+                            stockOperationItemDTO.setQuantityReceivedPackagingUOMUoMId(stockItemPackagingUOM.getId());
+                            stockOperationItemDTO.setQuantityReceivedPackagingUOMName(stockItemPackagingUOM.getPackagingUom().getDisplayString());
+                            if (!item.get("expiry_date").equals("") && stockItem.getHasExpiration()) {
+                                stockOperationItemDTO.setHasExpiration(true);
+                                stockOperationItemDTO.setExpiration(getDateFromString(item.get("expiry_date").toString(), "yyyy-MM-dd'T'HH:mm:ss.SSSX"));
+                            } else {
+                                stockOperationItemDTO.setHasExpiration(true);
+                                stockOperationItemDTO.setExpiration(addTimeToDate(300, 0, 0, 0, new Date()));
+                            }
+                            stockOperationItemDTO.setStockItemId(stockItem.getId());
+                            stockOperationItemDTO.setStockItemUuid(stockItem.getUuid());
+                            stockOperationItemDTO.setStockItemName(stockItem.getCommonName());
+                            stockOperationItemDTO.setCommonName(stockItem.getCommonName());
+                            stockOperationItemDTO.setPackagingUoMId(stockItemPackagingUOM.getId());
+                            stockOperationItemDTO.setStockItemPackagingUOMFactor(stockItemPackagingUOM.getFactor());
+                            stockOperationItemDTO.setStockItemPackagingUOMUuid(stockItemPackagingUOM.getUuid());
+                            stockOperationItemDTO.setStockItemPackagingUOMName(stockItemPackagingUOM.getPackagingUom().getDisplayString());
+                            stockOperationItemDTO.setStockItemConceptId(stockItem.getConcept().getConceptId());
+                            if (stockItem.getIsDrug()) {
+                                stockOperationItemDTO.setStockItemDrugId(stockItem.getDrug().getDrugId());
+                            }
+                            stockOperationItemDTOS.add(stockOperationItemDTO);
+                            processedItems.add(item);
+                        } else {
+                            unproccesedItems.add(item);
+                        }
+                    } catch (Exception exception) {
+                        log.error(exception);
+                    }
+                } else {
+                    unproccesedItems.add(item);
+                }
+            } catch (Exception exception) {
+                log.error(exception);
+            }
+        }
+        return stockOperationItemDTOS;
+    }
+
+    private Boolean validStockItemFromERP(Map item) {
+        if (item.get("batch_number").equals("") || item.get("expiry_date").equals("") || item.get("quantity_issued").equals("") || item.get("unit_of_measure").equals("") || item.get("product_id").equals("")) {
+            return false;
+        }
+        return true;
+    }
+
+    private Concept getStockItemUOM(String packageUnit) {
+        ConceptService conceptService = Context.getConceptService();
+        switch (packageUnit.toLowerCase()) {
+            case "pieces":
+                return conceptService.getConcept(PIECES);
+            case "tablets":
+            case "tab":
+                return conceptService.getConcept(TABLETS);
+            case "vial":
+                return conceptService.getConcept(VIAL);
+            case "capsule":
+                return conceptService.getConcept(CAPSULE);
+            case "packs":
+                return conceptService.getConcept(PACKS);
+            case "ampoule":
+                return conceptService.getConcept(AMPOULE);
+            case "bottle":
+                return conceptService.getConcept(BOTTLE);
+            case "litres":
+                return conceptService.getConcept(LITERS);
+            case "blister":
+                return conceptService.getConcept(BLISTER);
+            case "box":
+                return conceptService.getConcept(BOX);
+            case "tin":
+                return conceptService.getConcept(TIN);
+            case "cap":
+                return conceptService.getConcept(CAP);
+            case "gram":
+                return conceptService.getConcept(GRAM);
+            case "amule":
+                return conceptService.getConcept(AMPULE);
+            case "bar":
+                return conceptService.getConcept(BAR);
+            case "can":
+                return conceptService.getConcept(CAN);
+            case "kilogram":
+                return conceptService.getConcept(KILOGRAM);
+            case "tube":
+                return conceptService.getConcept(TUBE);
+            case "bag":
+                return conceptService.getConcept(BAG);
+            case "packet":
+                return conceptService.getConcept(PACKET);
+            case "pessary":
+                return conceptService.getConcept(PESSARY);
+            case "pack":
+                return conceptService.getConcept(PACK);
+            case "cylinder":
+                return conceptService.getConcept(CYLINDER);
+            case "cycle":
+                return conceptService.getConcept(CYCLE);
+            default:
+                return null;
+        }
+
+    }
+
+    private Date getDateFromString(String dateString, String format) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        try {
+            return dateFormat.parse(dateString);
+        } catch (Exception e) {
+            log.error(e);
+        }
+        return new Date();
+    }
+
+    private Date addTimeToDate(Integer days, Integer hours, Integer minutes, Integer seconds, Date currentDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        if (seconds != null && seconds != 0) {
+            calendar.add(Calendar.SECOND, seconds);
+        }
+
+        if (minutes != null && minutes != 0) {
+            calendar.add(Calendar.MINUTE, minutes);
+        }
+
+        if (hours != null && hours != 0) {
+            calendar.add(Calendar.HOUR_OF_DAY, hours);
+        }
+
+        if (days != null && days != 0) {
+            calendar.add(Calendar.DAY_OF_MONTH, days);
+        }
+        return calendar.getTime();
+    }
+
+    private static boolean isInteger(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private String getProviderAttributeByType(Set<ProviderAttribute> providerAttributes, ProviderAttributeType providerAttributeType) {
+        for (ProviderAttribute providerAttribute : providerAttributes) {
+            if (providerAttributeType.equals(providerAttribute.getAttributeType())) {
+                return providerAttribute.getValue().toString();
+            }
+        }
+        return null;
+    }
+
 }
 
