@@ -1226,10 +1226,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendRequisitionStock");
         String url = syncTaskType.getUrl() + api;
 
-
-        if (syncTaskType.getTokenExpiryDate() == null || (syncTaskType.getTokenExpiryDate() != null && syncTaskType.getTokenExpiryDate().before(new Date()))) {
-            syncTaskType = setAccessTokenToSyncTaskType();
-        }
         String token = syncTaskType.getTokenType() + " " + syncTaskType.getUrlToken();
         try {
             for (JSONObject jsonObject : processRequisitionsToSync()) {

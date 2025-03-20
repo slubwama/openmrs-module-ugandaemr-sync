@@ -435,6 +435,6 @@
         <fhir2ModuleVersion>2.3.0</fhir2ModuleVersion>
         <webservices.restModuleVersion>2.47.0</webservices.restModuleVersion>
         <ibatisVersion>3.0</ibatisVersion>
-        <stockmanagementVersion>1.4.2</stockmanagementVersion>
+        <stockmanagementVersion>1.4.4</stockmanagementVersion>
     </properties>
 </project>
