@@ -1856,7 +1856,7 @@
             <column name="start_time" valueDate="2025-03-08T11:59:59" />
             <column name="repeat_interval" value="3600" />
             <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
-            <column name="created_by" value="0" />
+            <column name="created_by" value="1" />
             <column name="start_on_startup" value="0"/>
             <column name="started" value="1"/>
             <column name="uuid" value="92aa7eaa-fc0b-11ef-ab84-28977ca9db4b" />
