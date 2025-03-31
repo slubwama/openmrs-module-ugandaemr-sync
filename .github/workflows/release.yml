@@ -1,0 +1,57 @@
+name: Maven Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Clean Git State
+        run: |
+          git status
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "Git working directory is not clean. Exiting..."
+            exit 1
+          fi
+
+      - name: Set Up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          server-id: openmrs-repo-modules
+          server-username: SONATYPE_USERNAME
+          server-password: SONATYPE_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Configure GPG Key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import --import-options import-show
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          gpgconf --reload gpg-agent
+
+      - name: Set Git User
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Check Release Version
+        run: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+
+      - name: Release with Maven
+        run: mvn -B release:prepare release:perform -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+
+      - name: Push Changes
+        if: success()
+        run: git push --follow-tags origin main
