@@ -46,7 +46,7 @@ jobs:
         run: mvn help:evaluate -Dexpression=project.version -q -DforceStdout
 
       - name: Release with Maven
-        run: mvn -B release:prepare release:perform -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        run: mvn -B release:prepare release:perform -Darguments="-Dmaven.javadoc.skip=true" -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
