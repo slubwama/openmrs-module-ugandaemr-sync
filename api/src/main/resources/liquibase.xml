@@ -1924,4 +1924,49 @@
             INSERT INTO stockmgmt_stock_operation_type (stock_operation_type_id, name, description, operation_type, has_source, source_type, has_destination, destination_type, acronym, available_when_reserved, creator, date_created, changed_by, date_changed, voided, voided_by, date_voided, void_reason, uuid, notify_submitted, notify_approved, notify_completed, notify_cancelled, notify_rejected, notify_returned, notify_dispatched, allow_expired_batch_numbers, allow_batch_info_update) VALUES (10, 'External Requisition', 'Request for items from external Source.', 'erequisition', 1, 'Other', 1, 'Location', 'EREQ', 0, 1, '2025-02-15 10:06:30', null, null, 0, null, null, null, '7073e8f4-eb6b-11ef-80d7-730ad71afb9c', 1, 1, 1, 0, 0, 0, 0, 0, 1);
         </sql>
     </changeSet>
+
+    <changeSet id="ugandaemrsync-2025-04-02" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendDrugPrescriptionsToEAFYATask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sends Prescriptions eAFYA</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Sends Prescriptions eAFYA" />
+            <column name="description" value="Sends Prescriptions eAFYA" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendDrugPrescriptionsToEAFYATask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2025-03-08T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="0"/>
+            <column name="started" value="0"/>
+            <column name="uuid" value="c1a5bcea-0f9f-11f0-9e19-da924fd23489" />
+        </insert>
+    </changeSet>
+    <changeSet id="ugandaemrsync-2025-04-02-14:00" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '8ca0ffd0-0fb0-11f0-9e19-da924fd23489'
+            </sqlCheck>
+        </preConditions>
+        <comment>Create Sends Prescriptions eAFYA Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Sends Prescriptions eAFYA"/>
+            <column name="data_type" value="org.openmrs.DrugOrder" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="192.168.1.2" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2025-04-02 14:00:00" />
+            <column name="uuid" value="8ca0ffd0-0fb0-11f0-9e19-da924fd23489" />
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
