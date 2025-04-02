@@ -359,6 +359,14 @@
     </globalProperty>
 
     <globalProperty>
+        <property>ugandaemrsync.eafya.SendPrescription</property>
+        <defaultValue>/api/prescription</defaultValue>
+        <description>
+           Send Prescription to eAFYA for patient
+        </description>
+    </globalProperty>
+
+    <globalProperty>
         <property>ugandaemrsync.eafya.lastStockInventoryStatusSyncDate</property>
         <defaultValue>1989-01-01 00:00:01</defaultValue>
         <description>
