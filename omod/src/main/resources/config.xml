@@ -344,7 +344,7 @@
 
     <globalProperty>
         <property>ugandaemrsync.eafya.getIssuedStock</property>
-        <defaultValue>/api/medix/GetReceivedStock?SiteCode=%s&amp;GetDrugs=true</defaultValue>
+        <defaultValue>/api/issued</defaultValue>
         <description>
             Gets stock item that has been received
         </description>
@@ -352,7 +352,7 @@
 
     <globalProperty>
         <property>ugandaemrsync.eafya.sendRequisitionStock</property>
-        <defaultValue>/api/medix/GetReceivedStock?SiteCode=%s&amp;GetDrugs=true</defaultValue>
+        <defaultValue>/api/requisition</defaultValue>
         <description>
             Gets stock item that has been received
         </description>
