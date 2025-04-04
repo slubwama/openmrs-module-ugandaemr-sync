@@ -1357,7 +1357,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String externalRequisitionNumber = jsonResponse.getJSONObject("data").getString("requisition_number");
             String statusMessage = jsonResponse.getString("message");
 
-            log.info(String.format("Requisition %s synced successfully. External ID: s%", jsonObject.getString("internal_requisition_no"), externalRequisitionNumber));
+            log.info(String.format("Requisition %s synced successfully. External ID: %s", jsonObject.getString("internal_requisition_no"), externalRequisitionNumber));
 
             logTransaction(syncTaskType, responseCode, null, externalRequisitionNumber, statusMessage, new Date(), url, true, false);
             logTransaction(syncTaskType, responseCode, null, jsonObject.getString("internal_requisition_no"), statusMessage, new Date(), url, false, false);
