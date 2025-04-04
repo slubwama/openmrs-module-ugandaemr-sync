@@ -520,6 +520,7 @@ public class SyncConstant {
 
 
 	public final static String EAFYA_SMART_ERP_RECEIVE_STOCK = "Recieved stock from eAFYA";
+	public final static String EAFYA_SMART_ERP_SEND_STOCK = "Send stock requistion to eAFYA";
 
 	public final static String PIECES = "167040";
 
