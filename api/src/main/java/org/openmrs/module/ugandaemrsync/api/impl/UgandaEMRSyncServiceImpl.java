@@ -1760,52 +1760,84 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return null;
     }
 
-
+    /**
+     * Sends patient prescription data to an external system.
+     * <p>
+     * This method retrieves pending prescriptions, formats them as JSON,
+     * and sends them to an external endpoint via HTTP POST. If successful,
+     * it updates the patient's record with an external identifier and logs the transaction.
+     * </p>
+     *
+     * <p><b>Process Flow:</b></p>
+     * <ol>
+     *     <li>Retrieve the external system's API details and authentication credentials.</li>
+     *     <li>Fetch the concept IDs related to prescriptions.</li>
+     *     <li>Generate drug orders to be synced.</li>
+     *     <li>Send each drug order as a JSON payload to the external system.</li>
+     *     <li>On success, update the patient's record with the received external patient ID.</li>
+     *     <li>Log transaction details for tracking purposes.</li>
+     * </ol>
+     *
+     * <p><b>Error Handling:</b></p>
+     * <ul>
+     *     <li>Logs errors if any step fails.</li>
+     *     <li>Handles missing or invalid JSON data safely.</li>
+     * </ul>
+     */
     @Override
     public void sendPrescription() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         PatientService patientService = Context.getPatientService();
         UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+
         SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class).getSyncTaskTypeByUUID("8ca0ffd0-0fb0-11f0-9e19-da924fd23489");
-        String[] conceptsIds = new String[0];
-        if (syncTaskType.getDataTypeId() != null) {
-            conceptsIds = syncTaskType.getDataTypeId().split(",");
-        }
         String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendPrescription");
         String url = syncTaskType.getUrl() + api;
-        Map response;
-        Collection<Concept> concepts = new ArrayList<>();
-        for (String conceptId : conceptsIds) {
-            Concept concept = Context.getConceptService().getConcept(conceptId);
-            if (concept != null) {
-                concepts.add(concept);
-            }
-        }
 
-        List<JSONObject> jsObjectList = ugandaEMRSyncService.generateDrugOrderToOtherSystem(concepts);
+        // Extract concept IDs safely
+        String[] conceptIds = syncTaskType.getDataTypeId() != null ? syncTaskType.getDataTypeId().split(",") : new String[0];
 
+        // Fetch Concept objects
+        List<Concept> concepts = Arrays.stream(conceptIds)
+                .map(id -> Context.getConceptService().getConcept(id))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        List<JSONObject> drugOrders = ugandaEMRSyncService.generateDrugOrderToOtherSystem(concepts);
 
         try {
-            for (Object object : jsObjectList) {
-                JSONObject jsonObject = new JSONObject(object.toString());
-                response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, jsonObject.toString(), false);
+            for (JSONObject jsonObject : drugOrders) {
+                Map<String, Object> response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, jsonObject.toString(), false);
+
                 if (!response.isEmpty() && (response.get("responseCode").equals(200) || response.get("responseCode").equals(201))) {
-                    Patient patient = patientService.getPatientIdentifierByUuid(jsonObject.getString("internal_patient_id")).getPatient();
-                    if (response.get("patient_id") != null) {
-                        PatientIdentifier patientIdentifier = new PatientIdentifier();
-                        patientIdentifier.setIdentifierType(patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID));
-                        patientIdentifier.setIdentifier(response.get("patient_id").toString());
-                        patient.addIdentifier(patientIdentifier);
-                        patientService.savePatient(patient);
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, jsonObject.getString("internal_patient_id"), response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false, false);
-                    } else {
-                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, jsonObject.getString("internal_patient_id"), response.get("responseMessage").toString(), new Date(), syncTaskType.getUrl() + api, false, false);
+                    String internalPatientId = jsonObject.optString("internal_patient_id", null);
+
+                    if (internalPatientId != null) {
+                        Patient patient = patientService.getPatientIdentifierByUuid(internalPatientId).getPatient();
+                        String patientId = (String) response.get("patient_id");
+
+                        if (patientId != null) {
+                            // Create a new patient identifier
+                            PatientIdentifier patientIdentifier = new PatientIdentifier();
+                            patientIdentifier.setIdentifierType(patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID));
+                            patientIdentifier.setIdentifier(patientId);
+
+                            // Add identifier and save patient
+                            patient.addIdentifier(patientIdentifier);
+                            patientService.savePatient(patient);
+                        }
+
+                        // Log the transaction
+                        logTransaction(syncTaskType, Integer.parseInt(response.get("responseCode").toString()), null, internalPatientId, response.get("responseMessage").toString(), new Date(), url, false, false);
+
+                        log.info(String.format("Prescription for patient %s synced successfully. External ID: %s", internalPatientId, patientId));
                     }
                 }
             }
         } catch (Exception e) {
-            log.error(e);
+            log.error("Error while syncing prescription data: ", e);
         }
     }
+
 }
 
