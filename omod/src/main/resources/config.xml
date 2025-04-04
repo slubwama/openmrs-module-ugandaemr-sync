@@ -352,7 +352,7 @@
 
     <globalProperty>
         <property>ugandaemrsync.eafya.sendRequisitionStock</property>
-        <defaultValue>/api/requisition</defaultValue>
+        <defaultValue>/api/requsition</defaultValue>
         <description>
             Gets stock item that has been received
         </description>
