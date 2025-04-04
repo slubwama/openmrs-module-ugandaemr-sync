@@ -1318,7 +1318,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             }
         } catch (Exception e) {
             log.error("Error syncing requisitions", e);
-            logTransaction(syncTaskType, 500, "Internal Server Error", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getMessage(), new Date(), url, false, false);
+            logTransaction(syncTaskType, 500, "Internal Server Error", EAFYA_SMART_ERP_SEND_STOCK, e.getMessage(), new Date(), url, false, false);
         }
 
         return successfulRequisitions;
@@ -1336,7 +1336,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             return parseResponse(response, jsonObject, syncTaskType, stockManagementService, stockOperation, url);
         } catch (Exception e) {
             log.error(String.format("Error sending requisition %s to ", jsonObject.getString("internal_requisition_no"), url), e);
-            logTransaction(syncTaskType, 500, "Error sending requisition", EAFYA_SMART_ERP_RECEIVE_STOCK, e.getMessage(), new Date(), url, false, false);
+            logTransaction(syncTaskType, 500, "Error sending requisition", EAFYA_SMART_ERP_SEND_STOCK, e.getMessage(), new Date(), url, false, false);
             return false;
         }
     }
@@ -1374,7 +1374,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     response.get("responseMessage").toString());
             log.error(errorMessage);
 
-            logTransaction(syncTaskType, responseCode, null, EAFYA_SMART_ERP_RECEIVE_STOCK, errorMessage, new Date(), url, false, false);
+            logTransaction(syncTaskType, responseCode, null, EAFYA_SMART_ERP_SEND_STOCK, errorMessage, new Date(), url, false, false);
             return false;
         }
     }
