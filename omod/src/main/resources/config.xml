@@ -391,6 +391,14 @@
     </globalProperty>
 
     <globalProperty>
+        <property>ugandaemrsync.eafya.clinicid</property>
+        <defaultValue></defaultValue>
+        <description>
+            The clinic id for the ART clinic in eAFYA
+        </description>
+    </globalProperty>
+
+    <globalProperty>
         <property>ugandaemrsync.eafya.operation</property>
         <defaultValue>Completed</defaultValue>
         <description>

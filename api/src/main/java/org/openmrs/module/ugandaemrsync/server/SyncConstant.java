@@ -35,7 +35,13 @@ public class SyncConstant {
 	public static final String ANC_IDENTIFIER_TYPE_UUID = "b0cc255e-ef57-4266-839e-0df7f5099eb9";
 	public static final String PNC_IDENTIFIER_TYPE_UUID = "758ef6e4-9ceb-4137-bc8d-9246dc7b41fe";
 	public static final String MARITAL_STATUS_ATTRIBUTE_TYPE = "8d871f2a-c2cc-11de-8d13-0010c6dffd0f";
+	public static final String PHONE_NO_ATTRIBUTE_TYPE = "14d4f066-15f5-102d-96e4-000c29c2a5d7";
 	public static final String ENCOUNTER_ROLE = "240b26f9-dd88-4172-823d-4a8bfeb7841f";
+
+
+	public static final String CARE_SETTING_UUID_OPD = "6f0c9a92-6f24-11e3-af88-005056821db0";
+
+	public static final String ORDER_TYPE_DRUG_UUID = "131168f4-15f5-102d-96e4-000c29c2a5d7";
 
     public static final String SERVER_IP = "ugandaemrsync.serverIP";
 
