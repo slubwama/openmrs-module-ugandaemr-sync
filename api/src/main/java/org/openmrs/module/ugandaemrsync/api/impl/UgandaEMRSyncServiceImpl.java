@@ -79,8 +79,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
@@ -111,7 +109,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getAllSyncTaskType()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTaskType()
      */
     @Override
     public List<SyncTaskType> getAllSyncTaskType() throws APIException {
@@ -119,7 +117,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncTaskTypeByUUID(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTaskTypeByUUID(java.lang.String)
      */
     @Override
     public SyncTaskType getSyncTaskTypeByUUID(String uuid) throws APIException {
@@ -127,7 +125,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#saveSyncTaskType(SyncTaskType)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTaskType(org.openmrs.module.ugandaemrsync.model.SyncTaskType)
      */
     @Override
     public SyncTaskType saveSyncTaskType(SyncTaskType syncTaskType) throws APIException {
@@ -138,7 +136,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncTaskBySyncTaskId(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncTaskBySyncTaskId(java.lang.String)
      */
     @Override
     public SyncTask getSyncTaskBySyncTaskId(String syncTaskId) throws APIException {
@@ -151,7 +149,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getAllSyncTask()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncTask()
      */
     @Override
     public List<SyncTask> getAllSyncTask() {
@@ -160,7 +158,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#saveSyncTask(SyncTask)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncTask(org.openmrs.module.ugandaemrsync.model.SyncTask)
      */
     @Override
     public SyncTask saveSyncTask(SyncTask syncTask) throws APIException {
@@ -172,7 +170,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getIncompleteActionSyncTask(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getIncompleteActionSyncTask(java.lang.String)
      */
     @Override
     public List<SyncTask> getIncompleteActionSyncTask(String syncTaskTypeUuid) throws APIException {
@@ -200,7 +198,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#addVLToEncounter(String, String, String, Encounter, Order)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addVLToEncounter(java.lang.String, java.lang.String, java.lang.String, org.openmrs.Encounter, org.openmrs.Order)
      */
     public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter, Order order) {
         if (!encounterHasVLDataAlreadySaved(encounter, order)) {
@@ -297,7 +295,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getPatientByPatientIdentifier(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getPatientByPatientIdentifier(java.lang.String)
      */
     public Patient getPatientByPatientIdentifier(String patientIdentifier) {
         try {
@@ -309,7 +307,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#validateFacility(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#validateFacility(java.lang.String)
      */
     public boolean validateFacility(String facilityDHIS2UUID) {
         try {
@@ -402,7 +400,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     /**
      * /**
      *
-     * @see UgandaEMRSyncService#getHealthCenterCode()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getHealthCenterCode()
      */
     public String getHealthCenterCode() {
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
@@ -411,7 +409,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getHealthCenterName()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getHealthCenterName()
      */
     public String getHealthCenterName() {
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
@@ -419,7 +417,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getPatientIdentifier(Patient, String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getPatientIdentifier(org.openmrs.Patient, java.lang.String)
      */
     public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID) {
         String query = "select patient_identifier.identifier from patient_identifier inner join patient_identifier_type on(patient_identifier.identifier_type=patient_identifier_type.patient_identifier_type_id) where patient_identifier_type.uuid in ('" + patientIdentifierTypeUUID + "') AND patient_id=" + patient.getPatientId() + "";
@@ -481,7 +479,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#saveSyncFhirProfile(SyncFhirProfile)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncFhirProfile(SyncFhirProfile)
      */
     @Override
     public SyncFhirProfile saveSyncFhirProfile(SyncFhirProfile syncFhirProfile) {
@@ -489,7 +487,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileById(Integer)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileById(java.lang.Integer)
      */
     @Override
     public SyncFhirProfile getSyncFhirProfileById(Integer id) {
@@ -497,7 +495,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileByUUID(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileByUUID(java.lang.String)
      */
     @Override
     public SyncFhirProfile getSyncFhirProfileByUUID(String uuid) {
@@ -506,7 +504,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileByScheduledTaskName(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileByScheduledTaskName(java.lang.String)
      */
     @Override
     public SyncFhirProfile getSyncFhirProfileByScheduledTaskName(String scheduledTaskName) {
@@ -525,7 +523,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#saveFHIRResource(SyncFhirResource)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveFHIRResource(SyncFhirResource)
      */
     @Override
     public SyncFhirResource saveFHIRResource(SyncFhirResource syncFHIRResource) {
@@ -534,7 +532,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#saveFHIRResource(SyncFhirResource)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveFHIRResource(SyncFhirResource)
      */
     @Override
     public List<SyncFhirResource> getSyncFHIRResourceBySyncFhirProfile(SyncFhirProfile syncFhirProfile, boolean includeSynced) {
@@ -543,7 +541,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFHIRResourceById(Integer)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFHIRResourceById(java.lang.Integer)
      */
     @Override
     public SyncFhirResource getSyncFHIRResourceById(Integer id) {
@@ -551,7 +549,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#markSyncFHIRResourceSynced(SyncFhirResource)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#markSyncFHIRResourceSynced(SyncFhirResource)
      */
     @Override
     public SyncFhirResource markSyncFHIRResourceSynced(SyncFhirResource syncFhirResources) {
@@ -563,7 +561,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getExpiredSyncFHIRResources(Date)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getExpiredSyncFHIRResources(java.util.Date)
      */
     @Override
     public List<SyncFhirResource> getExpiredSyncFHIRResources(Date date) {
@@ -572,7 +570,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getUnSyncedFHirResources(SyncFhirProfile)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getUnSyncedFHirResources(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
      */
     @Override
     public List<SyncFhirResource> getUnSyncedFHirResources(SyncFhirProfile syncFhirProfile) {
@@ -581,7 +579,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#purgeExpiredFHIRResource(Date)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#purgeExpiredFHIRResource(java.util.Date)
      */
     @Override
     public void purgeExpiredFHIRResource(Date date) {
@@ -592,7 +590,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#saveSyncFhirProfileLog(SyncFhirProfileLog)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncFhirProfileLog(SyncFhirProfileLog)
      */
     @Override
     public SyncFhirProfileLog saveSyncFhirProfileLog(SyncFhirProfileLog syncFhirProfileLog) {
@@ -601,7 +599,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, java.lang.String)
      */
     @Override
     public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType) {
@@ -610,7 +608,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile, java.lang.String)
      */
     @Override
     public SyncFhirProfileLog getLatestSyncFhirProfileLogByProfileAndResourceName(SyncFhirProfile syncFhirProfile, String resourceType) {
@@ -625,7 +623,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile, Patient, String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile, org.openmrs.Patient, java.lang.String)
      */
     @Override
     public SyncFhirCase getSyncFHIRCaseBySyncFhirProfileAndPatient(SyncFhirProfile syncFhirProfile, Patient patient, String caseIdentifier) {
@@ -633,7 +631,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#saveSyncFHIRCase(SyncFhirCase)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#saveSyncFHIRCase(SyncFhirCase)
      */
     @Override
     public SyncFhirCase saveSyncFHIRCase(SyncFhirCase syncFHIRCase) {
@@ -641,7 +639,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getAllSyncFhirProfile()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirProfile()
      */
     @Override
     public List<SyncFhirProfile> getAllSyncFhirProfile() {
@@ -650,7 +648,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirCasesByProfile(SyncFhirProfile)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCasesByProfile(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
      */
     @Override
     public List<SyncFhirCase> getSyncFhirCasesByProfile(SyncFhirProfile syncFhirProfile) {
@@ -659,7 +657,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#testOrderHasResults(Order)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#testOrderHasResults(org.openmrs.Order)
      */
     public boolean testOrderHasResults(Order order) {
         boolean hasOrder = false;
@@ -710,7 +708,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileByName(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileByName(java.lang.String)
      */
     public List<SyncFhirProfile> getSyncFhirProfileByName(String name) {
         return dao.getSyncFhirProfileByName(name);
@@ -718,7 +716,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirCaseByUUDI(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCaseByUUDI(java.lang.String)
      */
     @Override
     public SyncFhirCase getSyncFhirCaseByUUDI(String uuid) {
@@ -727,7 +725,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getAllSyncFhirCase()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirCase()
      */
     @Override
     public List<SyncFhirCase> getAllSyncFhirCase() {
@@ -736,7 +734,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirCaseById(Integer)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirCaseById(java.lang.Integer)
      */
     @Override
     public SyncFhirCase getSyncFhirCaseById(Integer id) {
@@ -745,7 +743,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getAllSyncFhirProfileLog()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllSyncFhirProfileLog()
      */
     @Override
     public List<SyncFhirProfileLog> getAllSyncFhirProfileLog() {
@@ -754,7 +752,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileLogByUUID(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByUUID(java.lang.String)
      */
     @Override
     public SyncFhirProfileLog getSyncFhirProfileLogByUUID(String uuid) {
@@ -763,7 +761,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileLogById(Integer)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogById(java.lang.Integer)
      */
     @Override
     public SyncFhirProfileLog getSyncFhirProfileLogById(Integer id) {
@@ -771,7 +769,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getAllFHirResources()
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getAllFHirResources()
      */
     @Override
     public List<SyncFhirResource> getAllFHirResources() {
@@ -779,7 +777,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirResourceByUUID(String)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirResourceByUUID(java.lang.String)
      */
     @Override
     public SyncFhirResource getSyncFhirResourceByUUID(String uuid) {
@@ -788,7 +786,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     /**
-     * @see UgandaEMRSyncService#getSyncFhirProfileLogByProfile(SyncFhirProfile)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncFhirProfileLogByProfile(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
      */
     @Override
     public List<SyncFhirProfileLog> getSyncFhirProfileLogByProfile(SyncFhirProfile syncFhirProfile) {
@@ -796,7 +794,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#addTestResultsToEncounter(JSONObject, Order)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#addTestResultsToEncounter(org.json.JSONObject, org.openmrs.Order)
      */
     public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order) {
         Encounter encounter = null;
@@ -1005,7 +1003,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#getSyncedFHirResources(SyncFhirProfile)
+     * @see org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService#getSyncedFHirResources(org.openmrs.module.ugandaemrsync.model.SyncFhirProfile)
      */
     @Override
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile) {
