@@ -10,7 +10,11 @@
 package org.openmrs.module.ugandaemrsync.api;
 
 import org.json.JSONObject;
-import org.openmrs.*;
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.Concept;
+import org.openmrs.Order;
+import org.openmrs.Patient;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;

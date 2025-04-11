@@ -367,6 +367,14 @@
     </globalProperty>
 
     <globalProperty>
+        <property>ugandaemrsync.eafya.GetProductList</property>
+        <defaultValue>/api/products</defaultValue>
+        <description>
+            Gets Product Catalogue from eAFYA
+        </description>
+    </globalProperty>
+
+    <globalProperty>
         <property>ugandaemrsync.eafya.lastStockInventoryStatusSyncDate</property>
         <defaultValue>1989-01-01 00:00:01</defaultValue>
         <description>

@@ -14,8 +14,33 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openmrs.*;
-import org.openmrs.api.*;
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.EncounterRole;
+import org.openmrs.Concept;
+import org.openmrs.ConceptDatatype;
+import org.openmrs.ConceptSource;
+import org.openmrs.Obs;
+import org.openmrs.Order;
+import org.openmrs.Drug;
+import org.openmrs.DrugOrder;
+import org.openmrs.OrderType;
+import org.openmrs.Patient;
+import org.openmrs.PatientIdentifierType;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PersonName;
+import org.openmrs.PersonAttribute;
+import org.openmrs.PersonAddress;
+import org.openmrs.Provider;
+import org.openmrs.ProviderAttributeType;
+import org.openmrs.ProviderAttribute;
+import org.openmrs.Location;
+import org.openmrs.CareSetting;
+import org.openmrs.api.APIException;
+import org.openmrs.api.ConceptService;
+import org.openmrs.api.ObsService;
+import org.openmrs.api.PatientService;
+import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
@@ -54,6 +79,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_ORGANIZATION_UUID;
@@ -71,6 +98,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     private List<Object> processedItems = new ArrayList<>();
 
     private StockOperation stockOperation = null;
+
+    private JSONArray productCatelogList;
+    private List<SyncTask> eAFYATaskListForToday;
 
 
     /**
@@ -1834,10 +1864,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         // Fetch the orders matching the search criteria
         List<Order> orders = orderService.getOrders(orderSearchCriteria);
 
+        List<Integer> encounterIds = extractEncounterIdFromSyncTasks(eAFYATaskListForToday);
+
         // Process orders and collect unique encounters
         for (Order order : orders) {
             // If the order is active and the encounter is not already processed, add it to the list
-            if (order.isActive() && !drugOrderEncounters.contains(order.getEncounter())) {
+
+            if (order.isActive() && !drugOrderEncounters.contains(order.getEncounter()) && !encounterIds.contains(order.getEncounter().getEncounterId())) {
                 drugOrderEncounters.add(order.getEncounter());
             }
         }
@@ -1859,7 +1892,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             if (patientOrder.has("prescription") &&
                     !patientOrder.getJSONArray("prescription").isEmpty() &&
                     patientOrder.has("patient") &&
-                    patientOrder.getJSONObject("patient").has("id_no")) {
+                    patientOrder.getJSONObject("patient").has("id")) {
 
                 // Add valid patient order to the result list
                 patientOrders.add(patientOrder);
@@ -1870,6 +1903,28 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientOrders;
     }
 
+
+    /**
+     * Extracts the encounter ID from a given input string.
+     * <p>
+     * The method looks for a pattern in the format "encounterId: <number>" and returns
+     * the numeric part as a string. If the pattern is not found, it returns {@code null}.
+     * </p>
+     *
+     * @param syncTasks the input string containing the encounter information
+     * @return the extracted encounter ID as a string, or {@code null} if not found
+     */
+    public List<Integer> extractEncounterIdFromSyncTasks(List<SyncTask> syncTasks) {
+        List<Integer> encounterIds = new ArrayList<>();
+        for (SyncTask syncTask : syncTasks) {
+            try {
+                encounterIds.add(Integer.parseInt(syncTask.getSyncTask()));
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+        return encounterIds; // If no encounter ID is found
+    }
 
     /**
      * Translates a set of OpenMRS drug orders into the EAFYA prescription format and adds them to the given patient order JSON object.
@@ -1893,7 +1948,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 DrugOrder drugOrder = (DrugOrder) order;
 
                 // Attempt to retrieve reference code for the drug
-                String drugReferenceCode = getStockItemReferenceFromDrug(drugOrder.getDrug());
+                String drugReferenceCode = getPharmacology(getStockItemReferenceFromDrug(drugOrder.getDrug()));
 
                 if (drugReferenceCode != null) {
                     JSONObject patientDrugOrder = new JSONObject();
@@ -1931,6 +1986,33 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientOrder;
     }
 
+    private String getPharmacology(String referenceCode) {
+
+        if (referenceCode == null) {
+            return null;
+        }
+
+        if (productCatelogList == null || productCatelogList.isEmpty()) {
+            return null;
+        }
+        for (Object object : productCatelogList) {
+            try {
+                JSONObject jsonObject = new JSONObject(object.toString());
+
+                if (jsonObject.has("product_id") &&
+                        jsonObject.has("pharmacology_id") &&
+                        referenceCode.equals(jsonObject.getString("product_id"))) {
+
+                    return jsonObject.getString("pharmacology_id");
+                }
+            } catch (Exception e) {
+                log.warn("Invalid object in productCatalogList: " + object, e);
+            }
+        }
+
+        return null;
+    }
+
 
     /**
      * Translates an OpenMRS Patient object into the EAFYA-compliant JSON structure.
@@ -1954,7 +2036,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * The method checks for the validity of the OPD number. If OPD number is null or doesn't contain "UG-",
      * it generates full patient details. Otherwise, it uses the OPD number for patient identification.
      *
-     * @param patient The patient whose data is being translated.
+     * @param patient      The patient whose data is being translated.
      * @param patientOrder The JSONObject to which the translated patient data will be added.
      * @return The updated patientOrder containing the patient data in EAFYA format.
      */
@@ -1986,14 +2068,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             // Address information
             PersonAddress address = patient.getPersonAddress();
             patientObject.put("city", address != null && address.getCountyDistrict() != null ? address.getCountyDistrict() : "");
-            patientObject.put("village", address != null && address.getAddress5() != null ? address.getAddress5() : "");
+            patientObject.put("village", address != null && address.getAddress5() != null ? address.getAddress5() : "Not available");
 
             // Marital status
-            PersonAttribute maritalStatus = patient.getAttribute(MARITAL_STATUS_ATTRIBUTE_TYPE);
+            PersonAttribute maritalStatus = patient.getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid(MARITAL_STATUS_ATTRIBUTE_TYPE));
             patientObject.put("marital_status", (maritalStatus != null && maritalStatus.getValue() != null) ? maritalStatus.getValue() : "");
 
             // Phone number
-            PersonAttribute phoneNo = patient.getAttribute(PHONE_NO_ATTRIBUTE_TYPE);
+            PersonAttribute phoneNo = patient.getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid(PHONE_NO_ATTRIBUTE_TYPE));
             patientObject.put("phone_number", (phoneNo != null && phoneNo.getValue() != null) ? phoneNo.getValue() : "");
 
             // Identifiers: Priority given to ART No, then fallback to OPD number
@@ -2004,6 +2086,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 patientId = opdNumber.getIdentifier();  // Use OPD number if ART is not available
             }
             patientObject.put("patient_id", patientId);
+            patientObject.put("id", patientId);
 
             // National ID and internal patient ID
             patientObject.put("id_no", nationalId != null && nationalId.getIdentifier() != null ? nationalId.getIdentifier() : "");
@@ -2011,6 +2094,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             // If OPD number is valid and contains "UG-", use only OPD identifier for patient_id
             patientObject.put("patient_id", opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "");
+            patientObject.put("id", opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "");
+            patientObject.put("internal_patient_id", openmrsId != null && openmrsId.getIdentifier() != null ? openmrsId.getIdentifier() : "");
         }
 
         // Attach the patient object to the patient order and return
@@ -2087,6 +2172,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         // Add clinic ID and provider EAFYA ID to the JSON object
         patientOrder.put("clinic_id", clinicId);
         patientOrder.put("created_by_id", eafyaId);
+        patientOrder.put("encounter_id", encounter.getEncounterId());
 
         return patientOrder;
     }
@@ -2122,121 +2208,178 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * Sends prescription data to an external system (e.g., EAFYA).
-     * This method constructs a JSON object for each drug order and sends it via HTTP POST to the specified URL.
-     * If the external system responds with success (200 or 201), it updates the patient's OPD number in the local system.
+     * Sends prescription data to an external system (eAFYA) by:
+     * - Retrieving drug orders based on specific concepts
+     * - Matching each drug order to a patient
+     * - Posting each prescription to the external system
+     * - Updating the patient's OPD number based on the response
      */
     public void sendPrescription() {
-        // Retrieve services required for sending prescription data
-        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        // Retrieve services
+        UgandaEMRSyncService syncService = Context.getService(UgandaEMRSyncService.class);
         PatientService patientService = Context.getPatientService();
-        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+        UgandaEMRHttpURLConnection httpConnection = new UgandaEMRHttpURLConnection();
 
-        // Retrieve the sync task type and API endpoint configuration
-        SyncTaskType syncTaskType = Context.getService(UgandaEMRSyncService.class)
-                .getSyncTaskTypeByUUID("8ca0ffd0-0fb0-11f0-9e19-da924fd23489");
+        // Fetch SyncTaskType by its configured UUID
+        SyncTaskType syncTaskType = syncService.getSyncTaskTypeByUUID("8ca0ffd0-0fb0-11f0-9e19-da924fd23489");
+        if (syncTaskType == null) {
+            log.error("SyncTaskType with UUID '8ca0ffd0-0fb0-11f0-9e19-da924fd23489' not found.");
+            return;
+        }
 
-        // Build the full URL for the API endpoint
-        String api = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendPrescription");
-        String url = syncTaskType.getUrl() + api;
+        // Construct the full endpoint URL
+        String apiPath = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendPrescription");
+        String url = syncTaskType.getUrl() + apiPath;
 
-        // Extract concept IDs safely from the sync task type
-        String[] conceptIds = syncTaskType.getDataTypeId() != null ? syncTaskType.getDataTypeId().split(",") : new String[0];
+        // Load the eAFYA product catalog to map drugs
+        productCatelogList = getProductCatalogFromEAFYA(syncTaskType);
+        // Lists of eAFYA Tasks logs generated today
+        eAFYATaskListForToday = getSyncTasksByType(syncTaskType, OpenmrsUtil.firstSecondOfDay(new Date()), OpenmrsUtil.getLastMomentOfDay(new Date()));
 
-        // Fetch Concept objects using the concept IDs
-        List<Concept> concepts = Arrays.stream(conceptIds)
-                .map(id -> Context.getConceptService().getConcept(id))
+        if (productCatelogList == null || productCatelogList.isEmpty()) {
+            log.warn("Product catalog from eAFYA is empty or unavailable.");
+            return;
+        }
+
+        // Parse configured concept IDs
+        String[] conceptIdArray = syncTaskType.getDataTypeId() != null
+                ? syncTaskType.getDataTypeId().split(",")
+                : new String[0];
+
+        List<Concept> concepts = Arrays.stream(conceptIdArray)
+                .map(Context.getConceptService()::getConcept)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // Generate the drug orders to be sent to the external system
-        List<JSONObject> drugOrders = ugandaEMRSyncService.generateDrugOrderToOtherSystem(concepts);
+        // Generate prescription orders
+        List<JSONObject> drugOrders = generateDrugOrderToOtherSystem(concepts);
 
-        // Iterate over the generated drug orders
         try {
-            for (JSONObject jsonObject : drugOrders) {
-                // Send the drug order to the external system using HTTP POST
-                Map<String, Object> response = ugandaEMRHttpURLConnection.sendPostBy(
+            for (JSONObject drugOrder : drugOrders) {
+                // Send prescription via POST
+                Map<String, Object> response = httpConnection.sendPostBy(
                         url,
                         syncTaskType.getUrlUserName(),
                         syncTaskType.getUrlPassword(),
                         null,
-                        jsonObject.toString(),
+                        drugOrder.toString(),
                         false
                 );
 
-                // Check the response code and proceed if it's a success (200 or 201)
-                if (!response.isEmpty() && (response.get("responseCode").equals(200) || response.get("responseCode").equals(201))) {
-                    String internalPatientId = jsonObject.optString("internal_patient_id", null);
+                int responseCode = response.get("responseCode") instanceof Integer
+                        ? (int) response.get("responseCode")
+                        : Integer.parseInt(response.get("responseCode").toString());
 
-                    // Update the patient's OPD number if the internal patient ID is found
-                    if (internalPatientId != null) {
-                        Patient patient = patientService.getPatientIdentifierByUuid(internalPatientId).getPatient();
-                        String patientId = (String) response.get("patient_id");
+                if (responseCode == 200 || responseCode == 201) {
+                    String internalPatientId = drugOrder.optString("internal_patient_id", null);
+                    String externalPatientId = extractPatientIdFromResponse(response);
 
-                        if (patientId != null) {
-                            // Retrieve the existing OPD number identifier type
-                            PatientIdentifierType patientIdentifierType = patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID);
-                            PatientIdentifier existingOPDNO = patient.getPatientIdentifier(patientIdentifierType);
-
-                            // Create or update the OPD number for the patient
-                            if (existingOPDNO != null) {
-                                // If the existing OPD number doesn't contain the prefix "UG-", update it
-                                if (!existingOPDNO.getIdentifier().contains("UG-")) {
-                                    existingOPDNO.setIdentifier(patientId);
-                                    patient.addIdentifier(existingOPDNO);
-                                }
-                            } else {
-                                // Create a new patient identifier for OPD number
-                                PatientIdentifier patientIdentifier = new PatientIdentifier();
-                                patientIdentifier.setIdentifierType(patientIdentifierType);
-                                patientIdentifier.setIdentifier(patientId);
-
-                                // Add identifier to the patient and save the patient
-                                patient.addIdentifier(patientIdentifier);
-                            }
-
-                            // Save the updated patient information
-                            patientService.savePatient(patient);
-                        }
-
-                        // Log the transaction to record the outcome
-                        logTransaction(
-                                syncTaskType,
-                                Integer.parseInt(response.get("responseCode").toString()),
-                                null,
-                                internalPatientId,
-                                response.get("responseMessage").toString(),
-                                new Date(),
-                                url,
-                                false,
-                                false
-                        );
-
-                        // Log success message
-                        log.info(String.format("Prescription for patient %s synced successfully. External ID: %s", internalPatientId, patientId));
+                    if (internalPatientId != null && !externalPatientId.isEmpty()) {
+                        updatePatientOPDNumber(internalPatientId, externalPatientId);
                     }
+
+                    // Log successful sync
+                    logTransaction(syncTaskType, responseCode, null, drugOrder.getString("encounterId"), "Identifier:" + externalPatientId + " encounterId:" + drugOrder.get("encounter_id")+"Patient:" + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
+                    log.info(String.format("Prescription for patient %s synced successfully. External ID: %s",
+                            internalPatientId, externalPatientId));
                 } else {
-                    // Log failure response if response code is not 200 or 201
-                    log.error("Failed to sync prescription for patient. Response code: " + response.get("responseCode"));
-                    logTransaction(
-                            syncTaskType,
-                            Integer.parseInt(response.get("responseCode").toString()),
-                            null,
-                            "Failed Prescription Sync",
-                            response.get("responseMessage").toString(),
-                            new Date(),
-                            url,
-                            false,
-                            false
-                    );
+                    // Log failure
+                    log.error("Failed to sync prescription. Response code: " + responseCode);
+                    logTransaction(syncTaskType, responseCode, null, "Failed Prescription Sync",
+                            response.get("responseMessage").toString(), new Date(), url, false, false);
                 }
             }
         } catch (Exception e) {
-            // Log the error if an exception occurs during the prescription sync process
             log.error("Error while syncing prescription data: ", e);
         }
     }
+
+    /**
+     * Extracts the patient_id field from the response map's "data" object (if present).
+     */
+    private String extractPatientIdFromResponse(Map<String, Object> response) {
+        try {
+            JSONObject json = new JSONObject(response);
+            if (json.has("data")) {
+                JSONObject data = json.getJSONObject("data");
+                return data.getJSONObject("patient").optString("id", "").trim();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract patient ID from response.", e);
+        }
+        return "";
+    }
+
+    /**
+     * Updates or adds an OPD number identifier to the patient, based on the external system ID.
+     */
+    private void updatePatientOPDNumber(String internalPatientId, String externalPatientId) {
+        PatientService patientService = Context.getPatientService();
+        PatientIdentifierType opdIdentifierType = patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID);
+
+        // Retrieve the patient using the internal patient identifier UUID
+        Patient patient = patientService.getPatientIdentifierByUuid(internalPatientId).getPatient();
+
+        if (patient == null || opdIdentifierType == null) return;
+
+        PatientIdentifier existingOPD = patient.getPatientIdentifier(opdIdentifierType);
+
+        if (existingOPD != null) {
+            if (!existingOPD.getIdentifier().contains("UG-")) {
+                existingOPD.setIdentifier(externalPatientId);
+                patient.addIdentifier(existingOPD);
+            }
+        } else {
+            PatientIdentifier newIdentifier = new PatientIdentifier();
+            newIdentifier.setIdentifierType(opdIdentifierType);
+            newIdentifier.setIdentifier(externalPatientId);
+            patient.addIdentifier(newIdentifier);
+        }
+
+        patientService.savePatient(patient);
+    }
+
+
+    /**
+     * Fetches the product catalog from the eAFYA API based on the given SyncTaskType configuration.
+     *
+     * <p>This method uses the URL, username, and password from the SyncTaskType to make an authenticated
+     * HTTP GET request to the eAFYA product list endpoint, then parses the response into a JSONArray.</p>
+     *
+     * @param syncTaskType The synchronization task type containing connection details to eAFYA.
+     * @return A JSONArray containing the product catalog data retrieved from eAFYA.
+     * @throws RuntimeException if the request fails or an error occurs while processing the response.
+     */
+    private JSONArray getProductCatalogFromEAFYA(SyncTaskType syncTaskType) {
+        JSONArray eAFYAProductList = new JSONArray();
+        String apiEndpoint = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.GetProductList");
+        String fullUrl = syncTaskType.getUrl() + apiEndpoint;
+
+        UgandaEMRHttpURLConnection httpConnection = new UgandaEMRHttpURLConnection();
+
+        try {
+            Map<String, Object> response = httpConnection.getByWithBasicAuth(
+                    fullUrl,
+                    syncTaskType.getUrlUserName(),
+                    syncTaskType.getUrlPassword(),
+                    "String"
+            );
+
+            int responseCode = Integer.parseInt(response.get("responseCode").toString());
+            if (responseCode == 200 || responseCode == 201) {
+                eAFYAProductList = new JSONArray(response.get("result").toString());
+            } else {
+                log.warn("Received unexpected response code: " + responseCode + " from URL: " + fullUrl);
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to fetch product catalog from eAFYA", e);
+            throw new RuntimeException("Error while fetching product catalog from eAFYA", e);
+        }
+
+        return eAFYAProductList;
+    }
+
 }
 
 
