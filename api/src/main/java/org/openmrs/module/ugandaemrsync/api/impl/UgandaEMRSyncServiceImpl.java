@@ -2277,7 +2277,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     }
 
                     // Log successful sync
-                    logTransaction(syncTaskType, responseCode, null, drugOrder.getString("encounterId"), "Identifier:" + externalPatientId + " encounterId:" + drugOrder.get("encounter_id")+"Patient:" + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
+                    logTransaction(syncTaskType, responseCode, null, drugOrder.get("encounter_id").toString(), "Patient: " + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
                     log.info(String.format("Prescription for patient %s synced successfully. External ID: %s",
                             internalPatientId, externalPatientId));
                 } else {
