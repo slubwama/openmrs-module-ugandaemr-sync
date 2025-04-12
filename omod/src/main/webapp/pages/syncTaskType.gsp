@@ -30,36 +30,40 @@
 <script>
     if (jQuery) {
         jq(document).ready(function () {
-            jq('#addEditSyncTaskTypeModel').on('show.bs.modal', function (event) {
-                var button = jq(event.relatedTarget);
-                var syncTaskTypeId = button.data('synctaskid');
-                var modal = jq(this);
+                jq('#addEditSyncTaskTypeModel').on('show.bs.modal', function (event) {
+                    var button = jq(event.relatedTarget);
+                    var syncTaskTypeId = button.data('synctaskid');
+                    var modal = jq(this);
 
-                modal.find("#syncTaskTypeId").val("");
-                modal.find("#syncTaskTypeName").val("");
-                modal.find("#dataType select").find().val("");
-                modal.find("#dataTypeId").val("");
-                modal.find("#username").val("");
-                modal.find("#password").val("");
-                modal.find("#url").val("");
-                modal.find("#token").val("");
+                    modal.find("#syncTaskTypeId").val("");
+                    modal.find("#syncTaskTypeName").val("");
+                    modal.find("#dataType select").find().val("");
+                    modal.find("#dataTypeId").val("");
+                    modal.find("#username").val("");
+                    modal.find("#password").val("");
+                    modal.find("#url").val("");
+                    modal.find("#token").val("");
 
-                var syncTaskType = queryRestData("/ws/rest/v1/synctasktype/" + syncTaskTypeId + "?v=full");
+                    var syncTaskType = queryRestData("/ws/rest/v1/synctasktype/" + syncTaskTypeId + "?v=full");
+                    if (syncTaskType !== null) {
 
-                modal.find("#syncTaskTypeId").val(syncTaskTypeId);
-                modal.find("#syncTaskTypeName").val(syncTaskType.name);
-                modal.find("#dataType").val(syncTaskType.dataType);
-                modal.find("#dataTypeId").val(syncTaskType.dataTypeId);
-                modal.find("#username").val(syncTaskType.urlUserName);
-                modal.find("#password").val(syncTaskType.urlPassword);
-                modal.find("#url").val(syncTaskType.url);
-                modal.find("#token").val(syncTaskType.urlToken);
+                        modal.find("#syncTaskTypeId").val(syncTaskTypeId);
+                        modal.find("#syncTaskTypeName").val(syncTaskType.name);
+                        modal.find("#dataType").val(syncTaskType.dataType);
+                        modal.find("#dataTypeId").val(syncTaskType.dataTypeId);
+                        modal.find("#username").val(syncTaskType.urlUserName);
+                        modal.find("#password").val(syncTaskType.urlPassword);
+                        modal.find("#url").val(syncTaskType.url);
+                        modal.find("#token").val(syncTaskType.urlToken);
+                    }
 
-                if (!syncTaskType) {
-                    ${ ui.message("coreapps.none ") }
-                }
-            });
-        });
+                    if (!syncTaskType) {
+                        ${ ui.message("coreapps.none ") }
+                    }
+                });
+            }
+        )
+        ;
 
         function queryRestData(url) {
             var responseDate = null;
@@ -140,7 +144,7 @@
                     <div class="">
 
                         <button type="button" style="font-size: 25px" class="confirm icon-plus-sign" data-toggle="modal"
-                                data-target="#addEditSyncTaskTypeModel"  data-whatever="@mdo">     Create</button>
+                                data-target="#addEditSyncTaskTypeModel" data-whatever="@mdo">Create</button>
                     </div>
 
                     <div class="vertical"></div>
@@ -182,7 +186,8 @@
                     <td>${it.dateCreated}</td>
                     <td>${it.uuid}</td>
                     <td>
-                        <i style="font-size: 25px" data-toggle="modal" data-target="#addEditSyncTaskTypeModel" data-synctaskid="${it.uuid}" class="icon-edit edit-action" title="Edit"></i>
+                        <i style="font-size: 25px" data-toggle="modal" data-target="#addEditSyncTaskTypeModel"
+                           data-synctaskid="${it.uuid}" class="icon-edit edit-action" title="Edit"></i>
                     </td>
                     <% }
                     } %>
@@ -233,6 +238,7 @@
                                         <option value="org.openmrs.Encounter">org.openmrs.Encounter</option>
                                         <option value="org.openmrs.Order">org.openmrs.Order</option>
                                         <option value="org.openmrs.TestOrder">org.openmrs.TestOrder</option>
+                                        <option value="org.openmrs.DrugOrder">org.openmrs.DrugOrder</option>
                                         <option value="org.openmrs.Location">org.openmrs.Location</option>
                                         <option value="org.openmrs.Patient">org.openmrs.Patient</option>
                                         <option value="org.openmrs.Person">org.openmrs.Person</option>

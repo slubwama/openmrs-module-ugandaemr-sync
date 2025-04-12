@@ -12,8 +12,9 @@ package org.openmrs.module.ugandaemrsync.api;
 import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
-import org.openmrs.Patient;
+import org.openmrs.Concept;
 import org.openmrs.Order;
+import org.openmrs.Patient;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -491,5 +492,9 @@ public interface UgandaEMRSyncService extends OpenmrsService {
    public List<String> getIssuedStock();
 
     public SyncTaskType setAccessTokenToSyncTaskType();
+
+    public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> conceptList);
+
+    public void sendPrescription();
 }
 

@@ -211,7 +211,7 @@ public class UgandaEMRHttpURLConnection {
      * @return
      * @throws Exception
      */
-    public Map sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String token) throws Exception {
+    public Map  sendPostByWithBasicAuth(String contentType, String content, String facilityId, String url, String username, String password, String token) throws Exception {
 
         SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
         HttpResponse response = null;

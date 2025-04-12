@@ -1925,10 +1925,54 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ugandaemrsync-2025-04-02" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM scheduler_task_config
+                WHERE schedulable_class = 'org.openmrs.module.ugandaemrsync.tasks.SendDrugPrescriptionsToEAFYATask'
+            </sqlCheck>
+        </preConditions>
+        <comment>Sends Prescriptions eAFYA</comment>
+        <insert tableName="scheduler_task_config">
+            <column name="name" value="Sends Prescriptions eAFYA" />
+            <column name="description" value="Sends Prescriptions eAFYA" />
+            <column name="schedulable_class" value="org.openmrs.module.ugandaemrsync.tasks.SendDrugPrescriptionsToEAFYATask" />
+            <column name="start_time_pattern" value="MM/dd/yyyy HH:mm:ss" />
+            <column name="start_time" valueDate="2025-03-08T11:59:59" />
+            <column name="repeat_interval" value="3600" />
+            <column name="date_created" valueDate="CURRENT_TIMESTAMP" />
+            <column name="created_by" value="1" />
+            <column name="start_on_startup" value="0"/>
+            <column name="started" value="0"/>
+            <column name="uuid" value="c1a5bcea-0f9f-11f0-9e19-da924fd23489" />
+        </insert>
+    </changeSet>
+    <changeSet id="ugandaemrsync-2025-04-02-14:00" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sync_task_type WHERE uuid = '8ca0ffd0-0fb0-11f0-9e19-da924fd23489'
+            </sqlCheck>
+        </preConditions>
+        <comment>Create Sends Prescriptions eAFYA Sync Task Type</comment>
+        <insert tableName="sync_task_type">
+            <column name="name" value="Sends Prescriptions eAFYA"/>
+            <column name="data_type" value="org.openmrs.DrugOrder" />
+            <column name="data_type_id" value="" />
+            <column name="url_end_point" value="192.168.1.2" />
+            <column name="url_username" value="" />
+            <column name="url_password" value="" />
+            <column name="url_token" value="" />
+            <column name="creator" value="1" />
+            <column name="voided" value="0" />
+            <column name="date_created" value="2025-04-02 14:00:00" />
+            <column name="uuid" value="8ca0ffd0-0fb0-11f0-9e19-da924fd23489" />
+        </insert>
+    </changeSet>
+
     <changeSet id="ugandaemr-2025-04-03-1312" author="slubwama">
         <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="1">
-               select count(*) sync_fhir_profile where uuid="0a7fff77-6ac7-416c-831e-4e3f1f2c853b";
+                select count(*) sync_fhir_profile where uuid="0a7fff77-6ac7-416c-831e-4e3f1f2c853b";
             </sqlCheck>
         </preConditions>
         <comment>Update ART Access to use cohorts instead of program workflows</comment>
@@ -1936,4 +1980,5 @@
             UPDATE sync_fhir_profile SET resource_types = 'Patient,Encounter,Observation', case_based_primary_resource_type = 'CohortType', case_based_primary_resource_type_id = 'e50fa0af-df36-4a26-853f-feb05244e5ca', resource_search_parameter = '{"episodeofcareFilter":{"lastUpdated":{"lowerBound":"","myUpperBound":""},"type":[]},"servicerequestFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"code":[],"encounterReference":[],"patientReference":[],"valueQuantityParam":[],"hasMemberReference":[],"valueStringParam":[],"id":[],"valueConcept":[],"valueDateParam":{"lowerBound":"","myUpperBound":""},"category":[]},"practitionerFilter":{"identifier":[],"given":[],"country":[],"lastUpdated":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"postalCode":[],"name":[],"state":[],"id":[],"family":[]},"patientFilter":{"given":[],"identifier":[],"country":[],"deceased":[],"gender":[],"city":[],"postalCode":[],"birthDate":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"name":[],"deathDate":{"lowerBound":"","myUpperBound":""},"state":[],"id":[],"family":[]},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"subject":[],"location":[],"id":[],"type":["8d5b27bc-c2cc-11de-8d13-0010c6dffd0f","8d5b2be0-c2cc-11de-8d13-0010c6dffd0f","6d88e370-f2ba-476b-bf1b-d8eaf3b1b67e","c11774c1-3b4a-4bdb-a847-6060895e006d"],"participant":[]},"medicationdispenseFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"code":[],"encounterReference":[],"patientReference":[],"valueQuantityParam":[],"hasMemberReference":[],"valueStringParam":[],"id":[],"valueConcept":[],"valueDateParam":{"lowerBound":"","myUpperBound":""},"category":[]},"medicationrequestFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"code":[],"encounterReference":[],"patientReference":[],"valueQuantityParam":[],"hasMemberReference":[],"valueStringParam":[],"id":[],"valueConcept":[],"valueDateParam":{"lowerBound":"","myUpperBound":""},"category":[]},"conditionFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"code":[],"encounterReference":[],"patientReference":[],"valueQuantityParam":[],"hasMemberReference":[],"valueStringParam":[],"id":[],"valueConcept":[],"valueDateParam":{"lowerBound":"","myUpperBound":""},"category":[]},"observationFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"code":["99161,90315,5096,90221,163023,856,1305,166500"],"encounterReference":[],"patientReference":[],"valueQuantityParam":[],"hasMemberReference":[],"valueStringParam":[],"id":[],"valueConcept":[],"valueDateParam":{"lowerBound":"","myUpperBound":""},"category":[]},"diagnosticreportFilter":{"date":{"lowerBound":"","myUpperBound":""},"lastUpdated":{"lowerBound":"","myUpperBound":""},"code":[],"encounterReference":[],"patientReference":[],"valueQuantityParam":[],"hasMemberReference":[],"valueStringParam":[],"id":[],"valueConcept":[],"valueDateParam":{"lowerBound":"","myUpperBound":""},"category":[]},"personFilter":{"country":[],"lastUpdated":{"lowerBound":"","myUpperBound":""},"deceased":[],"gender":[],"city":[],"postalCode":[],"name":[],"state":[],"id":[],"birthDate":{"lowerBound":"","myUpperBound":""}}}',changed_by = 1, date_changed = '2025-04-03 13:14:08' WHERE uuid = '0a7fff77-6ac7-416c-831e-4e3f1f2c853b';
         </sql>
     </changeSet>
+
 </databaseChangeLog>
