@@ -1972,7 +1972,7 @@
     <changeSet id="ugandaemr-2025-04-03-1312" author="slubwama">
         <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="1">
-                select count(*) sync_fhir_profile where uuid="0a7fff77-6ac7-416c-831e-4e3f1f2c853b";
+                select count(*) from sync_fhir_profile where uuid="0a7fff77-6ac7-416c-831e-4e3f1f2c853b";
             </sqlCheck>
         </preConditions>
         <comment>Update ART Access to use cohorts instead of program workflows</comment>
