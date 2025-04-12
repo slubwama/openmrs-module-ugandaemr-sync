@@ -23,6 +23,8 @@ public class SyncConstant {
 
 	public final static String MODULE_ID = "ugandaemrsync";
 	public static final String OPENMRS_IDENTIFIER_TYPE_UUID = "05a29f94-c0ed-11e2-94be-8c13b969e334";
+	public static final String HIV_CLINIC_IDENTIFIER_TYPE_UUID = "e1731641-30ab-102d-86b0-7a5022ba4115";
+	public static final String OPD_IDENTIFIER_TYPE_UUID = "be8f222a-3751-4f93-8c74-3aff399c19b6";
 	public static final String OPENMRS_IDENTIFIER_SYSTEM_URL_GP= "ugandaemrsync.identifier.system.openmrs";
 	public static final String NATIONAL_ID_IDENTIFIER_TYPE_UUID = "f0c16a6d-dc5f-4118-a803-616d0075d282";
 	public static final String NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP = "ugandaemrsync.identifier.system.nationalId";
@@ -32,8 +34,14 @@ public class SyncConstant {
 	public static final String NHPI_IDENTIFIER_SYSTEM_URL_GP = "ugandaemrsync.identifier.system.nphi";
 	public static final String ANC_IDENTIFIER_TYPE_UUID = "b0cc255e-ef57-4266-839e-0df7f5099eb9";
 	public static final String PNC_IDENTIFIER_TYPE_UUID = "758ef6e4-9ceb-4137-bc8d-9246dc7b41fe";
-
+	public static final String MARITAL_STATUS_ATTRIBUTE_TYPE = "8d871f2a-c2cc-11de-8d13-0010c6dffd0f";
+	public static final String PHONE_NO_ATTRIBUTE_TYPE = "14d4f066-15f5-102d-96e4-000c29c2a5d7";
 	public static final String ENCOUNTER_ROLE = "240b26f9-dd88-4172-823d-4a8bfeb7841f";
+
+
+	public static final String CARE_SETTING_UUID_OPD = "6f0c9a92-6f24-11e3-af88-005056821db0";
+
+	public static final String ORDER_TYPE_DRUG_UUID = "131168f4-15f5-102d-96e4-000c29c2a5d7";
 
     public static final String SERVER_IP = "ugandaemrsync.serverIP";
 

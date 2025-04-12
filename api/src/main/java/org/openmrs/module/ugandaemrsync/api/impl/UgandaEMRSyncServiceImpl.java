@@ -14,11 +14,33 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openmrs.*;
+import org.openmrs.Encounter;
+import org.openmrs.EncounterType;
+import org.openmrs.EncounterRole;
+import org.openmrs.Concept;
+import org.openmrs.ConceptDatatype;
+import org.openmrs.ConceptSource;
+import org.openmrs.Obs;
+import org.openmrs.Order;
+import org.openmrs.Drug;
+import org.openmrs.DrugOrder;
+import org.openmrs.OrderType;
+import org.openmrs.Patient;
+import org.openmrs.PatientIdentifierType;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PersonName;
+import org.openmrs.PersonAttribute;
+import org.openmrs.PersonAddress;
+import org.openmrs.Provider;
+import org.openmrs.ProviderAttributeType;
+import org.openmrs.ProviderAttribute;
+import org.openmrs.Location;
+import org.openmrs.CareSetting;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.ObsService;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
@@ -40,6 +62,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.util.UgandaEMRSyncUtil;
+import org.openmrs.parameter.OrderSearchCriteria;
 import org.openmrs.scheduler.TaskDefinition;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.context.ApplicationContext;
@@ -73,6 +96,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     private List<Object> processedItems = new ArrayList<>();
 
     private StockOperation stockOperation = null;
+
+    private JSONArray productCatelogList;
+    private List<SyncTask> eAFYATaskListForToday;
 
 
     /**
@@ -1785,5 +1811,573 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return null;
     }
 
+    /**
+     * Generates a list of drug orders formatted for export to another system.
+     * The method collects active drug orders for a specified set of drugs and formats them into EAFYA-compatible JSON objects.
+     * <p>
+     * The process involves:
+     * - Fetching the care setting, order type, and drug orders.
+     * - Processing the drug orders and translating them to the required format.
+     * - Adding clinic and provider information to the orders.
+     * The result is a list of JSON objects representing patient orders with associated drug information.
+     *
+     * @param drugs A collection of drug concepts to filter the orders by.
+     * @return A list of JSON objects representing patient orders with drug prescriptions.
+     */
+    public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> drugs) {
+        // Initialize the list to hold the patient orders
+        List<JSONObject> patientOrders = new ArrayList<>();
+
+        // Retrieve the OrderService and CareSetting for the specific care setting (OPD)
+        OrderService orderService = Context.getOrderService();
+        CareSetting careSetting = orderService.getCareSettingByUuid(CARE_SETTING_UUID_OPD);
+
+        // Initialize a list to hold unique encounters related to drug orders
+        List<Encounter> drugOrderEncounters = new ArrayList<>();
+
+        // Fetch the order type for drug orders
+        OrderType orderType = orderService.getOrderTypeByUuid(ORDER_TYPE_DRUG_UUID);
+
+        // Define the order search criteria for active drug orders within the care setting
+        OrderSearchCriteria orderSearchCriteria = new OrderSearchCriteria(
+                null,
+                careSetting,
+                drugs,
+                Collections.singletonList(orderType),
+                null,
+                null,
+                OpenmrsUtil.getLastMomentOfDay(new Date()),
+                OpenmrsUtil.firstSecondOfDay(new Date()),
+                false,
+                null,
+                null,
+                Order.Action.NEW,
+                Order.FulfillerStatus.IN_PROGRESS,
+                true,
+                true,
+                true,
+                false
+        );
+
+        // Fetch the orders matching the search criteria
+        List<Order> orders = orderService.getOrders(orderSearchCriteria);
+
+        List<Integer> encounterIds = extractEncounterIdFromSyncTasks(eAFYATaskListForToday);
+
+        // Process orders and collect unique encounters
+        for (Order order : orders) {
+            // If the order is active and the encounter is not already processed, add it to the list
+
+            if (order.isActive() && !drugOrderEncounters.contains(order.getEncounter()) && !encounterIds.contains(order.getEncounter().getEncounterId())) {
+                drugOrderEncounters.add(order.getEncounter());
+            }
+        }
+
+        // Iterate through each unique encounter and generate the corresponding patient order JSON
+        for (Encounter encounter : drugOrderEncounters) {
+            JSONObject patientOrder = new JSONObject();
+
+            // Translate patient information and add to the JSON object
+            patientOrder = translatePatientToEAFYAFormat(encounter.getPatient(), patientOrder);
+
+            // Translate drug order information and add to the JSON object
+            patientOrder = translateDrugOrderToEAFYAFormat(encounter.getOrders(), patientOrder);
+
+            // Add clinic and provider information
+            patientOrder = addClinicAndProviderInformation(encounter, patientOrder);
+
+            // Ensure the JSON object contains valid prescription data and patient ID
+            if (patientOrder.has("prescription") &&
+                    !patientOrder.getJSONArray("prescription").isEmpty() &&
+                    patientOrder.has("patient") &&
+                    patientOrder.getJSONObject("patient").has("id")) {
+
+                // Add valid patient order to the result list
+                patientOrders.add(patientOrder);
+            }
+        }
+
+        // Return the list of patient orders
+        return patientOrders;
+    }
+
+
+    /**
+     * Extracts the encounter ID from a given input string.
+     * <p>
+     * The method looks for a pattern in the format "encounterId: <number>" and returns
+     * the numeric part as a string. If the pattern is not found, it returns {@code null}.
+     * </p>
+     *
+     * @param syncTasks the input string containing the encounter information
+     * @return the extracted encounter ID as a string, or {@code null} if not found
+     */
+    public List<Integer> extractEncounterIdFromSyncTasks(List<SyncTask> syncTasks) {
+        List<Integer> encounterIds = new ArrayList<>();
+        for (SyncTask syncTask : syncTasks) {
+            try {
+                encounterIds.add(Integer.parseInt(syncTask.getSyncTask()));
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+        return encounterIds; // If no encounter ID is found
+    }
+
+    /**
+     * Translates a set of OpenMRS drug orders into the EAFYA prescription format and adds them to the given patient order JSON object.
+     * Each valid drug order is converted into a JSON object with standardized fields and added to a "prescription" array.
+     * Only drug orders with a valid stock item reference are included.
+     *
+     * @param orders       A set of orders (possibly including drug orders).
+     * @param patientOrder The patient-level JSON object to which prescription details will be added.
+     * @return The updated patient order JSON object containing the "prescription" array.
+     */
+    private JSONObject translateDrugOrderToEAFYAFormat(Set<Order> orders, JSONObject patientOrder) {
+        if (orders == null || orders.isEmpty()) {
+            return patientOrder;
+        }
+
+        JSONArray prescriptionArray = new JSONArray();
+
+        for (Order order : orders) {
+            // Process only DrugOrder instances
+            if (order instanceof DrugOrder) {
+                DrugOrder drugOrder = (DrugOrder) order;
+
+                // Attempt to retrieve reference code for the drug
+                String drugReferenceCode = getPharmacology(getStockItemReferenceFromDrug(drugOrder.getDrug()));
+
+                if (drugReferenceCode != null) {
+                    JSONObject patientDrugOrder = new JSONObject();
+
+                    // Add drug name
+                    patientDrugOrder.put("drug_name",
+                            drugOrder.getDrug() != null ? drugOrder.getDrug().getName() : "");
+
+                    // Add reference ID
+                    patientDrugOrder.put("drug_id", drugReferenceCode);
+
+                    // Add dose (default to "" if null)
+                    patientDrugOrder.put("dosage", drugOrder.getDose() != null ? drugOrder.getDose() : "");
+
+                    // Add duration (default to "" if null)
+                    patientDrugOrder.put("duration", drugOrder.getDuration() != null ? drugOrder.getDuration() : "");
+
+                    // Add frequency (default to "" if null)
+                    patientDrugOrder.put("frequency",
+                            drugOrder.getFrequency() != null ? drugOrder.getFrequency().getName() : "");
+
+                    // Add route (default to "" if null)
+                    patientDrugOrder.put("route",
+                            (drugOrder.getRoute() != null && drugOrder.getRoute().getName() != null)
+                                    ? drugOrder.getRoute().getName().getName() : "");
+
+                    // Append to prescription array
+                    prescriptionArray.put(patientDrugOrder);
+                }
+            }
+        }
+
+        // Attach the prescription array to the JSON
+        patientOrder.put("prescription", prescriptionArray);
+        return patientOrder;
+    }
+
+    private String getPharmacology(String referenceCode) {
+
+        if (referenceCode == null) {
+            return null;
+        }
+
+        if (productCatelogList == null || productCatelogList.isEmpty()) {
+            return null;
+        }
+        for (Object object : productCatelogList) {
+            try {
+                JSONObject jsonObject = new JSONObject(object.toString());
+
+                if (jsonObject.has("product_id") &&
+                        jsonObject.has("pharmacology_id") &&
+                        referenceCode.equals(jsonObject.getString("product_id"))) {
+
+                    return jsonObject.getString("pharmacology_id");
+                }
+            } catch (Exception e) {
+                log.warn("Invalid object in productCatalogList: " + object, e);
+            }
+        }
+
+        return null;
+    }
+
+
+    /**
+     * Translates an OpenMRS Patient object into the EAFYA-compliant JSON structure.
+     * Ensures that all fields are populated with non-null values, using empty strings where applicable.
+     *
+     * @param patient The OpenMRS patient object containing demographic and identifier information.
+     * @param patientOrder A JSON object representing an existing patient order to which patient data will be added.
+     * @return A JSONObject containing the patientOrder enriched with patient demographic and identifier data.
+     */
+    /**
+     * Translates patient data into the EAFYA-compatible format for export.
+     * Handles demographic details, identifiers, and address information, with null checks for missing data.
+     * If the OPD identifier is valid and contains "UG-", patient demographics are added; otherwise, only OPD identifier is used.
+     *
+     * @param patient      The patient whose data is to be translated.
+     * @param patientOrder The JSON object where the patient data will be added.
+     * @return The updated JSON object with patient information.
+     */
+    /**
+     * Translates patient data into the EAFYA format and attaches it to the provided patientOrder.
+     * The method checks for the validity of the OPD number. If OPD number is null or doesn't contain "UG-",
+     * it generates full patient details. Otherwise, it uses the OPD number for patient identification.
+     *
+     * @param patient      The patient whose data is being translated.
+     * @param patientOrder The JSONObject to which the translated patient data will be added.
+     * @return The updated patientOrder containing the patient data in EAFYA format.
+     */
+    private JSONObject translatePatientToEAFYAFormat(Patient patient, JSONObject patientOrder) {
+        // Retrieve necessary services
+        PatientService patientService = Context.getPatientService();
+
+        // Retrieve patient identifiers
+        PatientIdentifier opdNumber = patient.getPatientIdentifier(
+                patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID));
+        PatientIdentifier artNo = patient.getPatientIdentifier(
+                patientService.getPatientIdentifierTypeByUuid(HIV_CLINIC_IDENTIFIER_TYPE_UUID));
+        PatientIdentifier openmrsId = patient.getPatientIdentifier(
+                patientService.getPatientIdentifierTypeByUuid(OPENMRS_IDENTIFIER_TYPE_UUID));
+        PatientIdentifier nationalId = patient.getPatientIdentifier(
+                patientService.getPatientIdentifierTypeByUuid(NATIONAL_ID_IDENTIFIER_TYPE_UUID));
+
+        // Initialize the patient JSON object
+        JSONObject patientObject = new JSONObject();
+
+        // Check if OPD number is null or does not contain "UG-"
+        if (opdNumber == null || (opdNumber.getIdentifier() != null && !opdNumber.getIdentifier().contains("UG-"))) {
+            // Full patient details when OPD number is invalid or missing
+            patientObject.put("birth_date", patient.getBirthdate() != null ? patient.getBirthdate().toString() : "");
+            patientObject.put("first_name", patient.getGivenName() != null ? patient.getGivenName() : "");
+            patientObject.put("last_name", patient.getFamilyName() != null ? patient.getFamilyName() : "");
+            patientObject.put("gender", convertGenderToFullWord(patient.getGender() != null ? patient.getGender() : ""));
+
+            // Address information
+            PersonAddress address = patient.getPersonAddress();
+            patientObject.put("city", address != null && address.getCountyDistrict() != null ? address.getCountyDistrict() : "");
+            patientObject.put("village", address != null && address.getAddress5() != null ? address.getAddress5() : "Not available");
+
+            // Marital status
+            PersonAttribute maritalStatus = patient.getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid(MARITAL_STATUS_ATTRIBUTE_TYPE));
+            patientObject.put("marital_status", (maritalStatus != null && maritalStatus.getValue() != null) ? maritalStatus.getValue() : "");
+
+            // Phone number
+            PersonAttribute phoneNo = patient.getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid(PHONE_NO_ATTRIBUTE_TYPE));
+            patientObject.put("phone_number", (phoneNo != null && phoneNo.getValue() != null) ? phoneNo.getValue() : "");
+
+            // Identifiers: Priority given to ART No, then fallback to OPD number
+            String patientId = "";
+            if (artNo != null && artNo.getIdentifier() != null) {
+                patientId = artNo.getIdentifier();  // Use ART number if available
+            } else if (opdNumber != null && opdNumber.getIdentifier() != null) {
+                patientId = opdNumber.getIdentifier();  // Use OPD number if ART is not available
+            }
+            patientObject.put("patient_id", patientId);
+            patientObject.put("id", patientId);
+
+            // National ID and internal patient ID
+            patientObject.put("id_no", nationalId != null && nationalId.getIdentifier() != null ? nationalId.getIdentifier() : "");
+            patientObject.put("internal_patient_id", openmrsId != null && openmrsId.getIdentifier() != null ? openmrsId.getIdentifier() : "");
+        } else {
+            // If OPD number is valid and contains "UG-", use only OPD identifier for patient_id
+            patientObject.put("patient_id", opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "");
+            patientObject.put("id", opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "");
+            patientObject.put("internal_patient_id", openmrsId != null && openmrsId.getIdentifier() != null ? openmrsId.getIdentifier() : "");
+        }
+
+        // Attach the patient object to the patient order and return
+        patientOrder.put("patient", patientObject);
+        return patientOrder;
+    }
+
+    /**
+     * Converts a single-character gender code to its full word equivalent.
+     *
+     * @param gender A string representing gender, typically "M" for male or "F" for female.
+     * @return "Male" if input is "M", "Female" if input is "F", or the original input if null or unrecognized.
+     */
+    private String convertGenderToFullWord(String gender) {
+        if (gender == null) {
+            return null;
+        }
+
+        switch (gender) {
+            case "M":
+                return "Male";
+            case "F":
+                return "Female";
+            default:
+                return gender;
+        }
+    }
+
+
+    /**
+     * Adds clinic ID and provider-specific EAFYA ID information to the given JSON object
+     * based on the details of the provided encounter.
+     *
+     * @param encounter  The encounter containing metadata about the provider.
+     * @param orderObject The JSON object to which clinic and provider information will be added.
+     * @return The updated JSON object with clinic and provider EAFYA identifiers.
+     */
+    /**
+     * Adds clinic ID and provider-specific EAFYA ID information to the given JSON object
+     * based on the details of the provided encounter.
+     *
+     * @param encounter    The encounter containing metadata about the provider.
+     * @param patientOrder The JSON object to which clinic and provider information will be added.
+     * @return The updated JSON object with clinic and provider EAFYA identifiers.
+     * @throws IllegalStateException if either the clinic ID or provider EAFYA ID is missing.
+     */
+    private JSONObject addClinicAndProviderInformation(Encounter encounter, JSONObject patientOrder) {
+        // Retrieve the provider attribute type used for the EAFYA ID
+        ProviderAttributeType providerAttributeType = Objects.requireNonNull(
+                Context.getProviderService().getProviderAttributeTypeByUuid("d376f27c-cb93-45b4-be0a-6be88c520233"),
+                "ProviderAttributeType (EAFYA ID) is required"
+        );
+
+        // Retrieve the clinic ID from global properties
+        String clinicId = Context.getAdministrationService()
+                .getGlobalProperty(MODULE_ID + ".eafya.clinicid");
+
+        // Validate that clinic ID is not null or blank
+        if (clinicId == null || clinicId.trim().isEmpty()) {
+            throw new IllegalStateException("Clinic ID global property (" + MODULE_ID + ".eafya.clinicid) is not configured.");
+        }
+
+        // Find the provider linked to the encounter's creator
+        Provider provider = fetchProviderForUser(encounter.getCreator().getUserId());
+
+        // Extract the EAFYA ID from the provider attributes
+        String eafyaId = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
+
+        // Validate that provider EAFYA ID is not null or blank
+        if (eafyaId == null || eafyaId.trim().isEmpty()) {
+            throw new IllegalStateException("Provider EAFYA ID attribute is missing for provider: " + provider.getName());
+        }
+
+        // Add clinic ID and provider EAFYA ID to the JSON object
+        patientOrder.put("clinic_id", clinicId);
+        patientOrder.put("created_by_id", eafyaId);
+        patientOrder.put("encounter_id", encounter.getEncounterId());
+
+        return patientOrder;
+    }
+
+
+    /**
+     * Retrieves the first provider associated with a given encounter under a specific encounter role.
+     *
+     * @param encounter The encounter from which to retrieve the provider.
+     * @return The first matching Provider if available; otherwise, null.
+     */
+    public Provider getProviderFromEncounter(Encounter encounter) {
+        // Retrieve the specified encounter role using its UUID
+        EncounterRole encounterRole = Context.getEncounterService().getEncounterRoleByUuid(ENCOUNTER_ROLE);
+
+        // Get the providers assigned to the encounter under the specified role
+        Set<Provider> providers = encounter.getProvidersByRole(encounterRole);
+
+        // Return the first provider if available, otherwise return null
+        return providers.stream().filter(provider -> !provider.getRetired()).findFirst().orElse(null);
+    }
+
+
+    private String getStockItemReferenceFromDrug(Drug drug) {
+        List<StockItem> stockItem = Context.getService(StockManagementService.class).getStockItemByDrug(drug.getDrugId());
+        if (!stockItem.isEmpty()) {
+            List<StockItemReference> stockItemReferences = stockItem.get(0).getReferences().stream().filter(reference -> reference.getReferenceSource().getUuid().equals("9babcc02-fc0b-11ef-ab84-28977ca9db4b")).collect(Collectors.toList());
+            if (!stockItemReferences.isEmpty()) {
+                return stockItemReferences.get(0).getStockReferenceCode();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sends prescription data to an external system (eAFYA) by:
+     * - Retrieving drug orders based on specific concepts
+     * - Matching each drug order to a patient
+     * - Posting each prescription to the external system
+     * - Updating the patient's OPD number based on the response
+     */
+    public void sendPrescription() {
+        // Retrieve services
+        UgandaEMRSyncService syncService = Context.getService(UgandaEMRSyncService.class);
+        PatientService patientService = Context.getPatientService();
+        UgandaEMRHttpURLConnection httpConnection = new UgandaEMRHttpURLConnection();
+
+        // Fetch SyncTaskType by its configured UUID
+        SyncTaskType syncTaskType = syncService.getSyncTaskTypeByUUID("8ca0ffd0-0fb0-11f0-9e19-da924fd23489");
+        if (syncTaskType == null) {
+            log.error("SyncTaskType with UUID '8ca0ffd0-0fb0-11f0-9e19-da924fd23489' not found.");
+            return;
+        }
+
+        // Construct the full endpoint URL
+        String apiPath = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendPrescription");
+        String url = syncTaskType.getUrl() + apiPath;
+
+        // Load the eAFYA product catalog to map drugs
+        productCatelogList = getProductCatalogFromEAFYA(syncTaskType);
+        // Lists of eAFYA Tasks logs generated today
+        eAFYATaskListForToday = getSyncTasksByType(syncTaskType, OpenmrsUtil.firstSecondOfDay(new Date()), OpenmrsUtil.getLastMomentOfDay(new Date()));
+
+        if (productCatelogList == null || productCatelogList.isEmpty()) {
+            log.warn("Product catalog from eAFYA is empty or unavailable.");
+            return;
+        }
+
+        // Parse configured concept IDs
+        String[] conceptIdArray = syncTaskType.getDataTypeId() != null
+                ? syncTaskType.getDataTypeId().split(",")
+                : new String[0];
+
+        List<Concept> concepts = Arrays.stream(conceptIdArray)
+                .map(Context.getConceptService()::getConcept)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        // Generate prescription orders
+        List<JSONObject> drugOrders = generateDrugOrderToOtherSystem(concepts);
+
+        try {
+            for (JSONObject drugOrder : drugOrders) {
+                // Send prescription via POST
+                Map<String, Object> response = httpConnection.sendPostBy(
+                        url,
+                        syncTaskType.getUrlUserName(),
+                        syncTaskType.getUrlPassword(),
+                        null,
+                        drugOrder.toString(),
+                        false
+                );
+
+                int responseCode = response.get("responseCode") instanceof Integer
+                        ? (int) response.get("responseCode")
+                        : Integer.parseInt(response.get("responseCode").toString());
+
+                if (responseCode == 200 || responseCode == 201) {
+                    String internalPatientId = drugOrder.optString("internal_patient_id", null);
+                    String externalPatientId = extractPatientIdFromResponse(response);
+
+                    if (internalPatientId != null && !externalPatientId.isEmpty()) {
+                        updatePatientOPDNumber(internalPatientId, externalPatientId);
+                    }
+
+                    // Log successful sync
+                    logTransaction(syncTaskType, responseCode, null, drugOrder.get("encounter_id").toString(), "Patient: " + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
+                    log.info(String.format("Prescription for patient %s synced successfully. External ID: %s",
+                            internalPatientId, externalPatientId));
+                } else {
+                    // Log failure
+                    log.error("Failed to sync prescription. Response code: " + responseCode);
+                    logTransaction(syncTaskType, responseCode, null, "Failed Prescription Sync",
+                            response.get("responseMessage").toString(), new Date(), url, false, false);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error while syncing prescription data: ", e);
+        }
+    }
+
+    /**
+     * Extracts the patient_id field from the response map's "data" object (if present).
+     */
+    private String extractPatientIdFromResponse(Map<String, Object> response) {
+        try {
+            JSONObject json = new JSONObject(response);
+            if (json.has("data")) {
+                JSONObject data = json.getJSONObject("data");
+                return data.getJSONObject("patient").optString("id", "").trim();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract patient ID from response.", e);
+        }
+        return "";
+    }
+
+    /**
+     * Updates or adds an OPD number identifier to the patient, based on the external system ID.
+     */
+    private void updatePatientOPDNumber(String internalPatientId, String externalPatientId) {
+        PatientService patientService = Context.getPatientService();
+        PatientIdentifierType opdIdentifierType = patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID);
+
+        // Retrieve the patient using the internal patient identifier UUID
+        Patient patient = patientService.getPatientIdentifierByUuid(internalPatientId).getPatient();
+
+        if (patient == null || opdIdentifierType == null) return;
+
+        PatientIdentifier existingOPD = patient.getPatientIdentifier(opdIdentifierType);
+
+        if (existingOPD != null) {
+            if (!existingOPD.getIdentifier().contains("UG-")) {
+                existingOPD.setIdentifier(externalPatientId);
+                patient.addIdentifier(existingOPD);
+            }
+        } else {
+            PatientIdentifier newIdentifier = new PatientIdentifier();
+            newIdentifier.setIdentifierType(opdIdentifierType);
+            newIdentifier.setIdentifier(externalPatientId);
+            patient.addIdentifier(newIdentifier);
+        }
+
+        patientService.savePatient(patient);
+    }
+
+
+    /**
+     * Fetches the product catalog from the eAFYA API based on the given SyncTaskType configuration.
+     *
+     * <p>This method uses the URL, username, and password from the SyncTaskType to make an authenticated
+     * HTTP GET request to the eAFYA product list endpoint, then parses the response into a JSONArray.</p>
+     *
+     * @param syncTaskType The synchronization task type containing connection details to eAFYA.
+     * @return A JSONArray containing the product catalog data retrieved from eAFYA.
+     * @throws RuntimeException if the request fails or an error occurs while processing the response.
+     */
+    private JSONArray getProductCatalogFromEAFYA(SyncTaskType syncTaskType) {
+        JSONArray eAFYAProductList = new JSONArray();
+        String apiEndpoint = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.GetProductList");
+        String fullUrl = syncTaskType.getUrl() + apiEndpoint;
+
+        UgandaEMRHttpURLConnection httpConnection = new UgandaEMRHttpURLConnection();
+
+        try {
+            Map<String, Object> response = httpConnection.getByWithBasicAuth(
+                    fullUrl,
+                    syncTaskType.getUrlUserName(),
+                    syncTaskType.getUrlPassword(),
+                    "String"
+            );
+
+            int responseCode = Integer.parseInt(response.get("responseCode").toString());
+            if (responseCode == 200 || responseCode == 201) {
+                eAFYAProductList = new JSONArray(response.get("result").toString());
+            } else {
+                log.warn("Received unexpected response code: " + responseCode + " from URL: " + fullUrl);
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to fetch product catalog from eAFYA", e);
+            throw new RuntimeException("Error while fetching product catalog from eAFYA", e);
+        }
+
+        return eAFYAProductList;
+    }
+
 }
+
 
