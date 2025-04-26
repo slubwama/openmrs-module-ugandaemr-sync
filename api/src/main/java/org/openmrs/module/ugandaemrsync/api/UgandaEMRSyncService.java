@@ -26,10 +26,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * The main service of this module, which is exposed for other modules. See
@@ -496,5 +493,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> conceptList);
 
     public void sendPrescription();
+
+
+    public List<Map<String, String>> generateAndSyncBulkViralLoadRequest();
+
+    public Map sendSingleViralLoadOrder(Order order);
+
+    public Date getDateFromString(String dateString, String format);
 }
 

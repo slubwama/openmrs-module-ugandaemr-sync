@@ -89,7 +89,7 @@ public class SyncFHIRRecord {
 
     SyncFhirCase syncFhirCase = null;
 
-    private SyncFhirProfile profile;
+    private SyncFhirProfile profile = null;
     private List<PatientProgram> patientPrograms;
 
     Map<String, Object> anyOtherObject = new HashMap<>();
@@ -728,7 +728,7 @@ public class SyncFHIRRecord {
         return resourceBundles;
     }
 
-    private Collection<String> groupInCaseBundle(String resourceType, Collection<IBaseResource> iBaseResources, String identifierTypeName) {
+    public Collection<String> groupInCaseBundle(String resourceType, Collection<IBaseResource> iBaseResources, String identifierTypeName) {
 
         Collection<String> resourceBundles = new ArrayList<>();
 
@@ -752,7 +752,7 @@ public class SyncFHIRRecord {
 
             if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
 
-                if (resourceType.equals("Patient") && profile.getKeepProfileIdentifierOnly()) {
+                if (resourceType.equals("Patient") && profile != null && profile.getKeepProfileIdentifierOnly()) {
                     try {
                         jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
                         jsonString = addCodingToIdentifier(jsonString, "identifier");
@@ -803,14 +803,19 @@ public class SyncFHIRRecord {
     }
 
     private String removeIdentifierExceptProfileId(String payload, String attributeName) {
-        JSONObject jsonObject = new JSONObject(payload);
-        int objectCount = 0;
-        for (int i = 0; i < jsonObject.getJSONArray(attributeName).length(); i++) {
-            if (!jsonObject.getJSONArray("identifier").getJSONObject(i).getJSONObject("type").getJSONArray("coding").getJSONObject(0).get("code").toString().equals(profile.getPatientIdentifierType().getUuid())) {
-                jsonObject.getJSONArray("identifier").remove(i);
+        if (profile != null) {
+            JSONObject jsonObject = new JSONObject(payload);
+            int objectCount = 0;
+            for (int i = 0; i < jsonObject.getJSONArray(attributeName).length(); i++) {
+                if (!jsonObject.getJSONArray("identifier").getJSONObject(i).getJSONObject("type").getJSONArray("coding").getJSONObject(0).get("code").toString().equals(profile.getPatientIdentifierType().getUuid())) {
+                    jsonObject.getJSONArray("identifier").remove(i);
+                }
             }
+
+            return jsonObject.toString();
+        } else {
+            return payload;
         }
-        return jsonObject.toString();
     }
 
     private String removeAttribute(String payload, String attributeName) {
@@ -963,19 +968,21 @@ public class SyncFHIRRecord {
     }
 
 
-    private Collection<IBaseResource> getPatientResourceBundle(SyncFhirProfile syncFhirProfile, List<PatientIdentifier> patientIdentifiers, SyncFhirCase syncFhirCase) {
+    public Collection<IBaseResource> getPatientResourceBundle(SyncFhirProfile syncFhirProfile, List<PatientIdentifier> patientIdentifiers, SyncFhirCase syncFhirCase) {
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getIsCaseBasedProfile()) {
-            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
-            } else if (syncFhirCase != null) {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
-            }
-        } else {
-            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
+        if (syncFhirProfile != null) {
+            if (syncFhirProfile.getIsCaseBasedProfile()) {
+                if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+                } else if (syncFhirCase != null) {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+                }
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
 
+            }
         }
 
 
@@ -992,12 +999,14 @@ public class SyncFHIRRecord {
         return getApplicationContext().getBean(FhirPatientService.class).searchForPatients(patientSearchParams).getResources(0, Integer.MAX_VALUE);
     }
 
-    private Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Order> orders) {
+    public Collection<IBaseResource> getPractitionerResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Order> orders) {
         PractitionerSearchParams practitionerSearchParams = new PractitionerSearchParams();
 
-        if (!syncFhirProfile.getIsCaseBasedProfile()) {
-            DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
-            practitionerSearchParams.setLastUpdated(lastUpdated);
+        if (syncFhirProfile != null) {
+            if (!syncFhirProfile.getIsCaseBasedProfile()) {
+                DateRangeParam lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Practitioner"));
+                practitionerSearchParams.setLastUpdated(lastUpdated);
+            }
         }
         TokenAndListParam providerReference = new TokenAndListParam();
         for (Encounter encounter : encounterList) {
@@ -1011,28 +1020,36 @@ public class SyncFHIRRecord {
             providerReference.addAnd(new TokenParam(order.getOrderer().getUuid()));
         }
 
-        if (providerReference != null) {
+        if (providerReference.size()>0) {
             practitionerSearchParams.setIdentifier(providerReference);
         }
 
-        return getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(practitionerSearchParams).getResources(0, Integer.MAX_VALUE);
+        List<IBaseResource> iBaseResources = new ArrayList<>();
+
+        if (providerReference.size()>0) {
+            iBaseResources = getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(practitionerSearchParams).getResources(0, Integer.MAX_VALUE);
+        }
+
+        return iBaseResources;
 
     }
 
-    private Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<Person> personList, SyncFhirCase syncFhirCase) {
+    public Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<Person> personList, SyncFhirCase syncFhirCase) {
 
 
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getIsCaseBasedProfile()) {
-            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+        if (syncFhirProfile != null) {
+            if (syncFhirProfile.getIsCaseBasedProfile()) {
+                if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+                } else {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+                }
             } else {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
-            }
-        } else {
-            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Patient"));
 
+            }
         }
 
         PersonSearchParams personSearchParams = new PersonSearchParams();
@@ -1052,7 +1069,7 @@ public class SyncFHIRRecord {
     }
 
 
-    private Collection<IBaseResource> getEncounterResourceBundle(List<Encounter> encounters) {
+    public Collection<IBaseResource> getEncounterResourceBundle(List<Encounter> encounters) {
 
 
         Collection<String> encounterUUIDS = new ArrayList<>();
@@ -1072,39 +1089,41 @@ public class SyncFHIRRecord {
         return iBaseResources;
     }
 
-    private Collection<IBaseResource> getObservationResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Person> personList) {
+    public Collection<IBaseResource> getObservationResourceBundle(SyncFhirProfile syncFhirProfile, List<Encounter> encounterList, List<Person> personList) {
 
-        JSONObject searchParams = getSearchParametersInJsonObject("Observation", syncFhirProfile.getResourceSearchParameter());
-
-        JSONArray codes = searchParams.getJSONArray("code");
 
         List<Concept> conceptQuestionList = new ArrayList<>();
 
-        for (Object conceptUID : codes) {
-            try {
-
-                Concept concept = Context.getConceptService().getConcept(conceptUID.toString());
-                if (concept != null) {
-                    conceptQuestionList.add(concept);
-                }
-
-            } catch (Exception e) {
-                log.error("Error while adding concept with uuid " + conceptUID, e);
-            }
-
-        }
-
         DateRangeParam lastUpdated = new DateRangeParam();
 
-        if (syncFhirProfile.getIsCaseBasedProfile()) {
-            if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
-            } else if (syncFhirCase != null) {
-                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
-            }
-        } else {
-            lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Observation"));
+        if (syncFhirProfile != null) {
+            JSONObject searchParams = getSearchParametersInJsonObject("Observation", syncFhirProfile.getResourceSearchParameter());
 
+            JSONArray codes = searchParams.getJSONArray("code");
+
+            for (Object conceptUID : codes) {
+                try {
+
+                    Concept concept = Context.getConceptService().getConcept(conceptUID.toString());
+                    if (concept != null) {
+                        conceptQuestionList.add(concept);
+                    }
+
+                } catch (Exception e) {
+                    log.error("Error while adding concept with uuid " + conceptUID, e);
+                }
+
+            }
+            if (syncFhirProfile.getIsCaseBasedProfile()) {
+                if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+                } else if (syncFhirCase != null) {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+                }
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Observation"));
+
+            }
         }
 
         List<Obs> observationList = Context.getObsService().getObservations(personList, encounterList, conceptQuestionList, null, null, null, null, null, null, getLastSyncDate(syncFhirProfile, "Observation"), new Date(), false);
@@ -1121,7 +1140,7 @@ public class SyncFHIRRecord {
     }
 
 
-    private Collection<IBaseResource> getServiceRequestResourceBundle(List<Order> testOrders) {
+    public Collection<IBaseResource> getServiceRequestResourceBundle(List<Order> testOrders) {
 
 
         Collection<String> testOrdersUUIDS = new ArrayList<>();

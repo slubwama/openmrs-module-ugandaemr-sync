@@ -42,6 +42,7 @@ public class SyncConstant {
 	public static final String CARE_SETTING_UUID_OPD = "6f0c9a92-6f24-11e3-af88-005056821db0";
 
 	public static final String ORDER_TYPE_DRUG_UUID = "131168f4-15f5-102d-96e4-000c29c2a5d7";
+	public static final String ORDER_TYPE_TEST_UUID = "52a447d3-a64a-11e3-9aeb-50e549534c5e";
 
     public static final String SERVER_IP = "ugandaemrsync.serverIP";
 
