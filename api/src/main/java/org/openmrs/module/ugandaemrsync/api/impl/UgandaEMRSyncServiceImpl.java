@@ -9,7 +9,6 @@
  */
 package org.openmrs.module.ugandaemrsync.api.impl;
 
-import com.sun.javafx.collections.MappingChange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;

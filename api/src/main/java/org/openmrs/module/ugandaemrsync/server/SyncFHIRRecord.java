@@ -1008,30 +1008,24 @@ public class SyncFHIRRecord {
                 practitionerSearchParams.setLastUpdated(lastUpdated);
             }
         }
-        TokenAndListParam providerReference = new TokenAndListParam();
+        Collection<String> providerList = new ArrayList<>();
         for (Encounter encounter : encounterList) {
             Provider provider = getProviderFromEncounter(encounter);
             if (provider != null) {
-                providerReference.addAnd(new TokenParam(provider.getUuid()));
+                providerList.add(provider.getUuid());
             }
         }
 
         for (Order order : orders) {
-            providerReference.addAnd(new TokenParam(order.getOrderer().getUuid()));
-        }
-
-        if (providerReference.size()>0) {
-            practitionerSearchParams.setIdentifier(providerReference);
+            providerList.add(order.getOrderer().getUuid());
         }
 
         List<IBaseResource> iBaseResources = new ArrayList<>();
 
-        if (providerReference.size()>0) {
-            iBaseResources = getApplicationContext().getBean(FhirPractitionerService.class).searchForPractitioners(practitionerSearchParams).getResources(0, Integer.MAX_VALUE);
+        if (!providerList.isEmpty()) {
+            iBaseResources.addAll(getApplicationContext().getBean(FhirPractitionerService.class).get(providerList));
         }
-
         return iBaseResources;
-
     }
 
     public Collection<IBaseResource> getPersonResourceBundle(SyncFhirProfile syncFhirProfile, List<Person> personList, SyncFhirCase syncFhirCase) {
