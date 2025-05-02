@@ -1089,12 +1089,14 @@ public class SyncFHIRRecord {
         List<Concept> conceptQuestionList = new ArrayList<>();
 
         DateRangeParam lastUpdated = new DateRangeParam();
+        Date lastSyncDate = null;
 
         if (syncFhirProfile != null) {
             JSONObject searchParams = getSearchParametersInJsonObject("Observation", syncFhirProfile.getResourceSearchParameter());
 
             JSONArray codes = searchParams.getJSONArray("code");
 
+            lastSyncDate=getLastSyncDate(syncFhirProfile, "Observation");
             for (Object conceptUID : codes) {
                 try {
 
@@ -1120,7 +1122,7 @@ public class SyncFHIRRecord {
             }
         }
 
-        List<Obs> observationList = Context.getObsService().getObservations(personList, encounterList, conceptQuestionList, null, null, null, null, null, null, getLastSyncDate(syncFhirProfile, "Observation"), new Date(), false);
+        List<Obs> observationList = Context.getObsService().getObservations(personList, encounterList, conceptQuestionList, null, null, null, null, null, null, lastSyncDate, new Date(), false);
 
         Collection<String> obsListUUID = observationList.stream().map(Obs::getUuid).collect(Collectors.toCollection(ArrayList::new));
 

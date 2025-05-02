@@ -2439,7 +2439,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     response = 200;
                 }
 
-                logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), true, false);
+                if(response==200 || response==201){
+                    Context.getOrderService().updateOrderFulfillerStatus(order,Order.FulfillerStatus.RECEIVED,syncResponse.get("responseCode").toString());
+                    logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), true, false);
+                }else {
+                    logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), false, false);
+                }
             }
         } catch (Exception e) {
             log.error("Failed to create sync task", e);
