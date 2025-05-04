@@ -2387,6 +2387,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             if (!isOrderSynced(order, syncTaskType)) {
                 String payload = processResourceFromOrder(order);
 
+
                 if (payload != null) {
                     responses.add(sendViralLoadToCPHL(syncTaskType, payload, httpConnection, order));
                 } else {
@@ -2415,6 +2416,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return responses;
     }
 
+    public Map<String, String> generateVLFHIRResultRequestBody(String jsonRequestString, String healthCenterCode, String patientIdentifier, String sampleIdentifier) {
+        Map<String, String> jsonMap = new HashMap<>();
+        String filledJsonFile = "";
+        filledJsonFile = String.format(jsonRequestString, healthCenterCode, patientIdentifier, sampleIdentifier);
+        jsonMap.put("json", filledJsonFile);
+        return jsonMap;
+    }
+
 
     @Override
     public Map sendSingleViralLoadOrder(Order order) {
@@ -2441,6 +2450,108 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             response.put("responseMessage", "Order: " + order.getAccessionNumber() + " is already synced");
         }
         return response;
+    }
+
+
+    @Override
+    public Map requestLabResult(Order order, SyncTask syncTask) {
+        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
+        Map response = new HashMap<>();
+        if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
+            response.put("responseMessage", "No Internet Connection to send order" + order.getAccessionNumber());
+            return response;
+        }
+
+        if (order == null && syncTask != null) {
+            order = getOrderByAccessionNumber(syncTask.getSyncTask());
+            if (order == null) {
+                response.put("responseMessage", "Order Not found for accession number: " + syncTask.getSyncTask());
+                log.info("Order Not found for accession number: " + syncTask.getSyncTask());
+                return response;
+            }
+        }
+
+        String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, getHealthCenterCode(), getPatientIdentifier(order.getEncounter().getPatient(), PATIENT_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask())).get("json");
+
+        Map results = new HashMap();
+
+        SyncTaskType syncTaskType = getSyncTaskTypeByUUID(VIRAL_LOAD_RESULT_PULL_TYPE_UUID);
+
+        try {
+            results = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", dataOutput, false);
+        } catch (Exception e) {
+            log.error("Failed to fetch results", e);
+            logTransaction(syncTaskType, 500, e.getMessage(), order.getAccessionNumber(), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
+            response.put("responseMessage", e.getMessage());
+        }
+
+        Integer responseCode = null;
+        String responseMessage = null;
+
+        // Parsing responseCode and responseMessage
+        if (results.containsKey("responseCode") && results.containsKey("responseMessage")) {
+            responseCode = Integer.parseInt(results.get("responseCode").toString());
+            responseMessage = results.get("responseMessage").toString();
+            response.put("responseMessage", responseMessage);
+        }
+
+        // Processing results if responseCode is valid and status is not pending
+        if (responseCode != null && (responseCode == 200 || responseCode == 201) && !results.isEmpty() && results.containsKey("status") && !results.get("status").equals("pending")) {
+            Map reasonReference = (Map) results.get("reasonReference");
+            ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
+
+            // Saving Viral Load Results
+            if (order.getEncounter() != null && !result.isEmpty()) {
+                Object qualitativeResult = result.get(0).get("valueString");
+                Object quantitativeResult = result.get(0).get("valueInteger");
+
+                if (quantitativeResult != null && qualitativeResult != null) {
+                    try {
+                        addVLToEncounter(qualitativeResult.toString(), quantitativeResult.toString(), order.getEncounter().getEncounterDatetime().toString(), order.getEncounter(), order);
+                        syncTask.setActionCompleted(true);
+                        saveSyncTask(syncTask);
+                        logTransaction(syncTaskType, responseCode, result.get(0).get("valueString").toString(), order.getAccessionNumber(), result.get(0).get("valueString").toString(), new Date(), syncTaskType.getUrl(), false, false);
+                        try {
+                            Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+                        } catch (Exception e) {
+                            log.error("Failed to discontinue order", e);
+                            response.put("responseMessage", String.format("Failed to discontinue order %s", e.getMessage()));
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to add results to patient encounter", e);
+                        logTransaction(syncTaskType, 500, e.getMessage(), order.getAccessionNumber(), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
+                        response.put("responseMessage", String.format("Failed to add results to patient encounter %s", e.getMessage()));
+                    }
+                } else {
+                    logTransaction(syncTaskType, 500, "Internal server error: Results of Viral load have a null value", order.getAccessionNumber(), "Internal server error: Results of Viral load have a null value", new Date(), syncTaskType.getUrl(), false, false);
+
+                    response.put("responseMessage", String.format("Internal server error: Results of Viral load order %s have a null value", order.getAccessionNumber()));
+                }
+            }
+        } else {
+            // Logging based on responseCode or status
+            if (responseCode != null && !results.containsKey("status")) {
+                logTransaction(syncTaskType, responseCode, responseMessage, order.getAccessionNumber(), responseMessage, new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", responseMessage);
+            } else if (results.containsKey("status")) {
+                logTransaction(syncTaskType, responseCode, results.get("status").toString(), order.getAccessionNumber(), results.get("status").toString(), new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", results.get("status").toString());
+            }
+        }
+        //TODO return appropriate response
+        return response;
+    }
+
+
+    public Order getOrderByAccessionNumber(String accessionNumber) {
+        OrderService orderService = Context.getOrderService();
+        List list = Context.getAdministrationService().executeSQL(String.format(VIRAL_LOAD_ORDER_QUERY, accessionNumber), true);
+        if (list.size() > 0) {
+            for (Object o : list) {
+                return orderService.getOrder(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString()));
+            }
+        }
+        return null;
     }
 
     private boolean isOrderSynced(Order order, SyncTaskType syncTaskType) {

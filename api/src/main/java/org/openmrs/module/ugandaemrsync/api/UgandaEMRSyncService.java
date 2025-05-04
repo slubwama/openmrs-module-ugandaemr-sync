@@ -499,6 +499,10 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public Map sendSingleViralLoadOrder(Order order);
 
+    public Map requestLabResult(Order order, SyncTask syncTask);
+
     public Date getDateFromString(String dateString, String format);
+
+    public Order getOrderByAccessionNumber(String assessionNumber);
 }
 
