@@ -2512,6 +2512,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         saveSyncTask(syncTask);
                         logTransaction(syncTaskType, responseCode, result.get(0).get("valueString").toString(), order.getAccessionNumber(), result.get(0).get("valueString").toString(), new Date(), syncTaskType.getUrl(), false, false);
                         try {
+                            Context.getOrderService().updateOrderFulfillerStatus(order,Order.FulfillerStatus.COMPLETED,result.get(0).get("valueString").toString());
                             Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
                         } catch (Exception e) {
                             log.error("Failed to discontinue order", e);
@@ -2538,7 +2539,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 response.put("responseMessage", results.get("status").toString());
             }
         }
-        //TODO return appropriate response
         return response;
     }
 
