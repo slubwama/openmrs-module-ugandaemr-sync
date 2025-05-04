@@ -14,29 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openmrs.Encounter;
-import org.openmrs.EncounterType;
-import org.openmrs.EncounterRole;
-import org.openmrs.Concept;
-import org.openmrs.ConceptDatatype;
-import org.openmrs.ConceptSource;
-import org.openmrs.Obs;
-import org.openmrs.Order;
-import org.openmrs.Drug;
-import org.openmrs.DrugOrder;
-import org.openmrs.OrderType;
-import org.openmrs.Patient;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PersonName;
-import org.openmrs.PersonAttribute;
-import org.openmrs.PersonAddress;
-import org.openmrs.Provider;
-import org.openmrs.Person;
-import org.openmrs.ProviderAttributeType;
-import org.openmrs.ProviderAttribute;
-import org.openmrs.Location;
-import org.openmrs.CareSetting;
+import org.openmrs.*;
 import org.openmrs.api.APIException;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.ObsService;
@@ -1273,6 +1251,49 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
     }
 
+    private String generateSpecimen(Order order) {
+        try {
+            if (order != null) {
+                String specimenString = "{\"fullUrl\":\"urn:uuid:%s\",\"resource\":{\"resourceType\":\"Specimen\",\"id\":\"%s\",\"type\":{\"coding\":[{\"system\":\"http://snomed.info/sct\",\"code\":\"%s\",\"display\":\"Plasma specimen\"}]},\"subject\":{\"reference\":\"urn:uuid:%s\"},\"collection\":{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}},\"processing\":[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]},\"request\":{\"method\":\"POST\",\"url\":\"Specimen\"}}";
+                TestOrder testOrder = (TestOrder) order;
+                JSONObject jsonObject = new JSONObject(specimenString);
+                JSONArray codding = new JSONArray();
+
+                if (testOrder.getAccessionNumber() != null) {
+                    jsonObject.put("fullUrl", "urn:uuid:" + testOrder.getAccessionNumber());
+                    jsonObject.getJSONObject("resource").put("id", order.getAccessionNumber());
+                }
+
+                for (ConceptMap conceptMap : testOrder.getSpecimenSource().getConceptMappings()) {
+
+                    if (conceptMap != null && conceptMap.getConceptReferenceTerm() != null && conceptMap.getConceptReferenceTerm().getConceptSource() != null) {
+                        String system = null;
+                        if (conceptMap.getConceptReferenceTerm().getConceptSource().getHl7Code() != null) {
+                            system = conceptMap.getConceptReferenceTerm().getConceptSource().getHl7Code();
+                        } else {
+                            system = conceptMap.getConceptReferenceTerm().getConceptSource().getName();
+                        }
+                        codding.put(new JSONObject(String.format("{\"system\":\"%s\",\"code\":\"%s\",\"display\":\"%s\"}", system, conceptMap.getConceptReferenceTerm().getCode(), conceptMap.getConceptReferenceTerm().getName())));
+                    }
+                }
+
+
+                jsonObject.getJSONObject("resource").put("collection", new JSONObject(String.format("{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}}", testOrder.getDateActivated(), testOrder.getOrderer().getUuid())));
+
+                jsonObject.getJSONObject("resource").put("processing", new JSONArray(String.format("[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]", testOrder.getDateActivated())));
+
+                jsonObject.getJSONObject("resource").getJSONObject("type").put("coding", codding);
+                jsonObject.getJSONObject("resource").getJSONObject("subject").put("reference", "urn:uuid:" + order.getPatient().getUuid());
+
+                return jsonObject.toString();
+            }
+        } catch (Exception exception) {
+            log.error(exception);
+        }
+
+        return null;
+    }
+
     /**
      * Parses a string into an integer, logs an error if parsing fails, and returns 0 as default.
      */
@@ -2387,7 +2408,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         if (!isOrderSynced(order, syncTaskType)) {
             String payload = processResourceFromOrder(order);
             if (payload != null) {
-                response=sendViralLoadToCPHL(syncTaskType, payload, ugandaEMRHttpURLConnection, order);
+                response = sendViralLoadToCPHL(syncTaskType, payload, ugandaEMRHttpURLConnection, order);
             } else {
                 response.put("responseMessage", "UgandaEMR Internal Server error. There was an error processing order:" + order.getAccessionNumber());
                 logTransaction(syncTaskType, 500, "UgandaEMR Internal Server error. There was an error processing order:" + order.getAccessionNumber(), order.getAccessionNumber(), "UgandaEMR Internal Server error. There was an error processing order:" + order.getAccessionNumber(), new Date(), syncTaskType.getUrl(), false, false);
@@ -2403,7 +2424,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         boolean isOrderSynced = true;
 
         List<SyncTask> allSyncTasks = getSyncTasksByType(syncTaskType);
-        List<SyncTask> syncTasks = allSyncTasks.stream().filter(syncTask -> order.getAccessionNumber().equals(syncTask.getSyncTask()) && syncTaskType.equals(syncTask.getSyncTaskType()) && (syncTask.getStatusCode()==200 || syncTask.getStatusCode()==201)).collect(Collectors.toList());
+        List<SyncTask> syncTasks = allSyncTasks.stream().filter(syncTask -> order.getAccessionNumber().equals(syncTask.getSyncTask()) && syncTaskType.equals(syncTask.getSyncTaskType()) && (syncTask.getStatusCode() == 200 || syncTask.getStatusCode() == 201)).collect(Collectors.toList());
         if (syncTasks.size() < 1) {
             isOrderSynced = false;
         }
@@ -2439,16 +2460,16 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     response = 200;
                 }
 
-                if(response==200 || response==201){
-                    Context.getOrderService().updateOrderFulfillerStatus(order,Order.FulfillerStatus.RECEIVED,syncResponse.get("responseCode").toString());
+                if (response == 200 || response == 201) {
+                    Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, syncResponse.get("responseCode").toString());
                     logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), true, false);
-                }else {
+                } else {
                     logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), false, false);
                 }
             }
         } catch (Exception e) {
             log.error("Failed to create sync task", e);
-            syncResponse.put("responseMessage","Failed to create sync task: "+e.getMessage());
+            syncResponse.put("responseMessage", "Failed to create sync task: " + e.getMessage());
             logTransaction(syncTaskType, 500, "UgandaEMR Internal Server error. There was an error processing order:" + e.getMessage(), order.getAccessionNumber(), "UgandaEMR Internal Server error. There was an error processing order:" + e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
         }
 
@@ -2480,7 +2501,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
 
-
     private String processResourceFromOrder(Order order) {
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
         Collection<String> resources = new ArrayList<>();
@@ -2496,9 +2516,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         List<Person> personList = new ArrayList<>();
         personList.add(order.getPatient().getPerson());
 
+        String specimenSource = generateSpecimen(order);
+
         encounter.add(order.getEncounter());
 
-        resources.addAll(syncFHIRRecord.groupInCaseBundle("ServiceRequest", syncFHIRRecord.getServiceRequestResourceBundle(orderList), "HIV Clinic No."));
+        resources.addAll(addSpecimenSource(syncFHIRRecord.groupInCaseBundle("ServiceRequest", syncFHIRRecord.getServiceRequestResourceBundle(orderList), "HIV Clinic No."), order));
 
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Encounter", syncFHIRRecord.getEncounterResourceBundle(encounter), "HIV Clinic No."));
 
@@ -2508,11 +2530,30 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Observation", syncFHIRRecord.getObservationResourceBundle(null, encounter, personList), "HIV Clinic No."));
 
+        if (specimenSource != null) {
+            resources.add(specimenSource);
+        }
+
         if (!resources.isEmpty()) {
             finalCaseBundle = String.format(FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION, resources.toString());
         }
-
         return finalCaseBundle;
+    }
+
+    private Collection<String> addSpecimenSource(Collection<String> serviceRequests, Order order) {
+        TestOrder testOrder = (TestOrder) order;
+        Collection<String> serviceRequestList = new ArrayList<>();
+        for (String serviceRequest : serviceRequests) {
+            if (testOrder.getAccessionNumber() != null) {
+                JSONObject jsonObject = new JSONObject(serviceRequest);
+
+                jsonObject.getJSONObject("resource").put("specimen", new JSONArray(String.format("[{\"reference\":\"Specimen/%s\"}]", testOrder.getAccessionNumber())));
+                serviceRequestList.add(jsonObject.toString());
+            } else {
+                serviceRequestList.add(serviceRequest);
+            }
+        }
+        return serviceRequestList;
     }
 
     /**
