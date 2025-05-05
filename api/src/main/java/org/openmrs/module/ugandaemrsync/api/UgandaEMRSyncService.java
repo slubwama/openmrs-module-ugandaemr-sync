@@ -26,7 +26,11 @@ import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
+import java.util.Map;
 
 /**
  * The main service of this module, which is exposed for other modules. See

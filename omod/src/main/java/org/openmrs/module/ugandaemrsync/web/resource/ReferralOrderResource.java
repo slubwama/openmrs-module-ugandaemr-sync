@@ -195,7 +195,6 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
                     return referralOrder;
                 })
                 .collect(Collectors.toList());
-
         return new NeedsPaging<>(referralOrders, context);
     }
 
