@@ -59,9 +59,10 @@ public class RequestLabResultsResource extends DelegatingCrudResource<SyncTestOr
 
             // Extract required properties
             List orderUuids = propertiesToCreate.get("orders");
-            SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(RECEIVE_VIRAL_LOAD_SYNC_TASK_TYPE_UUID);
+            SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TASK_TYPE_UUID);
             for (Object orderUuid : orderUuids) {
                 Order order = Context.getOrderService().getOrderByUuid(orderUuid.toString());
+
                 List<SyncTask> syncTasks = ugandaEMRSyncService.getSyncTasksBySyncTaskId(order.getAccessionNumber()).stream().filter(syncTask -> syncTask.getSyncTaskType().equals(syncTaskType)).collect(Collectors.toList());
 
                 if (!syncTasks.isEmpty()) {
