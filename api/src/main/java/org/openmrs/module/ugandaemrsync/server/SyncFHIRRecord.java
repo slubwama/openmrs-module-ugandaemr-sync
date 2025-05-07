@@ -730,7 +730,7 @@ public class SyncFHIRRecord {
 
     public Collection<String> groupInCaseBundle(String resourceType, Collection<IBaseResource> iBaseResources, String identifierTypeName) {
 
-        Collection<String> resourceBundles = new ArrayList<>();
+         Collection<String> resourceBundles = new ArrayList<>();
 
         for (IBaseResource iBaseResource : iBaseResources) {
 
