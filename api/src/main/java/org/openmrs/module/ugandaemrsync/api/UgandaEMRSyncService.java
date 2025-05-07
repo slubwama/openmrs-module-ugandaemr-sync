@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.Map;
 
 /**
  * The main service of this module, which is exposed for other modules. See
@@ -496,5 +497,16 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> conceptList);
 
     public void sendPrescription();
+
+
+    public List<Map<String, String>> generateAndSyncBulkViralLoadRequest();
+
+    public Map sendSingleViralLoadOrder(Order order);
+
+    public Map requestLabResult(Order order, SyncTask syncTask);
+
+    public Date getDateFromString(String dateString, String format);
+
+    public Order getOrderByAccessionNumber(String assessionNumber);
 }
 

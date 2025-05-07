@@ -1981,4 +1981,15 @@
         </sql>
     </changeSet>
 
+    <changeSet id="ugandaemr-2025-05-04-1312" author="slubwama">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="1">
+                select count(*) from sync_task_type where uuid="3551ca84-06c0-432b-9064-fcfeefd6f4ec";
+            </sqlCheck>
+        </preConditions>
+        <comment>Update URL for Viral Load order send to use single payload channel</comment>
+        <sql>
+            UPDATE sync_task_type SET url_end_point = "https://ugisl.mets.or.ug/vl/sendbundledservicerequest?api_token=YiKjdApZ9gE5GzBRg7IZlligoqlk06FM8a64oPkEXnakBL6mDYcvM5NINqvc" WHERE uuid = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
+        </sql>
+    </changeSet>
 </databaseChangeLog>
