@@ -67,7 +67,8 @@ public class RequestLabResultsResource extends DelegatingCrudResource<SyncTestOr
 
                 if (!syncTasks.isEmpty()) {
                     SyncTask viralLoadSyncTask = syncTasks.get(0);
-                    if ((viralLoadSyncTask.getStatusCode() == 200 || viralLoadSyncTask.getStatusCode() == 201) && viralLoadSyncTask.getRequireAction() && !viralLoadSyncTask.getActionCompleted()) {
+                    boolean isSuccess = viralLoadSyncTask.getStatusCode() == 200 || viralLoadSyncTask.getStatusCode() == 201 || viralLoadSyncTask.getStatusCode() == 202 || viralLoadSyncTask.getStatusCode() == 208;
+                    if (isSuccess && viralLoadSyncTask.getRequireAction() && !viralLoadSyncTask.getActionCompleted()) {
                         responses.add(ugandaEMRSyncService.requestLabResult(order, viralLoadSyncTask));
                     } else {
                         Map<String, String> response = new HashMap<String, String>();
