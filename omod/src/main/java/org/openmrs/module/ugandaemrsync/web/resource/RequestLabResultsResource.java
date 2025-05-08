@@ -5,6 +5,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
+import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.web.resource.DTO.SyncTestOrderSync;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.ConversionUtil;
@@ -24,6 +25,9 @@ import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import org.openmrs.module.webservices.validation.ValidateUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 @Resource(name = RestConstants.VERSION_1 + "/requestlabresult", supportedClass = SyncTestOrderSync.class, supportedOpenmrsVersions = {"1.9.* - 9.*"})
 public class RequestLabResultsResource extends DelegatingCrudResource<SyncTestOrderSync> {
@@ -44,27 +48,36 @@ public class RequestLabResultsResource extends DelegatingCrudResource<SyncTestOr
         UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncTestOrderSync delegate = new SyncTestOrderSync();
-        List<Map> responses=new ArrayList<>();
-        List<Order> orderList=new ArrayList<>();
+        List<Map> responses = new ArrayList<>();
+        List<Order> orderList = new ArrayList<>();
 
         if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
             Map<String, String> response = new HashMap<String, String>();
             response.put("responseMessage", "No Internet Connection to get results of orders from CPHL");
             responses.add(response);
-        }else {
+        } else {
 
             // Extract required properties
             List orderUuids = propertiesToCreate.get("orders");
-
+            SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TASK_TYPE_UUID);
             for (Object orderUuid : orderUuids) {
                 Order order = Context.getOrderService().getOrderByUuid(orderUuid.toString());
-                SyncTask syncTask=ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getAccessionNumber());
 
-                if((syncTask.getStatusCode()==200 || syncTask.getStatusCode()==201) && syncTask.getRequireAction() && !syncTask.getActionCompleted()) {
-                    responses.add(ugandaEMRSyncService.requestLabResult(order, syncTask));
+                List<SyncTask> syncTasks = ugandaEMRSyncService.getSyncTasksBySyncTaskId(order.getAccessionNumber()).stream().filter(syncTask -> syncTask.getSyncTaskType().equals(syncTaskType)).collect(Collectors.toList());
+
+                if (!syncTasks.isEmpty()) {
+                    SyncTask viralLoadSyncTask = syncTasks.get(0);
+                    boolean isSuccess = viralLoadSyncTask.getStatusCode() == 200 || viralLoadSyncTask.getStatusCode() == 201 || viralLoadSyncTask.getStatusCode() == 202 || viralLoadSyncTask.getStatusCode() == 208;
+                    if (isSuccess && viralLoadSyncTask.getRequireAction() && !viralLoadSyncTask.getActionCompleted()) {
+                        responses.add(ugandaEMRSyncService.requestLabResult(order, viralLoadSyncTask));
+                    } else {
+                        Map<String, String> response = new HashMap<String, String>();
+                        response.put("responseMessage", String.format("Order: %s does not qualify to receive results", order.getAccessionNumber()));
+                        responses.add(response);
+                    }
                 }else {
                     Map<String, String> response = new HashMap<String, String>();
-                    response.put("responseMessage", String.format("Order: %s does not qualify to receive results",order.getAccessionNumber()));
+                    response.put("responseMessage", String.format("No Order found for order no: %s", order.getAccessionNumber()));
                     responses.add(response);
                 }
                 orderList.add(order);

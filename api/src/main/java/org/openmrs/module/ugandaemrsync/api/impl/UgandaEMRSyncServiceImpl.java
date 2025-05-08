@@ -2532,11 +2532,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             // Logging based on responseCode or status
             if (responseCode != null && !results.containsKey("status")) {
-                logTransaction(syncTaskType, responseCode, responseMessage, order.getAccessionNumber(), responseMessage, new Date(), syncTaskType.getUrl(), false, false);
-                response.put("responseMessage", responseMessage);
+                String detailedResponseMessage=String.format("CPHL Server Response for order: %s while fetching results:  %s",order.getAccessionNumber(),responseMessage);
+                logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", detailedResponseMessage);
             } else if (results.containsKey("status")) {
-                logTransaction(syncTaskType, responseCode, results.get("status").toString(), order.getAccessionNumber(), results.get("status").toString(), new Date(), syncTaskType.getUrl(), false, false);
-                response.put("responseMessage", results.get("status").toString());
+
+                String detailedResponseMessage=String.format("CPHL Response : Results for order: %s are %s",order.getAccessionNumber(),results.get("status").toString());
+                logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", detailedResponseMessage);
             }
         }
         return response;
