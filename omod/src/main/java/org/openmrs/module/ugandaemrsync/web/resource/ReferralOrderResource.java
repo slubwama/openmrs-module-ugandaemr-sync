@@ -165,7 +165,6 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
 
         String activatedOnOrAfter = context.getParameter("activatedOnOrAfter");
         String fulfillerStatusParam = context.getParameter("fulfillerStatus");
-        String synced = context.getParameter("synced");
 
         Order.FulfillerStatus fulfillerStatus = parseFulfillerStatus(fulfillerStatusParam);
 
