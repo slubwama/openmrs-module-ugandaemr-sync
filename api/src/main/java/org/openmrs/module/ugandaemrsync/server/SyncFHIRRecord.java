@@ -730,7 +730,7 @@ public class SyncFHIRRecord {
 
     public Collection<String> groupInCaseBundle(String resourceType, Collection<IBaseResource> iBaseResources, String identifierTypeName) {
 
-         Collection<String> resourceBundles = new ArrayList<>();
+        Collection<String> resourceBundles = new ArrayList<>();
 
         for (IBaseResource iBaseResource : iBaseResources) {
 
@@ -744,99 +744,55 @@ public class SyncFHIRRecord {
     }
 
     private String encodeResourceToString(String resourceType, String identifierTypeName, IBaseResource iBaseResource) {
-        IParser parser = FhirContext.forR4().newJsonParser();
-        String jsonString;
+        IParser iParser = FhirContext.forR4().newJsonParser();
 
+        String jsonString = "";
         try {
-            jsonString = parser.encodeResourceToString(iBaseResource);
+            jsonString = iParser.encodeResourceToString(iBaseResource);
 
-            switch (resourceType) {
-                case "Patient":
-                    jsonString = handlePatientResource(jsonString);
-                    break;
+            if (resourceType.equals("Patient") || resourceType.equals("Practitioner")) {
 
-                case "Practitioner":
-                    jsonString = handlePractitionerResource(jsonString);
-                    break;
+                if (resourceType.equals("Patient")) {
+                    jsonString = correctEstimatedDOB(jsonString);
+                    if (profile != null && profile.getKeepProfileIdentifierOnly()) {
+                        try {
+                            jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
+                            jsonString = addCodingToIdentifier(jsonString, "identifier");
+                            jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
+                        } catch (Exception exception) {
+                            log.error(exception);
+                        }
+                    }
+                }
+                jsonString = addAttributeToObject(jsonString, "telecom", "system", "phone");
+                jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
+                jsonString = addUseOfficialToName(jsonString, "name");
+                jsonString = removeAttribute(jsonString, "contained");
+                jsonString = jsonString.replace("address5", "village").replace("address4", "parish").replace("address3", "subcounty").replace("state", "city");
+            }
 
-                case "Person":
-                    jsonString = wrapResourceWithId(jsonString, resourceType);
-                    break;
+            if (resourceType.equals("Patient") || resourceType.equals("Practitioner") || resourceType.equals("Person")) {
+                JSONObject jsonObject = new JSONObject(jsonString);
+                String resourceIdentifier = "";
+                resourceIdentifier = jsonObject.get("id").toString();
+                jsonString = wrapResourceInPUTRequest(jsonString, resourceType, resourceIdentifier);
+            } else if (resourceType.equals("Encounter")) {
+                jsonString = addOrganizationToRecord(jsonString, "serviceProvider");
+                jsonString = addServiceType(jsonString, "serviceType");
+                if (anyOtherObject.get("episodeOfCare") != null) {
+                    jsonString = addEpisodeOfCareToEncounter(jsonString, anyOtherObject.get("episodeOfCare"));
+                }
+                jsonString = wrapResourceInPostRequest(jsonString);
 
-                case "Encounter":
-                    jsonString = handleEncounterResource(jsonString);
-                    break;
-
-                case "Observation":
-                    jsonString = addReferencesMappingToObservation(wrapResourceInPostRequest(jsonString));
-                    break;
-
-                default:
-                    jsonString = wrapResourceInPostRequest(jsonString);
-                    break;
+            } else if (resourceType.equals("Observation")) {
+                jsonString = addReferencesMappingToObservation(wrapResourceInPostRequest(jsonString));
+            } else {
+                jsonString = wrapResourceInPostRequest(jsonString);
             }
         } catch (Exception e) {
-            log.error("Error encoding resource: ", e);
-            return "";
+            log.error(e);
         }
-
         return jsonString;
-    }
-
-    private String handlePatientResource(String jsonString) {
-        jsonString = correctEstimatedDOB(jsonString);
-
-        if (profile != null && profile.getKeepProfileIdentifierOnly()) {
-            try {
-                jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
-                jsonString = addCodingToIdentifier(jsonString, "identifier");
-                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
-            } catch (Exception e) {
-                log.error("Error processing patient identifiers: ", e);
-            }
-        }
-
-        jsonString = commonPersonPractitionerTransformations(jsonString);
-        return wrapResourceWithId(jsonString, "Patient");
-    }
-
-    private String handlePractitionerResource(String jsonString) {
-        jsonString = commonPersonPractitionerTransformations(jsonString);
-        return wrapResourceWithId(jsonString, "Practitioner");
-    }
-
-    private String commonPersonPractitionerTransformations(String jsonString) {
-        jsonString = addAttributeToObject(jsonString, "telecom", "system", "phone");
-        jsonString = addOrganizationToRecord(jsonString, "managingOrganization");
-        jsonString = addUseOfficialToName(jsonString, "name");
-        jsonString = removeAttribute(jsonString, "contained");
-        jsonString = jsonString.replace("address5", "village")
-                .replace("address4", "parish")
-                .replace("address3", "subcounty")
-                .replace("state", "city");
-        return jsonString;
-    }
-
-    private String handleEncounterResource(String jsonString) {
-        jsonString = addOrganizationToRecord(jsonString, "serviceProvider");
-        jsonString = addServiceType(jsonString, "serviceType");
-
-        if (anyOtherObject.get("episodeOfCare") != null) {
-            jsonString = addEpisodeOfCareToEncounter(jsonString, anyOtherObject.get("episodeOfCare"));
-        }
-
-        return wrapResourceInPostRequest(jsonString);
-    }
-
-    private String wrapResourceWithId(String jsonString, String resourceType) {
-        try {
-            JSONObject jsonObject = new JSONObject(jsonString);
-            String id = jsonObject.getString("id");
-            return wrapResourceInPUTRequest(jsonString, resourceType, id);
-        } catch (Exception e) {
-            log.error("Error wrapping resource with ID: ", e);
-            return wrapResourceInPostRequest(jsonString);
-        }
     }
 
     private String addUseOfficialToName(String payload, String attributeName) {
@@ -1154,7 +1110,7 @@ public class SyncFHIRRecord {
 
             JSONArray codes = searchParams.getJSONArray("code");
 
-            lastSyncDate=getLastSyncDate(syncFhirProfile, "Observation");
+            lastSyncDate = getLastSyncDate(syncFhirProfile, "Observation");
             for (Object conceptUID : codes) {
                 try {
 
@@ -1424,7 +1380,7 @@ public class SyncFHIRRecord {
 
             }
         }
-        
+
         if (!searchParams.isEmpty() && searchParams.has("code")) {
             JSONArray codes = searchParams.getJSONArray("code");
             for (Object conceptUID : codes) {
@@ -1439,7 +1395,7 @@ public class SyncFHIRRecord {
         }
 
         ReferenceAndListParam patientReference = new ReferenceAndListParam();
-        if(syncFhirCase!=null) {
+        if (syncFhirCase != null) {
             patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
         }
 

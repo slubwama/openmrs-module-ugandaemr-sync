@@ -90,7 +90,6 @@ public class SyncConstant {
     public static final String VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID = "077c43ee-9745-11e9-bc42-526af7764f64";
 
     public static final String VIRAL_LOAD_SYNC_TASK_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
-    public static final String RECEIVE_VIRAL_LOAD_SYNC_TASK_TYPE_UUID = "3396dcf0-2106-4e73-9b90-c63978c3a8b4";
 
     public static final String VIRAL_LOAD_SYNC_TYPE_UUID = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
     public static final String VL_PROGRAM_DATA_SYNC_TYPE_UUID = "f9b2fa5d-5d37-4fd9-b20a-a0cab664f520";

@@ -2532,14 +2532,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             // Logging based on responseCode or status
             if (responseCode != null && !results.containsKey("status")) {
-                String detailedResponseMessage=String.format("CPHL Server Response for order: %s while fetching results:  %s",order.getAccessionNumber(),responseMessage);
-                logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
-                response.put("responseMessage", detailedResponseMessage);
+                logTransaction(syncTaskType, responseCode, responseMessage, order.getAccessionNumber(), responseMessage, new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", responseMessage);
             } else if (results.containsKey("status")) {
-
-                String detailedResponseMessage=String.format("CPHL Response : Results for order: %s are %s",order.getAccessionNumber(),results.get("status").toString());
-                logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
-                response.put("responseMessage", detailedResponseMessage);
+                logTransaction(syncTaskType, responseCode, results.get("status").toString(), order.getAccessionNumber(), results.get("status").toString(), new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", results.get("status").toString());
             }
         }
         return response;
@@ -2586,45 +2583,29 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     private Map sendViralLoadToCPHL(SyncTaskType syncTaskType, String payload, UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection, Order order) {
-        Map<String, Object> syncResponse = new HashMap<>();
 
+        Map syncResponse = null;
         try {
-            syncResponse = ugandaEMRHttpURLConnection.sendPostBy(
-                    syncTaskType.getUrl(),
-                    syncTaskType.getUrlUserName(),
-                    syncTaskType.getUrlPassword(),
-                    "",
-                    payload,
-                    false
-            );
-
+            syncResponse = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", payload, false);
             if (syncResponse != null) {
-                Map<String, Object> responseType = handleReturnedResponses(order, syncResponse);
-                int responseCode = Integer.parseInt(syncResponse.getOrDefault("responseCode", "500").toString());
+                Map responseType = handleReturnedResponses(order, syncResponse);
+                Integer response = (Integer) syncResponse.get("responseCode");
 
-                // Handle duplicate case with a 400 response
-                if (responseCode == 400 && "Duplicate".equalsIgnoreCase(String.valueOf(responseType.get("responseType")))) {
-                    responseCode = 200;
+                if (syncResponse.get("responseCode").toString().equals("400") && responseType.get("responseType").toString().equals("Duplicate")) {
+                    response = 200;
                 }
 
-                boolean isSuccess = responseCode == 200 || responseCode == 201 || responseCode == 202 || responseCode == 208;
-                String responseMessage = String.valueOf(syncResponse.get("responseMessage"));
-                String accessionNumber = order.getAccessionNumber();
-                String url = syncTaskType.getUrl();
-
-                if (isSuccess) {
-                    Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, String.valueOf(syncResponse.get("responseCode")));
+                if (response == 200 || response == 201) {
+                    Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, syncResponse.get("responseCode").toString());
+                    logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), true, false);
+                } else {
+                    logTransaction(syncTaskType, response, (String) syncResponse.get("responseMessage"), order.getAccessionNumber(), (String) syncResponse.get("responseMessage"), new Date(), syncTaskType.getUrl(), false, false);
                 }
-
-                logTransaction(syncTaskType, responseCode, responseMessage, accessionNumber, responseMessage, new Date(), url, isSuccess, false);
             }
-
         } catch (Exception e) {
-            String errorMessage = "UgandaEMR Internal Server error. There was an error processing order: " + e.getMessage();
             log.error("Failed to create sync task", e);
-            syncResponse.put("responseMessage", errorMessage);
-
-            logTransaction(syncTaskType, 500, errorMessage, order.getAccessionNumber(), errorMessage, new Date(), syncTaskType.getUrl(), false, false);
+            syncResponse.put("responseMessage", "Failed to create sync task: " + e.getMessage());
+            logTransaction(syncTaskType, 500, "UgandaEMR Internal Server error. There was an error processing order:" + e.getMessage(), order.getAccessionNumber(), "UgandaEMR Internal Server error. There was an error processing order:" + e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
         }
 
         return syncResponse;
@@ -2638,7 +2619,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
                 responseType.put("responseType", "Not HIE compliant");
             } else if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")) {
-                Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, String.valueOf(response.get("responseMessage").toString()));
+                //TODO need to update openmrs version in sync in order to support updating fulfiller status
                 responseType.put("responseType", "Duplicate");
             }
         } catch (Exception e) {
