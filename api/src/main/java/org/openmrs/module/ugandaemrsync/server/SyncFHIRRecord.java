@@ -784,6 +784,7 @@ public class SyncFHIRRecord {
     }
 
     private String handlePatientResource(String jsonString) {
+        jsonString = correctEstimatedDOB(jsonString);
         if (profile != null && profile.getKeepProfileIdentifierOnly()) {
             try {
                 jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
@@ -878,13 +879,24 @@ public class SyncFHIRRecord {
             for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
                 JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
                 PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
-                if (patientIdentifier.getPatient().getBirthdateEstimated()) {
-                    jsonObject.put("birthDate", patientIdentifier.getPatient().getBirthdate().toString().replace(" 00:00:00.0", ""));
-                }
                 jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
                 identifierCount++;
             }
         }
+        return jsonObject.toString();
+    }
+
+    private String correctEstimatedDOB(String payload) {
+        JSONObject jsonObject = new JSONObject(payload);
+
+        if (!jsonObject.has("id"))
+            return payload;
+
+        Patient patient = Context.getPatientService().getPatientByUuid(jsonObject.getString("id"));
+        if (patient.getBirthdateEstimated()) {
+            jsonObject.put("birthDate", patient.getBirthdate().toString().replace(" 00:00:00.0", ""));
+        }
+
         return jsonObject.toString();
     }
 
@@ -1141,7 +1153,7 @@ public class SyncFHIRRecord {
 
             JSONArray codes = searchParams.getJSONArray("code");
 
-            lastSyncDate=getLastSyncDate(syncFhirProfile, "Observation");
+            lastSyncDate = getLastSyncDate(syncFhirProfile, "Observation");
             for (Object conceptUID : codes) {
                 try {
 
@@ -1411,7 +1423,7 @@ public class SyncFHIRRecord {
 
             }
         }
-        
+
         if (!searchParams.isEmpty() && searchParams.has("code")) {
             JSONArray codes = searchParams.getJSONArray("code");
             for (Object conceptUID : codes) {
@@ -1426,7 +1438,7 @@ public class SyncFHIRRecord {
         }
 
         ReferenceAndListParam patientReference = new ReferenceAndListParam();
-        if(syncFhirCase!=null) {
+        if (syncFhirCase != null) {
             patientReference.addValue(new ReferenceOrListParam().add(new ReferenceParam(SP_IDENTIFIER, syncFhirCase.getPatient().getPatientIdentifier().getIdentifier())));
         }
 
