@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
-@Resource(name = RestConstants.VERSION_1 + "/syncreferralorder", supportedClass = ReferralOrder.class, supportedOpenmrsVersions = {"1.9.* - 9.*"})
+@Resource(name = RestConstants.VERSION_1 + "/referredorders", supportedClass = ReferralOrder.class, supportedOpenmrsVersions = {"1.9.* - 9.*"})
 public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder> {
 
     @Override
@@ -183,11 +183,11 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
                 Collections.singletonList(orderType),
                 null, null, null, activatedDate,
                 false, null, null,
-                null, fulfillerStatus,
+                Order.Action.REVISE, fulfillerStatus,
                 true, true, true, false
         );
 
-        List<ReferralOrder> referralOrders = orderService.getOrders(searchCriteria).stream().filter(order -> order.getInstructions().equals("REFER TO CPHL"))
+        List<ReferralOrder> referralOrders = orderService.getOrders(searchCriteria).stream().filter(order -> order.getAccessionNumber()!=null && order.getInstructions().equals("REFER TO CPHL"))
                 .map(order -> {
                     ReferralOrder referralOrder = new ReferralOrder();
                     referralOrder.setOrder(order);
@@ -254,17 +254,15 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
 
     private Order.FulfillerStatus parseFulfillerStatus(String status) {
         if (status == null) {
-            return null;
+            return Order.FulfillerStatus.IN_PROGRESS;
         }
         switch (status.toUpperCase()) {
             case "RECEIVED":
                 return Order.FulfillerStatus.RECEIVED;
             case "COMPLETED":
                 return Order.FulfillerStatus.COMPLETED;
-            case "IN_PROGRESS":
-                return Order.FulfillerStatus.IN_PROGRESS;
             default:
-                return null;
+                return Order.FulfillerStatus.IN_PROGRESS;
         }
     }
 }
