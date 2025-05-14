@@ -416,7 +416,7 @@
 
     <globalProperty>
         <property>ugandaemrsync.viralloadRequiredProgramData</property>
-        <defaultValue>413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2,202501021</defaultValue>
+        <defaultValue>413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2</defaultValue>
         <description>
            The Viral load required fields codes
         </description>
