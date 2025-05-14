@@ -2440,7 +2440,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         List<Order> orderList = new ArrayList<>();
 
         if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
-            response.put("responseMessage", "No Internet Connection to send order " + order.getAccessionNumber());
+            response.put("responseMessage", "No Internet Connection to send order" + order.getAccessionNumber());
             return response;
         }
 
@@ -2476,10 +2476,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             response.put("responseMessage", "Order: " + order.getAccessionNumber() + " is already synced");
         }
-
         return response;
     }
-
 
 
     @Override
@@ -2541,7 +2539,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         saveSyncTask(syncTask);
                         logTransaction(syncTaskType, responseCode, result.get(0).get("valueString").toString(), order.getAccessionNumber(), result.get(0).get("valueString").toString(), new Date(), syncTaskType.getUrl(), false, false);
                         try {
-                            Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.COMPLETED, result.get(0).get("valueString").toString());
+                            Context.getOrderService().updateOrderFulfillerStatus(order,Order.FulfillerStatus.COMPLETED,result.get(0).get("valueString").toString());
                             Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
                         } catch (Exception e) {
                             log.error("Failed to discontinue order", e);
@@ -2561,12 +2559,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             // Logging based on responseCode or status
             if (responseCode != null && !results.containsKey("status")) {
-                String detailedResponseMessage = String.format("CPHL Server Response for order: %s while fetching results:  %s", order.getAccessionNumber(), responseMessage);
+                String detailedResponseMessage=String.format("CPHL Server Response for order: %s while fetching results:  %s",order.getAccessionNumber(),responseMessage);
                 logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
                 response.put("responseMessage", detailedResponseMessage);
             } else if (results.containsKey("status")) {
 
-                String detailedResponseMessage = String.format("CPHL Response : Results for order: %s are %s", order.getAccessionNumber(), results.get("status").toString());
+                String detailedResponseMessage=String.format("CPHL Response : Results for order: %s are %s",order.getAccessionNumber(),results.get("status").toString());
                 logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
                 response.put("responseMessage", detailedResponseMessage);
             }
@@ -2920,7 +2918,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             return false;
         }
     }
-
 }
 
 
