@@ -1,11 +1,18 @@
 package org.openmrs.module.ugandaemrsync.server;
 
-import org.json.JSONObject;
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Observation;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.openmrs.Encounter;
-import org.openmrs.api.EncounterService;
+import org.mockito.MockedStatic;
+import org.openmrs.Concept;
+import org.openmrs.ConceptName;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -13,12 +20,10 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.test.context.ContextConfiguration;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static org.mockito.Mockito.*;
 
 @ComponentScan(basePackages = {"org.openmrs.module.fhir2"})
 public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
@@ -37,7 +42,7 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
     public void addOrganizationToRecord_shouldReturnJsonStringWithAManagingOrganization() {
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 
-        String managingOrganizationJsonString = syncFHIRRecord.addOrganizationToRecord("{}","managingOrganization");
+        String managingOrganizationJsonString = syncFHIRRecord.addOrganizationToRecord("{}", "managingOrganization");
 
         Assert.assertNotEquals(managingOrganizationJsonString, "{}");
         Assert.assertEquals(managingOrganizationJsonString, "{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\",\"identifier\":{\"system\":\"https://hmis.health.go.ug/\",\"use\":\"official\",\"value\":\"7744yxP\"},\"display\":\"Health Center Name\",\"type\":\"Organization\"}}");
@@ -74,4 +79,100 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         Assert.assertEquals(syncFhirResourcesBeforeSave.size() + 4, syncFhirResourcesAfterSave.size());
     }
 
+    @Test
+    public void testValidateVLFHIRBundle_withAllRequiredCodes() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        IParser parser = FhirContext.forR4().newJsonParser();
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.TRANSACTION);
+
+        bundle.addEntry().setResource(createObservation("413946009"));
+        bundle.addEntry().setResource(createObservation("385354005"));
+        bundle.addEntry().setResource(createObservation("385354005"));
+        bundle.addEntry().setResource(createObservation("202501002"));
+        bundle.addEntry().setResource(createObservation("LL5723-3"));
+        bundle.addEntry().setResource(createObservation("202501009"));
+        bundle.addEntry().setResource(createObservation("202501016"));
+        bundle.addEntry().setResource(createObservation("202501020"));
+        bundle.addEntry().setResource(createObservation("33882-2"));
+        bundle.addEntry().setResource(createObservation("202501021"));
+
+        String json = parser.encodeResourceToString(bundle);
+        boolean result = ugandaEMRSyncService.validateVLFHIRBundle(json);
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void testValidateVLFHIRBundle_missingSomeCodes() {
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        IParser parser = FhirContext.forR4().newJsonParser();
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+
+        bundle.addEntry().setResource(createObservation("202501021"));
+        bundle.addEntry().setResource(createObservation("202501020"));
+        // Missing "868642"
+
+        String json = parser.encodeResourceToString(bundle);
+        boolean result = ugandaEMRSyncService.validateVLFHIRBundle(json);
+        Assert.assertFalse("Payload Missing some data", result);
+    }
+
+
+    @Test
+    public void testGetMissingVLFHIRCodesAsString_withOutMissingCodes() {
+        UgandaEMRSyncService service = Context.getService(UgandaEMRSyncService.class);
+        IParser parser = FhirContext.forR4().newJsonParser();
+
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+        bundle.addEntry().setResource(createObservation("413946009"));
+        bundle.addEntry().setResource(createObservation("385354005"));
+        bundle.addEntry().setResource(createObservation("202501002"));
+        bundle.addEntry().setResource(createObservation("LL5723-3"));
+        bundle.addEntry().setResource(createObservation("202501009"));
+        bundle.addEntry().setResource(createObservation("202501016"));
+        bundle.addEntry().setResource(createObservation("33882-2"));
+        bundle.addEntry().setResource(createObservation("202501020"));
+        bundle.addEntry().setResource(createObservation("202501021"));
+
+        String json = parser.encodeResourceToString(bundle);
+
+
+        String result = service.getMissingVLFHIRCodesAsString(json);
+        Assert.assertEquals("", result);
+    }
+    @Test
+    public void testGetMissingVLFHIRCodesAsString_withTwoMissingCodes() {
+        UgandaEMRSyncService service = Context.getService(UgandaEMRSyncService.class);
+        IParser parser = FhirContext.forR4().newJsonParser();
+
+        // Create a bundle missing "202501020" and "202501021"
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.COLLECTION);
+        bundle.addEntry().setResource(createObservation("413946009"));
+        bundle.addEntry().setResource(createObservation("385354005"));
+        bundle.addEntry().setResource(createObservation("202501002"));
+        bundle.addEntry().setResource(createObservation("LL5723-3"));
+        bundle.addEntry().setResource(createObservation("202501009"));
+        bundle.addEntry().setResource(createObservation("202501016"));
+        bundle.addEntry().setResource(createObservation("33882-2"));
+
+        String json = parser.encodeResourceToString(bundle);
+        String missingConceptName1=service.getVLMissingCconcept("202501020").getName().getName();
+        String missingConceptName2=service.getVLMissingCconcept("202501021").getName().getName();
+
+        String result = service.getMissingVLFHIRCodesAsString(json);
+        Assert.assertEquals(String.format("%s,%s",missingConceptName1,missingConceptName2), result);
+    }
+
+    private Observation createObservation(String code) {
+        Observation obs = new Observation();
+        obs.setStatus(Observation.ObservationStatus.FINAL);
+        obs.setCode(new CodeableConcept().addCoding(new Coding()
+                .setSystem("http://loinc.org")
+                .setCode(code)
+                .setDisplay("Sample Observation " + code)));
+        return obs;
+    }
 }
