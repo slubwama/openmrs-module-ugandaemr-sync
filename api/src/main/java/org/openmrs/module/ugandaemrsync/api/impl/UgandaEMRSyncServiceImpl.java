@@ -1308,9 +1308,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 }
 
 
-                jsonObject.getJSONObject("resource").put("collection", new JSONObject(String.format("{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}}", testOrder.getDateActivated(), testOrder.getOrderer().getUuid())));
+                jsonObject.getJSONObject("resource").put("collection", new JSONObject(String.format("{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}}",  testOrder.getDateActivated().toString().replace(" ","T"), testOrder.getOrderer().getUuid())));
 
-                jsonObject.getJSONObject("resource").put("processing", new JSONArray(String.format("[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]", testOrder.getDateActivated())));
+                jsonObject.getJSONObject("resource").put("processing", new JSONArray(String.format("[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]", testOrder.getDateActivated().toString().replace(" ","T"))));
 
                 jsonObject.getJSONObject("resource").getJSONObject("type").put("coding", codding);
                 jsonObject.getJSONObject("resource").getJSONObject("subject").put("reference", "urn:uuid:" + order.getPatient().getUuid());
@@ -2462,7 +2462,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                             getMissingVLFHIRCodesAsString(payload)
                     );
                     logTransaction(syncTaskType, 500, missingObsInPayload, order.getAccessionNumber(),
-                            "UgandaEMR Internal Server error. There was an error processing order: " + order.getAccessionNumber(),
+                            missingObsInPayload,
                             new Date(), syncTaskType.getUrl(), false, false);
                     response.put("responseMessage", missingObsInPayload);
                 } else {
