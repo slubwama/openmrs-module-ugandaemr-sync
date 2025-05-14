@@ -9,8 +9,13 @@
  */
 package org.openmrs.module.ugandaemrsync.api.impl;
 
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Observation;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -82,6 +87,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Year;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -2439,12 +2445,33 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
 
         if (!isOrderSynced(order, syncTaskType)) {
+            if (order != null && order.getAccessionNumber() != null && !isValidCPHLBarCode(order.getAccessionNumber())) {
+                String message = String.format("Order: %s does not have valid bar code.", order.getAccessionNumber());
+                logTransaction(syncTaskType, 500, message, order.getAccessionNumber(), message, new Date(), syncTaskType.getUrl(), false, false);
+                response.put("responseMessage", message);
+                return response;
+            }
+
             String payload = processResourceFromOrder(order);
+
             if (payload != null) {
-                response = sendViralLoadToCPHL(syncTaskType, payload, ugandaEMRHttpURLConnection, order);
+                if (!validateVLFHIRBundle(payload)) {
+                    String missingObsInPayload = String.format(
+                            "Order: %s is not valid due to missing %s in the required field",
+                            order.getAccessionNumber(),
+                            getMissingVLFHIRCodesAsString(payload)
+                    );
+                    logTransaction(syncTaskType, 500, missingObsInPayload, order.getAccessionNumber(),
+                            "UgandaEMR Internal Server error. There was an error processing order: " + order.getAccessionNumber(),
+                            new Date(), syncTaskType.getUrl(), false, false);
+                    response.put("responseMessage", missingObsInPayload);
+                } else {
+                    response = sendViralLoadToCPHL(syncTaskType, payload, ugandaEMRHttpURLConnection, order);
+                }
             } else {
-                response.put("responseMessage", "UgandaEMR Internal Server error. There was an error processing order:" + order.getAccessionNumber());
-                logTransaction(syncTaskType, 500, "UgandaEMR Internal Server error. There was an error processing order:" + order.getAccessionNumber(), order.getAccessionNumber(), "UgandaEMR Internal Server error. There was an error processing order:" + order.getAccessionNumber(), new Date(), syncTaskType.getUrl(), false, false);
+                String error = "UgandaEMR Internal Server error. There was an error processing order: " + order.getAccessionNumber();
+                response.put("responseMessage", error);
+                logTransaction(syncTaskType, 500, error, order.getAccessionNumber(), error, new Date(), syncTaskType.getUrl(), false, false);
             }
         } else {
             response.put("responseMessage", "Order: " + order.getAccessionNumber() + " is already synced");
@@ -2796,6 +2823,101 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return eAFYAProductList;
     }
 
+    public boolean validateVLFHIRBundle(String bundleJson) {
+        List<String> targetCodes = Arrays.asList(Context.getAdministrationService().getGlobalProperty("ugandaemrsync.viralloadRequiredProgramData").split(","));
+        Set<String> foundCodes = new HashSet<>();
+
+        FhirContext ctx = FhirContext.forR4();
+        IParser parser = ctx.newJsonParser();
+        Bundle bundle = parser.parseResource(Bundle.class, bundleJson);
+
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+            if (entry.getResource() instanceof Observation) {
+                Observation obs = (Observation) entry.getResource();
+                for (Coding coding : obs.getCode().getCoding()) {
+                    if (targetCodes.contains(coding.getCode())) {
+                        foundCodes.add(coding.getCode());
+                    }
+                }
+            }
+        }
+
+        return foundCodes.containsAll(targetCodes);
+    }
+
+    public String getMissingVLFHIRCodesAsString(String bundleJson) {
+        List<String> targetCodes = Arrays.asList(
+                Context.getAdministrationService()
+                        .getGlobalProperty("ugandaemrsync.viralloadRequiredProgramData")
+                        .split(",")
+        );
+        Set<String> foundCodes = new HashSet<>();
+
+        FhirContext ctx = FhirContext.forR4();
+        IParser parser = ctx.newJsonParser();
+        Bundle bundle = parser.parseResource(Bundle.class, bundleJson);
+
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+            if (entry.getResource() instanceof Observation) {
+                Observation obs = (Observation) entry.getResource();
+                for (Coding coding : obs.getCode().getCoding()) {
+                    if (targetCodes.contains(coding.getCode())) {
+                        foundCodes.add(coding.getCode());
+                    }
+                }
+            }
+        }
+
+        // Identify missing codes
+        List<String> missingCodes = new ArrayList<>();
+        for (String code : targetCodes) {
+            if (!foundCodes.contains(code)) {
+
+                Concept concept = getVLMissingCconcept(code);
+                if (concept != null) {
+                    missingCodes.add(concept.getName().getName());
+                } else {
+                    missingCodes.add(code);
+                }
+            }
+        }
+        return missingCodes.stream().collect(Collectors.joining(","));
+    }
+
+    public Concept getVLMissingCconcept(String code) {
+        Concept loinc = Context.getConceptService().getConceptByMapping(code, "LOINC");
+        Concept cphl = Context.getConceptService().getConceptByMapping(code, "UNHLS");
+        Concept snomed = Context.getConceptService().getConceptByMapping(code, "SNOMED");
+
+        if (loinc != null) {
+            return snomed;
+        }
+
+        if (cphl != null) {
+            return cphl;
+        }
+        if (snomed != null) {
+            return snomed;
+        }
+
+        return null;
+    }
+
+    public boolean isValidCPHLBarCode(String accessionNumber) {
+        Integer minimumCPHLBarCodeLength = Integer.parseInt(Context.getAdministrationService().getGlobalProperty("ugandaemrsync.minimumCPHLBarCodeLength"));
+        if (accessionNumber == null || accessionNumber.length() < minimumCPHLBarCodeLength) {
+            return false;
+        }
+
+        int currentYearSuffix = Year.now().getValue() % 100;
+
+        try {
+            int prefix = Integer.parseInt(accessionNumber.substring(0, 2));
+            return prefix == currentYearSuffix || prefix == (currentYearSuffix - 1);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 }
 
 

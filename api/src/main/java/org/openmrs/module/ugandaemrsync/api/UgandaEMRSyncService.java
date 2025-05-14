@@ -508,5 +508,12 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public Date getDateFromString(String dateString, String format);
 
     public Order getOrderByAccessionNumber(String assessionNumber);
+
+    public boolean validateVLFHIRBundle(String bundleJson);
+
+    public boolean isValidCPHLBarCode(String accessionNumber);
+    public String getMissingVLFHIRCodesAsString(String bundleJson);
+
+    public Concept getVLMissingCconcept(String code);
 }
 
