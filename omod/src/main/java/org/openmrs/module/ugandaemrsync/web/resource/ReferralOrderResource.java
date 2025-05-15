@@ -178,7 +178,7 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
         OrderSearchCriteria searchCriteria = new OrderSearchCriteria(
                 null,
                 careSetting,
-                Collections.singletonList(conceptService.getConcept(165412)),
+                syncService.getReferralOrderConcepts(),
                 Collections.singletonList(orderType),
                 null, null, null, activatedDate,
                 false, null, null,
