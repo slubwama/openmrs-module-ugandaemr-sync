@@ -163,7 +163,7 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
         OrderService orderService = Context.getOrderService();
         ConceptService conceptService = Context.getConceptService();
 
-        String activatedOnOrAfter = context.getParameter("activatedOnOrAfter");
+        String activatedOnOrAfterDateParam = context.getParameter("activatedOnOrAfterDate");
         String fulfillerStatusParam = context.getParameter("fulfillerStatus");
 
         Order.FulfillerStatus fulfillerStatus = parseFulfillerStatus(fulfillerStatusParam);
@@ -171,8 +171,8 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
         CareSetting careSetting = orderService.getCareSettingByUuid(CARE_SETTING_UUID_OPD);
         OrderType orderType = orderService.getOrderTypeByUuid(ORDER_TYPE_TEST_UUID);
         Date activatedDate = OpenmrsUtil.firstSecondOfDay(new Date());
-        if (activatedOnOrAfter != null && !activatedOnOrAfter.equals("")) {
-            activatedDate = OpenmrsUtil.firstSecondOfDay(syncService.getDateFromString(activatedOnOrAfter, "yyyy-MM-dd"));
+        if (activatedOnOrAfterDateParam != null && !activatedOnOrAfterDateParam.equals("")) {
+            activatedDate = OpenmrsUtil.firstSecondOfDay(syncService.getDateFromString(activatedOnOrAfterDateParam, "yyyy-MM-dd"));
         }
 
         OrderSearchCriteria searchCriteria = new OrderSearchCriteria(
@@ -186,7 +186,7 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
                 true, true, true, false
         );
 
-        List<ReferralOrder> referralOrders = orderService.getOrders(searchCriteria).stream().filter(order -> order.getAccessionNumber()!=null && order.getInstructions().equals("REFER TO CPHL"))
+        List<ReferralOrder> referralOrders = orderService.getOrders(searchCriteria).stream().filter(order -> order.getAccessionNumber() != null && order.getInstructions().equals("REFER TO CPHL"))
                 .map(order -> {
                     ReferralOrder referralOrder = new ReferralOrder();
                     referralOrder.setOrder(order);

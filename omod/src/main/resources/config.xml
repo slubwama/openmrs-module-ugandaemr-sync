@@ -429,6 +429,14 @@
             The minimum Length of a CPHL Barcode.
         </description>
     </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.cphlReferralOrderConceptIds</property>
+        <defaultValue>165412</defaultValue>
+        <description>
+          The Concept ID for allowable referral orders to be synced to CPHL
+        </description>
+    </globalProperty>
     
     <!-- Internationalization -->
     <!-- All message codes should start with ugandaemrsync.* -->

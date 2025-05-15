@@ -4,5 +4,6 @@
     <global_property  property="ugandaemr.dhis2.organizationuuid"  property_value="7744yxP"  description="The organization code in DHIS2"  uuid="193c431d-fe1b-47fb-bcc0-9824f3dd3cd5"/>
     <global_property  property="ugandaemrsync.viralloadRequiredProgramData"  property_value="413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2,202501021"  description="The Viral load required fields codes "  uuid="b1b706ca-3080-11f0-be8b-d08c4bd23cb6"/>
     <global_property  property="ugandaemrsync.minimumCPHLBarCodeLength"  property_value="9"  description="The minimum Length of a CPHL Barcode."  uuid="42d82a3e-309b-11f0-be8b-d08c4bd23cb6"/>
+    <global_property  property="ugandaemrsync.cphlReferralOrderConceptIds"  property_value="165412"  description="The Concept ID for allowable referral orders to be synced to CPHL"  uuid="86154180-3198-11f0-9bf9-e786e6f00235"/>
 </dataset>
 

@@ -14,10 +14,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
-import org.openmrs.Encounter;
-import org.openmrs.Obs;
-import org.openmrs.Order;
-import org.openmrs.Patient;
+import org.openmrs.*;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
@@ -473,6 +470,31 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     @Test
     public void testisValidCPHLBarCodeEmptyBarcode() {
         Assert.assertFalse(ugandaEMRSyncService.isValidCPHLBarCode(""));
+    }
+
+
+    @Test
+    public void testGetReferralOrderConcepts_GlobalPropertyHasOneOrMore() {
+
+        List<Concept> concepts= ugandaEMRSyncService.getReferralOrderConcepts();
+
+        Assert.assertEquals(1,concepts.size());
+        Assert.assertNotNull("Concept returned are not null",concepts.get(0));
+    }
+
+    @Test
+    public void testGetReferralOrderConcepts_GlobalPropertyValueIsBlank() {
+        GlobalProperty globalProperty=Context.getAdministrationService().getGlobalPropertyObject("ugandaemrsync.cphlReferralOrderConceptIds");
+
+        Assert.assertEquals(globalProperty.getPropertyValue(),"165412");
+
+        globalProperty.setPropertyValue("");
+
+        Context.getAdministrationService().saveGlobalProperty(globalProperty);
+
+        List<Concept> concepts= ugandaEMRSyncService.getReferralOrderConcepts();
+
+        Assert.assertEquals(0,concepts.size());
     }
 
 

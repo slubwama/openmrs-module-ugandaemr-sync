@@ -1308,9 +1308,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 }
 
 
-                jsonObject.getJSONObject("resource").put("collection", new JSONObject(String.format("{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}}",  testOrder.getDateActivated().toString().replace(" ","T"), testOrder.getOrderer().getUuid())));
+                jsonObject.getJSONObject("resource").put("collection", new JSONObject(String.format("{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}}", testOrder.getDateActivated().toString().replace(" ", "T"), testOrder.getOrderer().getUuid())));
 
-                jsonObject.getJSONObject("resource").put("processing", new JSONArray(String.format("[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]", testOrder.getDateActivated().toString().replace(" ","T"))));
+                jsonObject.getJSONObject("resource").put("processing", new JSONArray(String.format("[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]", testOrder.getDateActivated().toString().replace(" ", "T"))));
 
                 jsonObject.getJSONObject("resource").getJSONObject("type").put("coding", codding);
                 jsonObject.getJSONObject("resource").getJSONObject("subject").put("reference", "urn:uuid:" + order.getPatient().getUuid());
@@ -2539,7 +2539,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         saveSyncTask(syncTask);
                         logTransaction(syncTaskType, responseCode, result.get(0).get("valueString").toString(), order.getAccessionNumber(), result.get(0).get("valueString").toString(), new Date(), syncTaskType.getUrl(), false, false);
                         try {
-                            Context.getOrderService().updateOrderFulfillerStatus(order,Order.FulfillerStatus.COMPLETED,result.get(0).get("valueString").toString());
+                            Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.COMPLETED, result.get(0).get("valueString").toString());
                             Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
                         } catch (Exception e) {
                             log.error("Failed to discontinue order", e);
@@ -2559,12 +2559,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } else {
             // Logging based on responseCode or status
             if (responseCode != null && !results.containsKey("status")) {
-                String detailedResponseMessage=String.format("CPHL Server Response for order: %s while fetching results:  %s",order.getAccessionNumber(),responseMessage);
+                String detailedResponseMessage = String.format("CPHL Server Response for order: %s while fetching results:  %s", order.getAccessionNumber(), responseMessage);
                 logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
                 response.put("responseMessage", detailedResponseMessage);
             } else if (results.containsKey("status")) {
 
-                String detailedResponseMessage=String.format("CPHL Response : Results for order: %s are %s",order.getAccessionNumber(),results.get("status").toString());
+                String detailedResponseMessage = String.format("CPHL Response : Results for order: %s are %s", order.getAccessionNumber(), results.get("status").toString());
                 logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
                 response.put("responseMessage", detailedResponseMessage);
             }
@@ -2917,6 +2917,28 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    public List<Concept> getReferralOrderConcepts() {
+        List<Concept> referralOrderConceptList = new ArrayList<>();
+
+        String conceptIds = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.cphlReferralOrderConceptIds");
+
+        if (conceptIds != null && !conceptIds.trim().isEmpty()) {
+            List<String> referralOrderConceptIDs = Arrays.asList(conceptIds.split(","));
+
+            for (String conceptId : referralOrderConceptIDs) {
+                conceptId = conceptId.trim();
+                if (!conceptId.isEmpty()) {
+                    Concept concept = Context.getConceptService().getConcept(conceptId);
+                    if (concept != null) {
+                        referralOrderConceptList.add(concept);
+                    }
+                }
+            }
+        }
+
+        return referralOrderConceptList;
     }
 }
 

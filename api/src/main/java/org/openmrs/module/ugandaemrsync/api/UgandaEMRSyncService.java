@@ -515,5 +515,8 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public String getMissingVLFHIRCodesAsString(String bundleJson);
 
     public Concept getVLMissingCconcept(String code);
+
+
+    public List getReferralOrderConcepts();
 }
 
