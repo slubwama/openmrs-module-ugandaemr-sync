@@ -2890,7 +2890,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         Concept snomed = Context.getConceptService().getConceptByMapping(code, "SNOMED");
 
         if (loinc != null) {
-            return snomed;
+            return loinc;
         }
 
         if (cphl != null) {
