@@ -2829,17 +2829,23 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
-        Bundle bundle = parser.parseResource(Bundle.class, bundleJson);
+        Bundle bundle = null;
 
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Observation) {
-                Observation obs = (Observation) entry.getResource();
-                for (Coding coding : obs.getCode().getCoding()) {
-                    if (targetCodes.contains(coding.getCode())) {
-                        foundCodes.add(coding.getCode());
+        try {
+            bundle = parser.parseResource(Bundle.class, bundleJson);
+
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.getResource() instanceof Observation) {
+                    Observation obs = (Observation) entry.getResource();
+                    for (Coding coding : obs.getCode().getCoding()) {
+                        if (targetCodes.contains(coding.getCode())) {
+                            foundCodes.add(coding.getCode());
+                        }
                     }
                 }
             }
+        } catch (Exception exception) {
+            log.error(exception);
         }
 
         return foundCodes.containsAll(targetCodes);
@@ -2855,7 +2861,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         FhirContext ctx = FhirContext.forR4();
         IParser parser = ctx.newJsonParser();
-        Bundle bundle = parser.parseResource(Bundle.class, bundleJson);
+        Bundle bundle = null;
+        List<String> missingCodes = new ArrayList<>();
+        try {
+            bundle = parser.parseResource(Bundle.class, bundleJson);
 
         for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
             if (entry.getResource() instanceof Observation) {
@@ -2869,7 +2878,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
 
         // Identify missing codes
-        List<String> missingCodes = new ArrayList<>();
+
         for (String code : targetCodes) {
             if (!foundCodes.contains(code)) {
 
@@ -2880,6 +2889,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     missingCodes.add(code);
                 }
             }
+        }
+        } catch (Exception exception) {
+            log.error(exception);
         }
         return missingCodes.stream().collect(Collectors.joining(","));
     }

@@ -2,17 +2,18 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import liquibase.pro.packaged.A;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
-import org.openmrs.Concept;
-import org.openmrs.ConceptName;
-import org.openmrs.api.AdministrationService;
+import org.openmrs.Patient;
+import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -21,6 +22,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.context.annotation.ComponentScan;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
@@ -30,12 +32,13 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
 
     protected static final String UGANDAEMR_GLOBAL_PROPERTY_DATASET_XML = "org/openmrs/module/ugandaemrsync/include/globalPropertiesDataSet.xml";
     protected static final String UGANDAEMR_STANDARD_DATASET_XML = "org/openmrs/module/ugandaemrsync/include/standardTestDataset.xml";
-
+    SyncFHIRRecord syncFHIRRecord;
 
     @Before
     public void setup() throws Exception {
         executeDataSet(UGANDAEMR_GLOBAL_PROPERTY_DATASET_XML);
         executeDataSet(UGANDAEMR_STANDARD_DATASET_XML);
+        syncFHIRRecord = new SyncFHIRRecord();
     }
 
     @Test
@@ -142,6 +145,7 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         String result = service.getMissingVLFHIRCodesAsString(json);
         Assert.assertEquals("", result);
     }
+
     @Test
     public void testGetMissingVLFHIRCodesAsString_withTwoMissingCodes() {
         UgandaEMRSyncService service = Context.getService(UgandaEMRSyncService.class);
@@ -159,11 +163,11 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         bundle.addEntry().setResource(createObservation("33882-2"));
 
         String json = parser.encodeResourceToString(bundle);
-        String missingConceptName1=service.getVLMissingCconcept("202501020").getName().getName();
-        String missingConceptName2=service.getVLMissingCconcept("202501021").getName().getName();
+        String missingConceptName1 = service.getVLMissingCconcept("202501020").getName().getName();
+        String missingConceptName2 = service.getVLMissingCconcept("202501021").getName().getName();
 
         String result = service.getMissingVLFHIRCodesAsString(json);
-        Assert.assertEquals(String.format("%s,%s",missingConceptName1,missingConceptName2), result);
+        Assert.assertEquals(String.format("%s,%s", missingConceptName1, missingConceptName2), result);
     }
 
     private Observation createObservation(String code) {
@@ -174,5 +178,46 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
                 .setCode(code)
                 .setDisplay("Sample Observation " + code)));
         return obs;
+    }
+
+    @Test
+    public void shouldReturnOriginalPayloadIfIdIsMissing() {
+        String payload = "{\"name\": \"Jane Doe\"}";
+        String result = syncFHIRRecord.correctEstimatedDOB(payload);
+        Assert.assertEquals(payload, result);
+    }
+
+    @Test
+    public void shouldReturnOriginalPayloadIfPatientNotFound() {
+        String payload = "{\"id\":\"8b488d90-4c7c-4a79-aa9e-72a9c711j8g1\"}";
+
+        String result = syncFHIRRecord.correctEstimatedDOB(payload);
+        Assert.assertEquals(payload, result);
+    }
+
+    @Test
+    public void shouldCorrectEstimatedDOBWhenPatientIsFoundAndDOBIsEstimated() throws Exception {
+        String uuid = "8b488d90-4c7c-4a79-aa9e-77a9c711f8g1";
+
+        JSONObject input = new JSONObject();
+        input.put("id", uuid);
+
+        String result = syncFHIRRecord.correctEstimatedDOB(input.toString());
+
+        JSONObject resultJson = new JSONObject(result);
+        Assert.assertEquals("2017-01-01", resultJson.getString("birthDate"));
+    }
+
+    @Test
+    public void shouldNotAddBirthDateIfDOBIsNotEstimated() {
+        String uuid = "8b488d90-4c7c-4a79-aa9e-77a9c711f8f9";
+
+        JSONObject input = new JSONObject();
+        input.put("id", uuid);
+
+        String result = syncFHIRRecord.correctEstimatedDOB(input.toString());
+        JSONObject resultJson = new JSONObject(result);
+        // Should not have birthDate field
+        Assert.assertEquals(false, resultJson.has("birthDate"));
     }
 }

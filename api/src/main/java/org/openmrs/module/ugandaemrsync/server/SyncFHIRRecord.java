@@ -886,18 +886,27 @@ public class SyncFHIRRecord {
         return jsonObject.toString();
     }
 
-    private String correctEstimatedDOB(String payload) {
-        JSONObject jsonObject = new JSONObject(payload);
+    public String correctEstimatedDOB(String payload) {
+        try {
+            JSONObject jsonObject = new JSONObject(payload);
 
-        if (!jsonObject.has("id"))
+            if (!jsonObject.has("id") || jsonObject.isNull("id")) {
+                return payload;
+            }
+
+            String patientUuid = jsonObject.getString("id");
+            Patient patient = Context.getPatientService().getPatientByUuid(patientUuid);
+
+            if (patient != null && Boolean.TRUE.equals(patient.getBirthdateEstimated()) && patient.getBirthdate() != null) {
+                String formattedBirthdate = new SimpleDateFormat("yyyy-MM-dd").format(patient.getBirthdate());
+                jsonObject.put("birthDate", formattedBirthdate);
+            }
+
+            return jsonObject.toString();
+        } catch (Exception e) {
+            log.error("Failed to correct estimated DOB", e);
             return payload;
-
-        Patient patient = Context.getPatientService().getPatientByUuid(jsonObject.getString("id"));
-        if (patient.getBirthdateEstimated()) {
-            jsonObject.put("birthDate", patient.getBirthdate().toString().replace("T00:00:00.0", ""));
         }
-
-        return jsonObject.toString();
     }
 
     private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
