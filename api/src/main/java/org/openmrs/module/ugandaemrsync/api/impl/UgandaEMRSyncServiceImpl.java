@@ -2384,39 +2384,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             responses.add(errorResponse);
             return responses;
         }
-
-        // Fetch sync task type
-        SyncTaskType syncTaskType = syncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
-
         // Process each order
         for (Order order : orders) {
-            if (!isOrderSynced(order, syncTaskType)) {
-                String payload = processResourceFromOrder(order);
-
-
-                if (payload != null) {
-                    responses.add(sendViralLoadToCPHL(syncTaskType, payload, httpConnection, order));
-                } else {
-                    String accessionNumber = order.getAccessionNumber();
-                    String errorMessage = String.format("UgandaEMR Internal Server Error: Failed to process order with accession number %s.", accessionNumber);
-
-                    Map<String, String> errorResponse = new HashMap<>();
-                    errorResponse.put("message", errorMessage);
-                    responses.add(errorResponse);
-
-                    logTransaction(
-                            syncTaskType,
-                            500,
-                            errorMessage,
-                            accessionNumber,
-                            errorMessage,
-                            new Date(),
-                            syncTaskType.getUrl(),
-                            false,
-                            false
-                    );
-                }
-            }
+            responses.add(sendSingleViralLoadOrder(order));
         }
 
         return responses;
@@ -2437,7 +2407,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
-        List<Order> orderList = new ArrayList<>();
 
         if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
             response.put("responseMessage", "No Internet Connection to send order" + order.getAccessionNumber());
