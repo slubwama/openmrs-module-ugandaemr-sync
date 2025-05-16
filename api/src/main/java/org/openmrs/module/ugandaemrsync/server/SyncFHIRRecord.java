@@ -894,7 +894,7 @@ public class SyncFHIRRecord {
 
         Patient patient = Context.getPatientService().getPatientByUuid(jsonObject.getString("id"));
         if (patient.getBirthdateEstimated()) {
-            jsonObject.put("birthDate", patient.getBirthdate().toString().replace(" 00:00:00.0", ""));
+            jsonObject.put("birthDate", patient.getBirthdate().toString().replace("T00:00:00.0", ""));
         }
 
         return jsonObject.toString();
