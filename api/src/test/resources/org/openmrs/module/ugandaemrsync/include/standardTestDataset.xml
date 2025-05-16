@@ -121,7 +121,7 @@
 	<patient_identifier patient_identifier_id="10007" patient_id="10008" identifier="EXP-10008" identifier_type="8" preferred="0" location_id="1" creator="1" date_created="2017-01-03 00:00:00.0" voided="false" void_reason="" uuid="d3ca1de0-7144-4a5d-8c42-3f69afc028fg"/>
 
 	<!-- infant already linked to mother -->
-	<person person_id="10009" gender="M" birthdate="2017-02-07 00:00:00.0" birthdate_estimated="0" dead="false" creator="1" date_created="2017-01-03 00:00:00.0" voided="false" uuid="8b488d90-4c7c-4a79-aa9e-77a9c711f8g1"/>
+	<person person_id="10009" gender="M" birthdate="2017-01-01 00:00:00.0" birthdate_estimated="1" dead="false" creator="1" date_created="2017-01-03 00:00:00.0" voided="false" uuid="8b488d90-4c7c-4a79-aa9e-77a9c711f8g1"/>
 	<person_name person_name_id="100018" preferred="true" person_id="10008" prefix="" given_name="Mark" middle_name="" family_name="Hurd" family_name_suffix="" creator="1" date_created="2017-01-03 00:00:00.0" voided="false" void_reason="" uuid="2433f7be-4d99-411f-ba37-86f421646b4g"/>
 	<patient patient_id="10009" creator="1" date_created="2017-01-03 00:00:00.0" voided="false"/>
 	<patient_identifier patient_identifier_id="10008" patient_id="10009" identifier="EXP-10009" identifier_type="8" preferred="0" location_id="1" creator="1" date_created="2017-01-03 00:00:00.0" voided="false" void_reason="" uuid="d3ca1de0-7144-4a5d-8c42-3f69afc028fh"/>
