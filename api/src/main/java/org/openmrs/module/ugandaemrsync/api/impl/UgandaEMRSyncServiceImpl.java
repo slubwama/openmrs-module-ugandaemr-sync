@@ -2626,24 +2626,27 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             );
 
             if (syncResponse != null) {
-                Map<String, Object> responseType = handleReturnedResponses(order, syncResponse);
+                String responseFromCPHLServer=String.format("Response From CPHL Server: %s",syncResponse.get("responseMessage"));
+                Map responseType = handleReturnedResponses(order, syncResponse);
                 int responseCode = Integer.parseInt(syncResponse.getOrDefault("responseCode", "500").toString());
 
                 // Handle duplicate case with a 400 response
                 if (responseCode == 400 && "Duplicate".equalsIgnoreCase(String.valueOf(responseType.get("responseType")))) {
                     responseCode = 200;
+                    responseFromCPHLServer = String.format("Response From CPHL Server: %s",responseType.get("responseMessage"));
                 }
 
                 boolean isSuccess = responseCode == 200 || responseCode == 201 || responseCode == 202 || responseCode == 208;
-                String responseMessage = String.valueOf(syncResponse.get("responseMessage"));
                 String accessionNumber = order.getAccessionNumber();
                 String url = syncTaskType.getUrl();
 
                 if (isSuccess) {
-                    Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, String.valueOf(syncResponse.get("responseCode")));
+                    Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, responseFromCPHLServer);
                 }
 
-                logTransaction(syncTaskType, responseCode, responseMessage, accessionNumber, responseMessage, new Date(), url, isSuccess, false);
+                logTransaction(syncTaskType, responseCode, responseFromCPHLServer, accessionNumber, responseFromCPHLServer, new Date(), url, isSuccess, false);
+
+                syncResponse.put("responseMessage", responseFromCPHLServer);
             }
 
         } catch (Exception e) {
@@ -2664,12 +2667,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")) {
                 orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
                 responseType.put("responseType", "Not HIE compliant");
+                responseType.put("responseMessage", response.get("responseMessage").toString().contains("is not HIE compliant"));
             } else if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")) {
                 Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, String.valueOf(response.get("responseMessage").toString()));
                 responseType.put("responseType", "Duplicate");
+                responseType.put("responseMessage", response.get("responseMessage"));
             }
         } catch (Exception e) {
             log.error(e);
+            responseType.put("responseMessage", "Failed to handle response for CPHL");
         }
 
         return responseType;
