@@ -242,12 +242,27 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
         if (order == null || order.getAccessionNumber() == null) {
             return null;
         }
+
         UgandaEMRSyncService syncService = Context.getService(UgandaEMRSyncService.class);
-        SyncTaskType syncTaskType = syncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
-        List<SyncTask> syncTaskLog = syncService.getSyncTasksBySyncTaskId(order.getAccessionNumber()).stream().filter(syncTask -> syncTask.getSyncTaskType().equals(syncTaskType)).collect(Collectors.toList());
-        if (!syncTaskLog.isEmpty()) {
-            return syncTaskLog.get(0);
+        SyncTaskType requestType = syncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
+        SyncTaskType resultType = syncService.getSyncTaskTypeByUUID(VIRAL_LOAD_RESULT_SYNC_TYPE_UUID);
+
+        List<SyncTask> syncTasks = syncService.getSyncTasksBySyncTaskId(order.getAccessionNumber());
+
+        // Prioritize result sync task
+        for (SyncTask task : syncTasks) {
+            if (task.getSyncTaskType().equals(resultType)) {
+                return task;
+            }
         }
+
+        // Fallback to request sync task
+        for (SyncTask task : syncTasks) {
+            if (task.getSyncTaskType().equals(requestType)) {
+                return task;
+            }
+        }
+
         return null;
     }
 
