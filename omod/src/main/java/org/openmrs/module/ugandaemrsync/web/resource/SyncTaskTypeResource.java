@@ -130,7 +130,7 @@ public class SyncTaskTypeResource extends DelegatingCrudResource<SyncTaskType> {
 		description.addProperty("dataTypeId");
 		description.addProperty("url");
 		description.addProperty("urlUserName");
-		description.addProperty(" urlPassword");
+		description.addProperty("urlPassword");
 		description.addProperty("urlToken");
 		description.addProperty("tokenExpiryDate");
 		description.addProperty("tokenType");
