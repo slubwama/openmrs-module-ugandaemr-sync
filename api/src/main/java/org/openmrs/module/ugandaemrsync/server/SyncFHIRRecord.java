@@ -789,7 +789,6 @@ public class SyncFHIRRecord {
             try {
                 jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
-                jsonString = addCodingToSystemToPrimaryIdentifier(jsonString, "identifier");
             } catch (Exception e) {
                 log.error("Error processing patient identifiers: ", e);
             }
@@ -915,35 +914,6 @@ public class SyncFHIRRecord {
             for (int i = 0; i < jsonObject.getJSONArray(targetObject).length(); i++) {
                 jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
                 i++;
-            }
-        }
-        return jsonObject.toString();
-    }
-
-    public String addCodingToSystemToPrimaryIdentifier(String payload, String attributeName) {
-        JSONObject jsonObject = new JSONObject(payload);
-        int identifierCount = 0;
-        if (jsonObject.has(attributeName)) {
-            for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
-                JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-                if (jsonObject2.has("id")) {
-                    PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
-                    switch (patientIdentifier.getIdentifierType().getUuid()) {
-                        case SyncConstant.OPENMRS_IDENTIFIER_TYPE_UUID:
-                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(OPENMRS_IDENTIFIER_SYSTEM_URL_GP));
-                            break;
-                        case SyncConstant.NATIONAL_ID_IDENTIFIER_TYPE_UUID:
-                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP));
-                            break;
-                        case SyncConstant.PASSPORT_IDENTIFIER_TYPE_UUID:
-                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(PASSPORT_IDENTIFIER_SYSTEM_URL_GP));
-                            break;
-                        case SyncConstant.NHPI_IDENTIFIER_TYPE_TYPE_UUID:
-                            jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).put("system", getIdentifierSystemURL(NHPI_IDENTIFIER_SYSTEM_URL_GP));
-                            break;
-                    }
-                    identifierCount++;
-                }
             }
         }
         return jsonObject.toString();
