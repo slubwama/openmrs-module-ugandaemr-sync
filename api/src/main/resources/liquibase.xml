@@ -1998,50 +1998,21 @@
                 SELECT COUNT(*) FROM fhir_patient_identifier_system WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6'
             </sqlCheck>
         </preConditions>
-
         <sql>
-            UPDATE fhir_patient_identifier_system
-            SET patient_identifier_type_id = (
-            SELECT patient_identifier_type_id
-            FROM patient_identifier_type
-            WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
-            )
-            WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6';
+            UPDATE fhir_patient_identifier_system SET patient_identifier_type_id = ( SELECT patient_identifier_type_id FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115' ) WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6';
         </sql>
     </changeSet>
 
     <changeSet id="ugandaemr-2025-05-30-1946" author="slubwama">
-
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*)
-                FROM fhir_patient_identifier_system
-                WHERE uuid = '2b5a626e-3d70-11f0-bcbd-bf35c84f3004';
+                SELECT COUNT(*) FROM fhir_patient_identifier_system WHERE uuid = '2b5a626e-3d70-11f0-bcbd-bf35c84f3004';
             </sqlCheck>
         </preConditions>
-
         <comment>U4X-1024: Add FHIR Patient Identifier System mapping for ART Number if it does not exist</comment>
-
         <sql>
-            INSERT INTO fhir_patient_identifier_system (
-            patient_identifier_type_id,
-            name,
-            url,
-            creator,
-            date_created,
-            retired,
-            uuid
-            )
-            SELECT
-            patient_identifier_type_id,
-            name,
-            'https://health.go.ug/art_number' as url,
-            1,
-            '2025-04-28 08:43:43',
-            0,
-            '2b5a626e-3d70-11f0-bcbd-bf35c84f3004'
-            FROM patient_identifier_type
-            WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115';
+            INSERT INTO fhir_patient_identifier_system ( patient_identifier_type_id, name, url, creator, date_created, retired, uuid )
+            SELECT patient_identifier_type_id, name, 'https://health.go.ug/art_number' as url, 1, '2025-04-28 08:43:43', 0, '2b5a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115';
         </sql>
     </changeSet>
 
@@ -2049,64 +2020,14 @@
     <changeSet id="ugandaemr-2025-05-30-1940" author="yourname">
         <comment>U4X-1024: Create FHIR Patient Identifier System mappings for known exchangeable identifiers</comment>
         <sql>
-            INSERT INTO fhir_patient_identifier_system (
-            patient_identifier_type_id,
-            name,
-            url,
-            creator,
-            date_created,
-            retired,
-            uuid
-            )
-            SELECT
-            patient_identifier_type_id,
-            name,
-            'http://clientregistry.org/ugandaemr' as url,
-            1,
-            '2025-04-28 08:43:43',
-            0,
-            '2b5a626e-3d70-11f0-bcbd-bf35c84f3004'
-            FROM patient_identifier_type
-            WHERE uuid = '05a29f94-c0ed-11e2-94be-8c13b969e334'
-
+            INSERT INTO fhir_patient_identifier_system ( patient_identifier_type_id, name, url, creator, date_created, retired, uuid )
+            SELECT patient_identifier_type_id, name, 'http://clientregistry.org/ugandaemr' as url, 1, '2025-04-28 08:43:43', 0, '2b5a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = '05a29f94-c0ed-11e2-94be-8c13b969e334'
             UNION ALL
-
-            SELECT
-            patient_identifier_type_id,
-            name,
-            'http://health.go.ug/cr/passport' as url,
-            1,
-            '2025-04-28 08:43:43',
-            0,
-            '3c6a626e-3d70-11f0-bcbd-bf35c84f3004'
-            FROM patient_identifier_type
-            WHERE uuid = 'fd76e95a-9faa-42b8-8d88-5954fae77fba'
-
+            SELECT patient_identifier_type_id, name, 'http://health.go.ug/cr/passport' as url, 1, '2025-04-28 08:43:43', 0, '3c6a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'fd76e95a-9faa-42b8-8d88-5954fae77fba'
             UNION ALL
-
-            SELECT
-            patient_identifier_type_id,
-            name,
-            'http://health.go.ug/cr/hin' as url,
-            1,
-            '2025-04-28 08:43:43',
-            0,
-            '4d7a626e-3d70-11f0-bcbd-bf35c84f3004'
-            FROM patient_identifier_type
-            WHERE uuid = '4c7d6bb2-c8a6-40d3-b70d-fffc062f3416'
-
+            SELECT patient_identifier_type_id, name, 'http://health.go.ug/cr/hin' as url, 1, '2025-04-28 08:43:43', 0, '4d7a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = '4c7d6bb2-c8a6-40d3-b70d-fffc062f3416'
             UNION ALL
-
-            SELECT
-            patient_identifier_type_id,
-            name,
-            'http://health.go.ug/cr/nationalid' as url,
-            1,
-            '2025-04-28 08:43:43',
-            0,
-            '5e8a626e-3d70-11f0-bcbd-bf35c84f3004'
-            FROM patient_identifier_type
-            WHERE uuid = 'f0c16a6d-dc5f-4118-a803-616d0075d282';
+            SELECT patient_identifier_type_id, name, 'http://health.go.ug/cr/nationalid' as url, 1, '2025-04-28 08:43:43', 0, '5e8a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'f0c16a6d-dc5f-4118-a803-616d0075d282';
         </sql>
     </changeSet>
 </databaseChangeLog>
