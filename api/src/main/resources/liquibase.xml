@@ -1992,30 +1992,33 @@
             UPDATE sync_task_type SET url_end_point = "https://ugisl.mets.or.ug/vl/sendbundledservicerequest?api_token=YiKjdApZ9gE5GzBRg7IZlligoqlk06FM8a64oPkEXnakBL6mDYcvM5NINqvc" WHERE uuid = "3551ca84-06c0-432b-9064-fcfeefd6f4ec";
         </sql>
     </changeSet>
-    <changeSet id="ugandaemr-2025-05-30-1936" author="slubwama">
+    <changeSet id="ugandaemr-2025-05-31-1009" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="1">
                 SELECT COUNT(*) FROM fhir_patient_identifier_system WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6'
             </sqlCheck>
         </preConditions>
+        <comment>U4X-1024: Add FHIR Patient Identifier System mapping for ART Number if it does not exist</comment>
         <sql>
-            UPDATE fhir_patient_identifier_system SET patient_identifier_type_id = ( SELECT patient_identifier_type_id FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115' ) WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6';
+            DELETE from  fhir_patient_identifier_system WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6';
+
+            INSERT INTO fhir_patient_identifier_system ( patient_identifier_type_id, name, url, creator, date_created, retired, uuid )
+            SELECT patient_identifier_type_id, 'ART-NUMBER', 'https://health.go.ug/art_number' as url, 1, '2025-04-28 08:43:43', 0, '2b5a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115';
         </sql>
     </changeSet>
 
-    <changeSet id="ugandaemr-2025-05-30-1946" author="slubwama">
+    <changeSet id="ugandaemr-2025-05-31-1027" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM fhir_patient_identifier_system WHERE uuid = '2b5a626e-3d70-11f0-bcbd-bf35c84f3004';
+                SELECT COUNT(*) FROM fhir_patient_identifier_system WHERE uuid = 'c85526ee-23f3-11f0-be8b-d08c4bd23cb6'
             </sqlCheck>
         </preConditions>
         <comment>U4X-1024: Add FHIR Patient Identifier System mapping for ART Number if it does not exist</comment>
         <sql>
             INSERT INTO fhir_patient_identifier_system ( patient_identifier_type_id, name, url, creator, date_created, retired, uuid )
-            SELECT patient_identifier_type_id, name, 'https://health.go.ug/art_number' as url, 1, '2025-04-28 08:43:43', 0, '2b5a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115';
+            SELECT patient_identifier_type_id, 'ART-NUMBER', 'https://health.go.ug/art_number' as url, 1, '2025-04-28 08:43:43', 0, '2b5a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115';
         </sql>
     </changeSet>
-
 
     <changeSet id="ugandaemr-2025-05-30-1940" author="yourname">
         <comment>U4X-1024: Create FHIR Patient Identifier System mappings for known exchangeable identifiers</comment>
