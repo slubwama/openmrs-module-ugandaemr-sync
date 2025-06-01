@@ -508,7 +508,10 @@ public class SyncFHIRRecord {
                     } else if ((person.getDateChanged() != null && person.getDateChanged().after(syncFHIRCase.getLastUpdateDate())) || (person.getDateCreated() != null && person.getDateCreated().after(syncFHIRCase.getLastUpdateDate()))) {
                         personList.add(syncFHIRCase.getPatient().getPerson());
                     }
-                    resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList, syncFHIRCase), syncFhirProfile.getPatientIdentifierType().getName()));
+
+                    if (!personList.isEmpty()) {
+                        resources.addAll(groupInCaseBundle("Person", getPersonResourceBundle(syncFhirProfile, personList, syncFHIRCase), syncFhirProfile.getPatientIdentifierType().getName()));
+                    }
                     break;
                 case "EpisodeOfCare":
                     JSONArray jsonArray = getSearchParametersInJsonObject("EpisodeOfCare", syncFhirProfile.getResourceSearchParameter()).getJSONArray("type");
@@ -730,7 +733,7 @@ public class SyncFHIRRecord {
 
     public Collection<String> groupInCaseBundle(String resourceType, Collection<IBaseResource> iBaseResources, String identifierTypeName) {
 
-         Collection<String> resourceBundles = new ArrayList<>();
+        Collection<String> resourceBundles = new ArrayList<>();
 
         for (IBaseResource iBaseResource : iBaseResources) {
 
@@ -1093,6 +1096,7 @@ public class SyncFHIRRecord {
         } else if (syncFhirProfile != null && !syncFhirProfile.getIsCaseBasedProfile()) {
             personSearchParams.setLastUpdated(lastUpdated);
         }
+
         iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(personSearchParams).getResources(0, Integer.MAX_VALUE);
 
         return iBaseResources;
