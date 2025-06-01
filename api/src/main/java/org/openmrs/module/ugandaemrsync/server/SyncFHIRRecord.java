@@ -1096,9 +1096,6 @@ public class SyncFHIRRecord {
         } else if (syncFhirProfile != null && !syncFhirProfile.getIsCaseBasedProfile()) {
             personSearchParams.setLastUpdated(lastUpdated);
         }
-
-        iBaseResources = getApplicationContext().getBean(FhirPersonService.class).searchForPeople(personSearchParams).getResources(0, Integer.MAX_VALUE);
-
         return iBaseResources;
     }
 
