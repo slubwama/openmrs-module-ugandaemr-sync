@@ -788,7 +788,7 @@ public class SyncFHIRRecord {
 
     private String handlePatientResource(String jsonString) {
         jsonString = correctEstimatedDOB(jsonString);
-        if (profile != null && profile.getKeepProfileIdentifierOnly()) {
+        if (profile != null && profile.getKeepProfileIdentifierOnly()!=null && profile.getKeepProfileIdentifierOnly()) {
             try {
                 jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
