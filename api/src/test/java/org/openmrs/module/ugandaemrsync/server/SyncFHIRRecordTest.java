@@ -2,7 +2,6 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import liquibase.pro.packaged.A;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -11,9 +10,6 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
-import org.openmrs.Patient;
-import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -22,10 +18,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.context.annotation.ComponentScan;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
-
-import static org.mockito.Mockito.*;
 
 @ComponentScan(basePackages = {"org.openmrs.module.fhir2"})
 public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {

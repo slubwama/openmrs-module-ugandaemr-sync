@@ -96,7 +96,6 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
 			description.addProperty("syncDataEverSince");
-			description.addProperty("isCaseBasedProfile");
 			description.addProperty("dataToSyncStartDate");
 			description.addProperty("searchable");
 			description.addProperty("searchURL");
@@ -115,11 +114,10 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("isCaseBasedProfile");
 			description.addProperty("caseBasedPrimaryResourceType");
 			description.addProperty("caseBasedPrimaryResourceTypeId");
-			description.addProperty("caseBasedPrimaryResourceType");
 			description.addProperty("resourceSearchParameter");
 			description.addProperty("conceptSource", Representation.REF);
-			description.addProperty("url");
 			description.addProperty("syncLimit");
+			description.addProperty("url");
 			description.addProperty("urlToken");
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
@@ -131,7 +129,6 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("dateVoided");
 			description.addProperty("voidReason");
 			description.addProperty("syncDataEverSince");
-			description.addProperty("isCaseBasedProfile");
 			description.addProperty("dataToSyncStartDate");
 			description.addProperty("searchable");
 			description.addProperty("searchURL");
@@ -159,7 +156,6 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 			description.addProperty("urlUserName");
 			description.addProperty("urlPassword");
 			description.addProperty("syncDataEverSince");
-			description.addProperty("isCaseBasedProfile");
 			description.addProperty("dataToSyncStartDate");
 			description.addProperty("searchable");
 			description.addProperty("searchURL");
@@ -187,7 +183,7 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		description.addProperty("profileEnabled");
 		description.addProperty("patientIdentifierType");
 		description.addProperty("numberOfResourcesInBundle");
-		description.addProperty("numberOfResourcesInBundle");
+		description.addProperty("durationToKeepSyncedResources");
 		description.addProperty("generateBundle");
 		description.addProperty("isCaseBasedProfile");
 		description.addProperty("caseBasedPrimaryResourceType");
@@ -200,7 +196,6 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		description.addProperty("urlUserName");
 		description.addProperty("urlPassword");
 		description.addProperty("syncDataEverSince");
-		description.addProperty("isCaseBasedProfile");
 		description.addProperty("dataToSyncStartDate");
 		description.addProperty("searchable");
 		description.addProperty("searchURL");
@@ -237,7 +232,6 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 					.property("dataToSyncStartDate", new DateProperty())
 					.property("isCaseBasedProfile", new BooleanProperty())
 					.property("syncDataEverSince", new BooleanProperty())
-			        .property("isCaseBasedProfile", new BooleanProperty())
 					.property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 					.property("resourceSearchParameter", new StringProperty())
@@ -276,7 +270,6 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
                     .property("isCaseBasedProfile", new BooleanProperty())
                     .property("syncDataEverSince", new BooleanProperty())
 					.property("dataToSyncStartDate", new DateProperty())
-                    .property("isCaseBasedProfile", new BooleanProperty())
 					.property("caseBasedPrimaryResourceType", new StringProperty())
                     .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 					.property("resourceSearchParameter", new StringProperty())
@@ -303,23 +296,29 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 
 	@Override
 	public Model getUPDATEModel(Representation rep) {
-		return new ModelImpl().property("uuid", new StringProperty())
+		return new ModelImpl()
+				.property("uuid", new StringProperty())
 				.property("name", new StringProperty())
                 .property("resourceTypes", new StringProperty())
 				.property("profileEnabled", new BooleanProperty())
                 .property("patientIdentifierType", new StringProperty())
 				.property("numberOfResourcesInBundle", new IntegerProperty())
                 .property("durationToKeepSyncedResources", new IntegerProperty())
-                .property("dataToSyncStartDate", new DateProperty())
 				.property("generateBundle", new BooleanProperty())
 				.property("isCaseBasedProfile", new BooleanProperty())
 				.property("syncDataEverSince", new BooleanProperty())
-                .property("isCaseBasedProfile", new BooleanProperty())
 				.property("caseBasedPrimaryResourceType", new StringProperty())
                 .property("caseBasedPrimaryResourceTypeId", new StringProperty())
 				.property("resourceSearchParameter", new StringProperty())
+				.property("conceptSource", new StringProperty())
+				.property("syncLimit", new StringProperty())
 				.property("searchable", new BooleanProperty())
+				.property("url", new StringProperty())
+				.property("urlToken", new StringProperty())
+				.property("urlUserName", new StringProperty())
+				.property("urlPassword", new StringProperty())
 				.property("searchURL", new StringProperty())
+				.property("dataToSyncStartDate", new DateProperty())
                 .property("patientIdentifierType", new RefProperty("#/definitions/PatientIdentifierTypeGetRef"))
                 .property("conceptSource", new RefProperty("#/definitions/ConceptGetRef"))
                 .property("creator", new RefProperty("#/definitions/UserGetRef"))
