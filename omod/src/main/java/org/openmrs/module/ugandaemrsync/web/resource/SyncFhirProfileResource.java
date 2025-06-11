@@ -340,35 +340,35 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 	private  String processResourceSearchParameter(String resourceSearchParameter){
 		JSONObject resourceSearchParameterObject=new JSONObject(resourceSearchParameter);
 		JSONObject jsonObject=new JSONObject(FHIR_FILTER_OBJECT_STRING);
-		if(jsonObject.has("encounterFilter") && !resourceSearchParameterObject.has("encounterFilter") && !resourceSearchParameterObject.getString("encounterFilter").equals("") && resourceSearchParameterObject.getString("encounterFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("encounterFilter") && !resourceSearchParameterObject.getString("encounterFilter").equals("") && resourceSearchParameterObject.getString("encounterFilter").split(",").length > 0){
 			jsonObject.getJSONObject("encounterFilter").put("type",new JSONArray(resourceSearchParameterObject.getString("encounterFilter").split(",")));
 		}
 
-		if(jsonObject.has("episodeofcareFilter") && !resourceSearchParameterObject.has("episodeofcareFilter") && !resourceSearchParameterObject.getString("episodeofcareFilter").equals("") && resourceSearchParameterObject.getString("episodeofcareFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("episodeofcareFilter") && !resourceSearchParameterObject.getString("episodeofcareFilter").equals("") && resourceSearchParameterObject.getString("episodeofcareFilter").split(",").length > 0){
 			jsonObject.getJSONObject("episodeofcareFilter").put("type",new JSONArray(resourceSearchParameterObject.getString("episodeofcareFilter").split(",")));
 		}
 
-		if(jsonObject.has("observationFilter") && !resourceSearchParameterObject.has("observationFilter") && !resourceSearchParameterObject.getString("observationFilter").equals("") && resourceSearchParameterObject.getString("observationFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("observationFilter") && !resourceSearchParameterObject.getString("observationFilter").equals("") && resourceSearchParameterObject.getString("observationFilter").split(",").length > 0){
 			jsonObject.getJSONObject("observationFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("observationFilter").split(",")));
 		}
 
-		if(jsonObject.has("medicationdispenseFilter") && !resourceSearchParameterObject.has("medicationdispenseFilter") && !resourceSearchParameterObject.getString("medicationdispenseFilter").equals("") && resourceSearchParameterObject.getString("medicationdispenseFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("medicationdispenseFilter") && !resourceSearchParameterObject.getString("medicationdispenseFilter").equals("") && resourceSearchParameterObject.getString("medicationdispenseFilter").split(",").length > 0){
 			jsonObject.getJSONObject("medicationdispenseFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("medicationdispenseFilter").split(",")));
 		}
 
-		if(jsonObject.has("medicationrequestFilter") && !resourceSearchParameterObject.has("medicationrequestFilter") && !resourceSearchParameterObject.getString("medicationrequestFilter").equals("") && resourceSearchParameterObject.getString("medicationrequestFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("medicationrequestFilter") && !resourceSearchParameterObject.getString("medicationrequestFilter").equals("") && resourceSearchParameterObject.getString("medicationrequestFilter").split(",").length > 0){
 			jsonObject.getJSONObject("medicationrequestFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("medicationrequestFilter").split(",")));
 		}
 
-		if(jsonObject.has("diagnosticreportFilter") && !resourceSearchParameterObject.has("diagnosticreportFilter") && !resourceSearchParameterObject.getString("diagnosticreportFilter").equals("") && resourceSearchParameterObject.getString("diagnosticreportFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("diagnosticreportFilter") && !resourceSearchParameterObject.getString("diagnosticreportFilter").equals("") && resourceSearchParameterObject.getString("diagnosticreportFilter").split(",").length > 0){
 			jsonObject.getJSONObject("diagnosticreportFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("diagnosticreportFilter").split(",")));
 		}
 
-		if(jsonObject.has("conditionFilter") && !resourceSearchParameterObject.has("conditionFilter") && !resourceSearchParameterObject.getString("conditionFilter").equals("") && resourceSearchParameterObject.getString("conditionFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("conditionFilter") && !resourceSearchParameterObject.getString("conditionFilter").equals("") && resourceSearchParameterObject.getString("conditionFilter").split(",").length > 0){
 			jsonObject.getJSONObject("conditionFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("conditionFilter").split(",")));
 		}
 
-		if(jsonObject.has("servicerequestFilter") && !resourceSearchParameterObject.has("servicerequestFilter") && !resourceSearchParameterObject.getString("servicerequestFilter").equals("") && resourceSearchParameterObject.getString("servicerequestFilter").split(",").length > 0){
+		if(resourceSearchParameterObject.has("servicerequestFilter") && !resourceSearchParameterObject.getString("servicerequestFilter").equals("") && resourceSearchParameterObject.getString("servicerequestFilter").split(",").length > 0){
 			jsonObject.getJSONObject("servicerequestFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("servicerequestFilter").split(",")));
 		}
 		return jsonObject.toString();
