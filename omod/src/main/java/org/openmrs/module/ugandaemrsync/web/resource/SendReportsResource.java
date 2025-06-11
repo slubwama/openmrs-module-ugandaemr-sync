@@ -8,12 +8,11 @@ import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.tasks.SendReportsTask;
-import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RestConstants;
+import org.openmrs.ui.framework.SimpleObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -89,13 +88,7 @@ public class SendReportsResource {
             response = "No Available Data to send";
             status="failure";
         }
-
-
-        try {
-            return SimpleObject.parseJson(String.format("{\"status\":%s,\"message\":S5}",status,response));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return SimpleObject.create("status", status, "message", response);
     }
 
     private ReportDefinitionService getReportDefinitionService() {

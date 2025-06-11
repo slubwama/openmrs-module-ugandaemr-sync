@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
+import org.openmrs.ui.framework.SimpleObject;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,14 +33,19 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
 	protected Log log = LogFactory.getLog(getClass());
 	SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
 	protected byte[] data ;
+	SimpleObject serverResponseObject;
 
+	public SimpleObject getServerResponseObject(){
+		return serverResponseObject;
+	}
 	UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 
 
 	public SendDHIS2DataToCentralServerTask() {}
 
-	public SendDHIS2DataToCentralServerTask(byte[] data) {
+	public SendDHIS2DataToCentralServerTask(byte[] data, SimpleObject simpleObject) {
 		this.data = data;
+		this.serverResponseObject= simpleObject;
 	}
 
 
@@ -50,6 +56,14 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
         String baseUrl = ugandaEMRHttpURLConnection.getBaseURL(syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_URL));
         if (isBlank(syncGlobalProperties.getGlobalProperty(GP_DHIS2_SERVER_URL))) {
             log.error("DHIS 2 server URL is not set");
+
+            try {
+                map.put("responseCode", responseCode);
+                map.put("responseMessage", "DHIS 2 server URL is not set");
+                serverResponseObject = SimpleObject.create("message", objectMapper.writeValueAsString(map));
+            } catch (IOException e) {
+                log.error("error creating message to interface", e);
+            }
             log.error("DHIS 2 server URL is not set");
             return;
         }
@@ -58,7 +72,11 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
         if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
             map.put("responseCode", responseCode);
             map.put("responseMessage", "Failed to connect to the internet. Check connection");
-
+            try {
+                serverResponseObject = SimpleObject.create("message", objectMapper.writeValueAsString(map));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -67,6 +85,11 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
             map.put("responseCode", responseCode);
             map.put("responseMessage", "Server Not Available");
 
+            try {
+                serverResponseObject = SimpleObject.create("message", objectMapper.writeValueAsString(map));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -88,6 +111,13 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
             log.error(e);
         }
 
+
+        try {
+            serverResponseObject = SimpleObject.create("message", objectMapper.writeValueAsString(map));
+            serverResponseObject.put("responseCode", responseCode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 	public Map getMapOfResults(InputStream inputStreamReader, int responseCode) throws IOException {

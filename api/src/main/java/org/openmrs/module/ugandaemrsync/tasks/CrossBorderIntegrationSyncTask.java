@@ -11,6 +11,7 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.server.SyncFHIRRecord;
 import org.openmrs.scheduler.tasks.AbstractTask;
+import org.openmrs.ui.framework.SimpleObject;
 
 
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_UUID;
@@ -34,7 +35,7 @@ public class CrossBorderIntegrationSyncTask extends AbstractTask {
 
     }
 
-    public void updatePatientWithCBI(String patientDataObject) throws Exception {
+    public SimpleObject updatePatientWithCBI(String patientDataObject) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
@@ -47,11 +48,14 @@ public class CrossBorderIntegrationSyncTask extends AbstractTask {
                 }
                 if (patient != null) {
                     log.info("Patient " + patient.getNames() + "Successfully Updated");
+                    return SimpleObject.create("status", objectMapper.writeValueAsString("Patient Successfully Updated "));
                 }
             }
 
         } catch (Exception e) {
-            log.error("There was a problem updating in patient cross boarder ID",e);
+            return SimpleObject.create("status",
+                    objectMapper.writeValueAsString("There was a problem updating in patient cross boarder ID"));
         }
+        return null;
     }
 }

@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.openmrs.module</groupId>
         <artifactId>ugandaemrsync</artifactId>
-        <version>2.0.0-SNAPSHOT</version>
+        <version>1.3.15-SNAPSHOT</version>
     </parent>
 
     <artifactId>ugandaemrsync-api</artifactId>
@@ -94,6 +94,11 @@
             <artifactId>openmrs-web</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.openmrs.module</groupId>
+            <artifactId>uiframework-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.openmrs.module</groupId>
             <artifactId>fhir2-api</artifactId>
@@ -103,14 +108,17 @@
             <groupId>org.openmrs.module</groupId>
             <artifactId>fhir2-api-2.5</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.openmrs.module</groupId>
             <artifactId>fhir2-api-2.6</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.openmrs.module</groupId>
             <artifactId>fhir2-api-2.7</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.apache.ibatis</groupId>
             <artifactId>ibatis-core</artifactId>
