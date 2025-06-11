@@ -7,6 +7,8 @@ import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.BooleanProperty;
 import io.swagger.models.properties.IntegerProperty;
 import io.swagger.models.properties.DateProperty;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
@@ -23,10 +25,13 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceD
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
+import org.openmrs.module.webservices.validation.ValidateUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_FILTER_OBJECT_STRING;
 
 @Resource(name = RestConstants.VERSION_1 + "/syncfhirprofile", supportedClass = SyncFhirProfile.class, supportedOpenmrsVersions = {"1.9.* - 9.*"})
 public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProfile> {
@@ -36,9 +41,14 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 		return new SyncFhirProfile();
 	}
 
+
 	@Override
-	public SyncFhirProfile save(SyncFhirProfile SyncFhirProfile) {
-		return Context.getService(UgandaEMRSyncService.class).saveSyncFhirProfile(SyncFhirProfile);
+	public SyncFhirProfile save(SyncFhirProfile syncFhirProfile) {
+		if (syncFhirProfile.getResourceSearchParameter() != null) {
+			String resourceSearchParameter = processResourceSearchParameter(syncFhirProfile.getResourceSearchParameter().trim());
+			syncFhirProfile.setResourceSearchParameter(resourceSearchParameter);
+		}
+		return Context.getService(UgandaEMRSyncService.class).saveSyncFhirProfile(syncFhirProfile);
 	}
 
 	@Override
@@ -376,5 +386,42 @@ public class SyncFhirProfileResource extends DelegatingCrudResource<SyncFhirProf
 					.property("voidedBy", new RefProperty("#/definitions/UserGetRef"));
 		}
 		return model;
+	}
+
+	private  String processResourceSearchParameter(String resourceSearchParameter){
+		JSONObject resourceSearchParameterObject=new JSONObject(resourceSearchParameter);
+		JSONObject jsonObject=new JSONObject(FHIR_FILTER_OBJECT_STRING);
+		if(resourceSearchParameterObject.has("encounterFilter") && !resourceSearchParameterObject.getString("encounterFilter").equals("") && resourceSearchParameterObject.getString("encounterFilter").split(",").length > 0){
+			jsonObject.getJSONObject("encounterFilter").put("type",new JSONArray(resourceSearchParameterObject.getString("encounterFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("episodeofcareFilter") && !resourceSearchParameterObject.getString("episodeofcareFilter").equals("") && resourceSearchParameterObject.getString("episodeofcareFilter").split(",").length > 0){
+			jsonObject.getJSONObject("episodeofcareFilter").put("type",new JSONArray(resourceSearchParameterObject.getString("episodeofcareFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("observationFilter") && !resourceSearchParameterObject.getString("observationFilter").equals("") && resourceSearchParameterObject.getString("observationFilter").split(",").length > 0){
+			jsonObject.getJSONObject("observationFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("observationFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("medicationdispenseFilter") && !resourceSearchParameterObject.getString("medicationdispenseFilter").equals("") && resourceSearchParameterObject.getString("medicationdispenseFilter").split(",").length > 0){
+			jsonObject.getJSONObject("medicationdispenseFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("medicationdispenseFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("medicationrequestFilter") && !resourceSearchParameterObject.getString("medicationrequestFilter").equals("") && resourceSearchParameterObject.getString("medicationrequestFilter").split(",").length > 0){
+			jsonObject.getJSONObject("medicationrequestFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("medicationrequestFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("diagnosticreportFilter") && !resourceSearchParameterObject.getString("diagnosticreportFilter").equals("") && resourceSearchParameterObject.getString("diagnosticreportFilter").split(",").length > 0){
+			jsonObject.getJSONObject("diagnosticreportFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("diagnosticreportFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("conditionFilter") && !resourceSearchParameterObject.getString("conditionFilter").equals("") && resourceSearchParameterObject.getString("conditionFilter").split(",").length > 0){
+			jsonObject.getJSONObject("conditionFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("conditionFilter").split(",")));
+		}
+
+		if(resourceSearchParameterObject.has("servicerequestFilter") && !resourceSearchParameterObject.getString("servicerequestFilter").equals("") && resourceSearchParameterObject.getString("servicerequestFilter").split(",").length > 0){
+			jsonObject.getJSONObject("servicerequestFilter").put("code",new JSONArray(resourceSearchParameterObject.getString("servicerequestFilter").split(",")));
+		}
+		return jsonObject.toString();
 	}
 }
