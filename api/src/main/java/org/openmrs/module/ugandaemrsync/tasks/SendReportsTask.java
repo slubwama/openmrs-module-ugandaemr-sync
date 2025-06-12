@@ -9,7 +9,6 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.scheduler.tasks.AbstractTask;
-import org.openmrs.ui.framework.SimpleObject;
 import org.springframework.stereotype.Component;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -29,8 +28,6 @@ public class SendReportsTask extends AbstractTask {
      String previewBody;
 
      SyncTaskType syncTaskType;
-
-     SimpleObject response;
 
     public SendReportsTask() {
         super();
