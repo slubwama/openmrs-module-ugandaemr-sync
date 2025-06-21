@@ -1,9 +1,10 @@
 package org.openmrs.module.ugandaemrsync.tasks;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONObject;
 import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
@@ -38,12 +39,13 @@ public class CrossBorderIntegrationSyncTask extends AbstractTask {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-            JSONObject results = new JSONObject(patientDataObject);
-            for (Object jsonObject : results.getJSONArray("entry")) {
-                JSONObject patientData = new JSONObject(jsonObject.toString()).getJSONObject("resource");
+
+            JsonNode results=objectMapper.readTree(patientDataObject);
+
+            for (JsonNode jsonObject : (ArrayNode) results.get("entry")) {
                 Patient patient = null;
-                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData)) {
-                    patient = ugandaEMRSyncService.updatePatientsFromFHIR(patientData, PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                if (!ugandaEMRSyncService.patientFromFHIRExists(jsonObject.get("resource"))) {
+                    patient = ugandaEMRSyncService.updatePatientsFromFHIR(jsonObject.get("resource"), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                 }
                 if (patient != null) {
                     log.info("Patient " + patient.getNames() + "Successfully Updated");

@@ -88,13 +88,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>20231013</version>
-                <type>jar</type>
-            </dependency>
-
-            <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpmime</artifactId>
                 <version>4.5</version>
@@ -133,6 +126,12 @@
                 <artifactId>reporting-api</artifactId>
                 <version>${reportingVersion}</version>
                 <scope>provided</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.openmrs.module</groupId>
@@ -199,6 +198,14 @@
                     <artifactId>jackson-databind</artifactId>
                 </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jacksonVersion}</version>
+                <scope>compile</scope>
+                <type>jar</type>
             </dependency>
 
             <dependency>
@@ -435,5 +442,6 @@
         <webservices.restModuleVersion>2.47.0</webservices.restModuleVersion>
         <ibatisVersion>3.0</ibatisVersion>
         <stockmanagementVersion>1.4.4</stockmanagementVersion>
+        <jacksonVersion>2.19.1</jacksonVersion>
     </properties>
 </project>

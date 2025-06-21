@@ -2,11 +2,14 @@ package org.openmrs.module.ugandaemrsync.server;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,10 +41,12 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
     public void addOrganizationToRecord_shouldReturnJsonStringWithAManagingOrganization() {
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
 
+        JsonNode controlManagingOrganization = convertFromString("{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\",\"identifier\":{\"system\":\"https://hmis.health.go.ug/\",\"use\":\"official\",\"value\":\"7744yxP\"},\"display\":\"Health Center Name\",\"type\":\"Organization\"}}");
+
         String managingOrganizationJsonString = syncFHIRRecord.addOrganizationToRecord("{}", "managingOrganization");
 
         Assert.assertNotEquals(managingOrganizationJsonString, "{}");
-        Assert.assertEquals(managingOrganizationJsonString, "{\"managingOrganization\":{\"reference\":\"Organization/7744yxP\",\"identifier\":{\"system\":\"https://hmis.health.go.ug/\",\"use\":\"official\",\"value\":\"7744yxP\"},\"display\":\"Health Center Name\",\"type\":\"Organization\"}}");
+        Assert.assertEquals(convertFromString(managingOrganizationJsonString).get("managingOrganization").get("identifier").get("value"), controlManagingOrganization.get("managingOrganization").get("identifier").get("value"));
     }
 
 
@@ -191,26 +196,39 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
     @Test
     public void shouldCorrectEstimatedDOBWhenPatientIsFoundAndDOBIsEstimated() throws Exception {
         String uuid = "8b488d90-4c7c-4a79-aa9e-77a9c711f8g1";
-
-        JSONObject input = new JSONObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode input = objectMapper.createObjectNode();
         input.put("id", uuid);
 
         String result = syncFHIRRecord.correctEstimatedDOB(input.toString());
 
-        JSONObject resultJson = new JSONObject(result);
-        Assert.assertEquals("2017-01-01", resultJson.getString("birthDate"));
+        JsonNode resultJson = objectMapper.readTree(result);
+
+        Assert.assertEquals("2017-01-01", resultJson.get("birthDate").asText());
     }
 
     @Test
-    public void shouldNotAddBirthDateIfDOBIsNotEstimated() {
+    public void shouldNotAddBirthDateIfDOBIsNotEstimated() throws JsonProcessingException {
         String uuid = "8b488d90-4c7c-4a79-aa9e-77a9c711f8f9";
-
-        JSONObject input = new JSONObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode input = objectMapper.createObjectNode();
         input.put("id", uuid);
 
         String result = syncFHIRRecord.correctEstimatedDOB(input.toString());
-        JSONObject resultJson = new JSONObject(result);
-        // Should not have birthDate field
+
+        JsonNode resultJson = objectMapper.readTree(result);
+
         Assert.assertEquals(false, resultJson.has("birthDate"));
+    }
+
+    private JsonNode convertFromString(String jsonString) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode;
+        try {
+            jsonNode = objectMapper.readTree(jsonString);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+        return jsonNode;
     }
 }

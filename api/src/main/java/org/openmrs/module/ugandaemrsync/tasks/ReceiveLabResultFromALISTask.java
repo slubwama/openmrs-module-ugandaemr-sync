@@ -2,7 +2,6 @@ package org.openmrs.module.ugandaemrsync.tasks;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONObject;
 import org.openmrs.Order;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
@@ -43,7 +42,7 @@ public class ReceiveLabResultFromALISTask extends AbstractTask {
                 ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
                 //Save Lab Results
                 if (order.getEncounter() != null) {
-                   ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(""), order);
+                   ugandaEMRSyncService.addTestResultsToEncounter("", order);
                     syncTask.setActionCompleted(true);
                     ugandaEMRSyncService.saveSyncTask(syncTask);
                     try {
