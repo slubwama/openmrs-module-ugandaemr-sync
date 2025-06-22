@@ -3,16 +3,17 @@ package org.openmrs.module.ugandaemrsync.server;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.param.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.AllergyIntolerance;
-import org.hl7.fhir.r4.model.MedicationRequest;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.openmrs.*;
 import org.openmrs.api.*;
 import org.openmrs.module.fhir2.api.*;
@@ -34,6 +35,7 @@ import org.openmrs.util.OpenmrsUtil;
 import org.springframework.context.ApplicationContext;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -66,11 +68,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_C
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_POST;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_BUNDLE_RESOURCE_METHOD_PUT;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ENCOUNTER_ROLE;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.FHIR_CODING_DATATYPE;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PASSPORT_IDENTIFIER_SYSTEM_URL_GP;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.NATIONAL_ID_IDENTIFIER_SYSTEM_URL_GP;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.NHPI_IDENTIFIER_SYSTEM_URL_GP;
-import static org.openmrs.module.ugandaemrsync.server.SyncConstant.OPENMRS_IDENTIFIER_SYSTEM_URL_GP;
 
 /**
  * Created by lubwamasamuel on 07/11/2016.
@@ -197,40 +194,53 @@ public class SyncFHIRRecord {
     }
 
     public String addOrganizationToRecord(String payload, String attributeName) {
+        ObjectMapper objectMapper = new ObjectMapper();
         if (payload.isEmpty()) {
             return "";
         }
 
         String organizationString = String.format("{\"reference\":\"Organization/%s\",\"type\":\"Organization\",\"identifier\":{\"use\":\"official\",\"value\":\"%s\",\"system\":\"https://hmis.health.go.ug/\"},\"display\":\"%s\"}", healthCenterIdentifier, healthCenterIdentifier, healthCenterName);
-        JSONObject finalPayLoadJson = new JSONObject(payload);
-        JSONObject organization = new JSONObject(organizationString);
+        ObjectNode finalPayLoadJson = null;
+        try {
+            finalPayLoadJson = (ObjectNode) objectMapper.readTree(payload);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        JsonNode organization = null;
+        try {
+            organization = objectMapper.readTree(organizationString);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         finalPayLoadJson.put(attributeName, organization);
         return finalPayLoadJson.toString();
     }
 
     public String addServiceType(String payload, String attributeName) {
+        ObjectMapper objectMapper = new ObjectMapper();
         if (payload.isEmpty()) {
             return "";
         }
-        JSONObject finalPayLoadJson = new JSONObject(payload);
-        finalPayLoadJson.put(attributeName, new JSONObject("{\"coding\" : [{\"code\": \"dcd87b79-30ab-102d-86b0-7a5022ba4115\", \"display\": \"MEDICAL OUTPATIENT\"}],\"text\" : \"Out-Patient\"}"));
-        return finalPayLoadJson.toString();
-    }
-
-    /**
-     * Adds location to encounter Resource
-     *
-     * @param payload
-     * @return
-     */
-    public String addLocationToEncounterResource(String payload) {
-        if (payload.isEmpty()) {
-            return "";
+        ObjectNode finalPayLoadJson = null;
+        try {
+            finalPayLoadJson = (ObjectNode) objectMapper.readTree(payload);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
-        JSONObject finalPayLoadJson = new JSONObject(payload);
+        ObjectNode valueNode = objectMapper.createObjectNode();
+        ArrayNode codingArray = objectMapper.createArrayNode();
 
+        ObjectNode codingEntry = objectMapper.createObjectNode();
+        codingEntry.put("code", "dcd87b79-30ab-102d-86b0-7a5022ba4115");
+        codingEntry.put("display", "MEDICAL OUTPATIENT");
 
+        codingArray.add(codingEntry);
+        valueNode.set("coding", codingArray);
+        valueNode.put("text", "Out-Patient");
+
+        finalPayLoadJson.set(attributeName, valueNode);
         return finalPayLoadJson.toString();
     }
 
@@ -514,12 +524,22 @@ public class SyncFHIRRecord {
                     }
                     break;
                 case "EpisodeOfCare":
-                    JSONArray jsonArray = getSearchParametersInJsonObject("EpisodeOfCare", syncFhirProfile.getResourceSearchParameter()).getJSONArray("type");
-
+                    ArrayNode typeArray = null;
+                    try {
+                        typeArray = (ArrayNode) getSearchParametersInJsonObject("EpisodeOfCare", syncFhirProfile.getResourceSearchParameter()).get("type");
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
                     List<PatientProgram> patientProgramList = new ArrayList<>();
 
-                    for (Object jsonObject : jsonArray) {
-                        patientProgramList = Context.getProgramWorkflowService().getPatientPrograms(syncFHIRCase.getPatient(), Context.getProgramWorkflowService().getProgramByUuid(jsonObject.toString()), lastUpdateDate, currentDate, null, null, false);
+                    for (JsonNode typeNode : typeArray) {
+                        String programUuid = typeNode.asText(); // or use typeNode.get("code").asText() if it’s an object
+                        Program program = Context.getProgramWorkflowService().getProgramByUuid(programUuid);
+
+                        List<PatientProgram> programs = Context.getProgramWorkflowService()
+                                .getPatientPrograms(syncFHIRCase.getPatient(), program, lastUpdateDate, currentDate, null, null, false);
+
+                        patientProgramList.addAll(programs);
                     }
 
                     if (patientProgramList.size() > 0) {
@@ -530,11 +550,22 @@ public class SyncFHIRRecord {
                 case "Encounter":
                     List<EncounterType> encounterTypes = new ArrayList<>();
                     DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(lastUpdateDate);
-                    JSONArray encounterUUIDS = getSearchParametersInJsonObject("Encounter", syncFhirProfile.getResourceSearchParameter()).getJSONArray("type");
 
-                    for (Object jsonObject : encounterUUIDS) {
-                        encounterTypes.add(Context.getEncounterService().getEncounterTypeByUuid(jsonObject.toString()));
+                    ArrayNode encounterUUIDs = null;
+                    try {
+                        encounterUUIDs = (ArrayNode) getSearchParametersInJsonObject("Encounter", syncFhirProfile.getResourceSearchParameter()).get("type");
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
+
+                    for (JsonNode node : encounterUUIDs) {
+                        String uuid = node.asText();
+                        EncounterType encounterType = Context.getEncounterService().getEncounterTypeByUuid(uuid);
+                        if (encounterType != null) {
+                            encounterTypes.add(encounterType);
+                        }
+                    }
+
                     EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(syncFHIRCase.getPatient(), null, encounterLastUpdated.getLowerBoundAsInstant(), encounterLastUpdated.getUpperBoundAsInstant(), null, null, encounterTypes, null, null, null, false);
                     encounters = Context.getEncounterService().getEncounters(encounterSearchCriteria);
                     resources.addAll(groupInCaseBundle("Encounter", getEncounterResourceBundle(encounters), syncFhirProfile.getPatientIdentifierType().getName()));
@@ -597,67 +628,6 @@ public class SyncFHIRRecord {
 
 
         return finalCaseBundle;
-    }
-
-
-    public Collection<String> generateFHIRResourceBundles(SyncFhirProfile syncFhirProfile) {
-        Collection<String> stringCollection = new ArrayList<>();
-        List<Encounter> encounters = new ArrayList<>();
-
-        this.syncFhirProfile = syncFhirProfile;
-
-        Date currentDate = new Date();
-
-        String[] resourceTypes = syncFhirProfile.getResourceTypes().split(",");
-        for (String resource : resourceTypes) {
-            switch (resource) {
-                case "Encounter":
-                    List<EncounterType> encounterTypes = new ArrayList<>();
-                    DateRangeParam encounterLastUpdated = new DateRangeParam().setUpperBoundInclusive(currentDate).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "Encounter"));
-                    JSONArray jsonArray = getSearchParametersInJsonObject("Encounter", syncFhirProfile.getResourceSearchParameter()).getJSONArray("type");
-
-                    for (Object jsonObject : jsonArray) {
-                        encounterTypes.add(Context.getEncounterService().getEncounterTypeByUuid(jsonObject.toString()));
-                    }
-
-                    EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteria(null, null, encounterLastUpdated.getLowerBoundAsInstant(), encounterLastUpdated.getUpperBoundAsInstant(), null, null, encounterTypes, null, null, null, false);
-                    encounters = Context.getEncounterService().getEncounters(encounterSearchCriteria);
-
-                    saveSyncFHIRResources(groupInBundles("Encounter", getEncounterResourceBundle(encounters), syncFhirProfile.getNumberOfResourcesInBundle(), null), resource, syncFhirProfile, currentDate);
-
-                    break;
-                case "Observation":
-                    if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Observation", getObservationResourceBundle(syncFhirProfile, encounters, getPersonsFromEncounterList(encounters)), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Observation", syncFhirProfile, currentDate);
-                    } else {
-                        saveSyncFHIRResources(groupInBundles("Observation", getObservationResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Observation", syncFhirProfile, currentDate);
-                    }
-                    break;
-                case "Patient":
-                    if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Patient", getPatientResourceBundle(syncFhirProfile, getPatientIdentifierFromEncounter(encounters, syncFhirProfile.getPatientIdentifierType()), null), syncFhirProfile.getNumberOfResourcesInBundle(), syncFhirProfile.getPatientIdentifierType().getName()), "Patient", syncFhirProfile, currentDate);
-                    } else {
-                        saveSyncFHIRResources(groupInBundles("Patient", getPatientResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), syncFhirProfile.getPatientIdentifierType().getName()), "Patient", syncFhirProfile, currentDate);
-                    }
-                    break;
-                case "Practitioner":
-                    if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Practitioner", getPractitionerResourceBundle(syncFhirProfile, encounters, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Practitioner", syncFhirProfile, currentDate);
-                    } else {
-                        saveSyncFHIRResources(groupInBundles("Practitioner", getPractitionerResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Practitioner", syncFhirProfile, currentDate);
-                    }
-                    break;
-                case "Person":
-                    if (encounters.size() > 0) {
-                        saveSyncFHIRResources(groupInBundles("Person", getPersonResourceBundle(syncFhirProfile, getPersonsFromEncounterList(encounters), null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Person", syncFhirProfile, currentDate);
-                    } else {
-                        saveSyncFHIRResources(groupInBundles("Person", getPersonResourceBundle(syncFhirProfile, null, null), syncFhirProfile.getNumberOfResourcesInBundle(), null), "Person", syncFhirProfile, currentDate);
-                    }
-                    break;
-            }
-        }
-
-        return stringCollection;
     }
 
     public List<SyncFhirResource> saveSyncFHIRResources(@NotNull Collection<String> resources, @NotNull String resourceType, @NotNull SyncFhirProfile syncFhirProfile, Date currentDate) {
@@ -788,7 +758,7 @@ public class SyncFHIRRecord {
 
     private String handlePatientResource(String jsonString) {
         jsonString = correctEstimatedDOB(jsonString);
-        if (profile != null && profile.getKeepProfileIdentifierOnly()!=null && profile.getKeepProfileIdentifierOnly()) {
+        if (profile != null && profile.getKeepProfileIdentifierOnly() != null && profile.getKeepProfileIdentifierOnly()) {
             try {
                 jsonString = removeIdentifierExceptProfileId(jsonString, "identifier");
                 jsonString = addCodingToIdentifier(jsonString, "identifier");
@@ -831,8 +801,9 @@ public class SyncFHIRRecord {
 
     private String wrapResourceWithId(String jsonString, String resourceType) {
         try {
-            JSONObject jsonObject = new JSONObject(jsonString);
-            String id = jsonObject.getString("id");
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode jsonObject = (ObjectNode) objectMapper.readTree(jsonString);
+            String id = jsonObject.get("id").asText();
             return wrapResourceInPUTRequest(jsonString, resourceType, id);
         } catch (Exception e) {
             log.error("Error wrapping resource with ID: ", e);
@@ -841,10 +812,24 @@ public class SyncFHIRRecord {
     }
 
     private String addUseOfficialToName(String payload, String attributeName) {
-        JSONObject jsonObject = new JSONObject(payload);
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonObject = null;
+        try {
+            jsonObject = (ObjectNode) objectMapper.readTree(payload);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         int objectCount = 0;
-        for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
-            jsonObject.getJSONArray(attributeName).getJSONObject(objectCount).put("use", "official");
+        for (JsonNode jsonObject1 : (ArrayNode) jsonObject.get(attributeName)) {
+
+            ArrayNode arrayNode = (ArrayNode) jsonObject.get(attributeName);
+
+
+            ObjectNode elementNode = (ObjectNode) arrayNode.get(objectCount);
+
+
+            elementNode.put("use", "official");
             objectCount++;
         }
         return jsonObject.toString();
@@ -852,11 +837,22 @@ public class SyncFHIRRecord {
 
     private String removeIdentifierExceptProfileId(String payload, String attributeName) {
         if (profile != null) {
-            JSONObject jsonObject = new JSONObject(payload);
-            int objectCount = 0;
-            for (int i = 0; i < jsonObject.getJSONArray(attributeName).length(); i++) {
-                if (!jsonObject.getJSONArray("identifier").getJSONObject(i).getJSONObject("type").getJSONArray("coding").getJSONObject(0).get("code").toString().equals(profile.getPatientIdentifierType().getUuid())) {
-                    jsonObject.getJSONArray("identifier").remove(i);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode jsonObject;
+            try {
+                jsonObject = (ObjectNode) objectMapper.readTree(payload);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            ArrayNode identifiers = (ArrayNode) jsonObject.get(attributeName);
+            String expectedUuid = profile.getPatientIdentifierType().getUuid();
+
+            for (int i = identifiers.size() - 1; i >= 0; i--) {
+                JsonNode identifier = identifiers.get(i);
+                JsonNode codeNode = identifier.path("type").path("coding").path(0).path("code");
+
+                if (!expectedUuid.equals(codeNode.asText())) {
+                    identifiers.remove(i);
                 }
             }
 
@@ -867,60 +863,101 @@ public class SyncFHIRRecord {
     }
 
     private String removeAttribute(String payload, String attributeName) {
-        JSONObject jsonObject = new JSONObject(payload);
-        if (jsonObject.has(attributeName)) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode jsonObject = (ObjectNode) objectMapper.readTree(payload);
             jsonObject.remove(attributeName);
+            return objectMapper.writeValueAsString(jsonObject);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to remove attribute from payload", e);
         }
-        return jsonObject.toString();
     }
 
     public String addCodingToIdentifier(String payload, String attributeName) {
-        JSONObject jsonObject = new JSONObject(payload);
-        int identifierCount = 0;
-        if (jsonObject.has(attributeName)) {
-            for (Object jsonObject1 : jsonObject.getJSONArray(attributeName)) {
-                JSONObject jsonObject2 = new JSONObject(jsonObject1.toString());
-                PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(jsonObject2.get("id").toString());
-                jsonObject.getJSONArray(attributeName).getJSONObject(identifierCount).getJSONObject("type").put("coding", new JSONArray().put(new JSONObject().put("system", "UgandaEMR").put("code", patientIdentifier.getIdentifierType().getUuid())));
-                identifierCount++;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode jsonObject = (ObjectNode) mapper.readTree(payload);
+
+            if (jsonObject.has(attributeName) && jsonObject.get(attributeName).isArray()) {
+                ArrayNode identifiers = (ArrayNode) jsonObject.get(attributeName);
+
+                for (int i = 0; i < identifiers.size(); i++) {
+                    ObjectNode identifierNode = (ObjectNode) identifiers.get(i);
+                    String id = identifierNode.get("id").asText();
+
+                    PatientIdentifier patientIdentifier = Context.getPatientService().getPatientIdentifierByUuid(id);
+
+                    ObjectNode codingNode = mapper.createObjectNode();
+                    codingNode.put("system", "UgandaEMR");
+                    codingNode.put("code", patientIdentifier.getIdentifierType().getUuid());
+
+                    ArrayNode codingArray = mapper.createArrayNode();
+                    codingArray.add(codingNode);
+
+                    if (!identifierNode.has("type") || identifierNode.get("type").isNull()) {
+                        identifierNode.set("type", mapper.createObjectNode());
+                    }
+
+                    ((ObjectNode) identifierNode.get("type")).set("coding", codingArray);
+                }
             }
+
+            return mapper.writeValueAsString(jsonObject);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to add coding to identifier", e);
         }
-        return jsonObject.toString();
     }
 
     public String correctEstimatedDOB(String payload) {
         try {
-            JSONObject jsonObject = new JSONObject(payload);
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode root = (ObjectNode) mapper.readTree(payload);
 
-            if (!jsonObject.has("id") || jsonObject.isNull("id")) {
+            // Check for "id" field
+            if (!root.has("id") || root.get("id").isNull()) {
                 return payload;
             }
 
-            String patientUuid = jsonObject.getString("id");
+            String patientUuid = root.get("id").asText();
             Patient patient = Context.getPatientService().getPatientByUuid(patientUuid);
 
             if (patient != null && Boolean.TRUE.equals(patient.getBirthdateEstimated()) && patient.getBirthdate() != null) {
                 String formattedBirthdate = new SimpleDateFormat("yyyy-MM-dd").format(patient.getBirthdate());
-                jsonObject.put("birthDate", formattedBirthdate);
+                root.put("birthDate", formattedBirthdate);
             }
 
-            return jsonObject.toString();
+            return mapper.writeValueAsString(root);
+
         } catch (Exception e) {
             log.error("Failed to correct estimated DOB", e);
             return payload;
         }
     }
 
+
     private String addAttributeToObject(String payload, String targetObject, String attributeName, String attributeValue) {
-        JSONObject jsonObject = new JSONObject(payload);
-        if (jsonObject.has(targetObject) && jsonObject.getJSONArray(targetObject).length() > 0) {
-            for (int i = 0; i < jsonObject.getJSONArray(targetObject).length(); i++) {
-                jsonObject.getJSONArray(targetObject).getJSONObject(i).put(attributeName, attributeValue);
-                i++;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode root = (ObjectNode) mapper.readTree(payload);
+
+            if (root.has(targetObject) && root.get(targetObject).isArray()) {
+                ArrayNode array = (ArrayNode) root.get(targetObject);
+
+                for (JsonNode node : array) {
+                    if (node.isObject()) {
+                        ((ObjectNode) node).put(attributeName, attributeValue);
+                    }
+                }
             }
+
+            return mapper.writeValueAsString(root);
+
+        } catch (Exception e) {
+            log.error("Error adding attribute to object", e);
+            throw new RuntimeException("Failed to add attribute to JSON array objects", e);
         }
-        return jsonObject.toString();
     }
+
 
     private String getIdentifierSystemURL(String propertyName) {
         return Context.getAdministrationService().getGlobalProperty(propertyName);
@@ -963,12 +1000,15 @@ public class SyncFHIRRecord {
         return applicationContext;
     }
 
-    private JSONObject getSearchParametersInJsonObject(String resourceType, String searchParameterString) {
-        JSONObject jsonObject = new JSONObject(searchParameterString);
-        if (jsonObject.isNull(resourceType)) {
-            jsonObject = jsonObject.getJSONObject(resourceType.toLowerCase() + "Filter");
+    private ObjectNode getSearchParametersInJsonObject(String resourceType, String searchParameterString) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode rootNode = (ObjectNode) objectMapper.readTree(searchParameterString);
+
+        if (rootNode.get(resourceType) == null || rootNode.get(resourceType).isNull()) {
+            return (ObjectNode) rootNode.get(resourceType.toLowerCase() + "Filter");
         }
-        return jsonObject;
+
+        return (ObjectNode) rootNode.get(resourceType);
     }
 
     public String addSearchParameter(String resourceType, String searchParam, String searchParamString) {
@@ -1129,9 +1169,14 @@ public class SyncFHIRRecord {
         Date lastSyncDate = null;
 
         if (syncFhirProfile != null) {
-            JSONObject searchParams = getSearchParametersInJsonObject("Observation", syncFhirProfile.getResourceSearchParameter());
+            ObjectNode searchParams = null;
+            try {
+                searchParams = getSearchParametersInJsonObject("Observation", syncFhirProfile.getResourceSearchParameter());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
 
-            JSONArray codes = searchParams.getJSONArray("code");
+            ArrayNode codes = (ArrayNode) searchParams.get("code");
 
             lastSyncDate = getLastSyncDate(syncFhirProfile, "Observation");
             for (Object conceptUID : codes) {
@@ -1193,7 +1238,8 @@ public class SyncFHIRRecord {
     }
 
     private Collection<IBaseResource> getConditionResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
-        JSONArray codes = new JSONArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ArrayNode codes = objectMapper.createArrayNode();
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         TokenAndListParam codeReference = new TokenAndListParam();
@@ -1201,8 +1247,16 @@ public class SyncFHIRRecord {
 
         DateRangeParam lastUpdated = null;
         if (syncFhirProfile != null) {
-            JSONObject searchParams = getSearchParametersInJsonObject("Condition", syncFhirProfile.getResourceSearchParameter());
-            codes = searchParams.getJSONArray("code");
+            JsonNode searchParams = null;
+            try {
+                searchParams = getSearchParametersInJsonObject("Condition", syncFhirProfile.getResourceSearchParameter());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (searchParams.has("code") && searchParams.get("code").isArray()) {
+                codes = (ArrayNode) searchParams.get("code");
+            }
 
             if (syncFhirProfile != null && syncFhirProfile.getIsCaseBasedProfile()) {
 
@@ -1290,10 +1344,20 @@ public class SyncFHIRRecord {
 
 
     private Collection<IBaseResource> getMedicationDispenseResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ArrayNode codes = objectMapper.createArrayNode();
+        JsonNode searchParams = null;
 
-        JSONObject searchParams = getSearchParametersInJsonObject("medicationDispense", syncFhirProfile.getResourceSearchParameter());
+        try {
+            searchParams = getSearchParametersInJsonObject("medicationDispense", syncFhirProfile.getResourceSearchParameter());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-        JSONArray codes = searchParams.getJSONArray("code");
+        if (searchParams.has("code") && searchParams.get("code").isArray()) {
+            codes = (ArrayNode) searchParams.get("code");
+        }
+
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
 
         MedicationDispenseSearchParams medicationDispenseSearchParams = new MedicationDispenseSearchParams();
@@ -1325,11 +1389,11 @@ public class SyncFHIRRecord {
     }
 
     private Collection<IBaseResource> getMedicationRequestResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode searchParams =objectMapper.createObjectNode();
 
-        JSONObject searchParams = new JSONObject();
 
-
-        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+        Collection < IBaseResource > iBaseResources = new ArrayList<>();
 
         MedicationRequestSearchParams medicationRequestSearchParams = new MedicationRequestSearchParams();
         TokenAndListParam codeReference = new TokenAndListParam();
@@ -1337,7 +1401,12 @@ public class SyncFHIRRecord {
         DateRangeParam lastUpdated = null;
 
         if (syncFhirProfile != null) {
-            getSearchParametersInJsonObject("medicationRequest", syncFhirProfile.getResourceSearchParameter());
+            try {
+                searchParams=getSearchParametersInJsonObject("medicationRequest", syncFhirProfile.getResourceSearchParameter());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
             if (syncFhirProfile.getIsCaseBasedProfile()) {
                 if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                     lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
@@ -1351,7 +1420,7 @@ public class SyncFHIRRecord {
 
         }
         if (!searchParams.isEmpty() && searchParams.has("code")) {
-            JSONArray codes = searchParams.getJSONArray("code");
+            ArrayNode codes = (ArrayNode) searchParams.get("code");
             for (Object conceptUID : codes) {
                 try {
                     TokenParam paramConcept = new TokenParam(conceptUID.toString());
@@ -1380,7 +1449,9 @@ public class SyncFHIRRecord {
 
     private Collection<IBaseResource> getDiagnosticReportResourceBundle(SyncFhirCase syncFhirCase, SyncFhirProfile syncFhirProfile) {
 
-        JSONObject searchParams = new JSONObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode searchParams =objectMapper.createObjectNode();
+
 
 
         Collection<IBaseResource> iBaseResources = new ArrayList<>();
@@ -1391,7 +1462,11 @@ public class SyncFHIRRecord {
         DateRangeParam lastUpdated = null;
 
         if (syncFhirProfile != null) {
-            getSearchParametersInJsonObject("diagnosticReport", syncFhirProfile.getResourceSearchParameter());
+            try {
+                searchParams= getSearchParametersInJsonObject("diagnosticReport", syncFhirProfile.getResourceSearchParameter());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             if (syncFhirProfile.getIsCaseBasedProfile()) {
                 if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
                     lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
@@ -1405,7 +1480,7 @@ public class SyncFHIRRecord {
         }
 
         if (!searchParams.isEmpty() && searchParams.has("code")) {
-            JSONArray codes = searchParams.getJSONArray("code");
+            ArrayNode codes = (ArrayNode) searchParams.get("code");
             for (Object conceptUID : codes) {
                 try {
                     TokenParam paramConcept = new TokenParam(conceptUID.toString());
@@ -1499,7 +1574,9 @@ public class SyncFHIRRecord {
                         syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
                         if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
-                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            JsonNode results = objectMapper.readTree(map.get("result").toString());
+                            ugandaEMRSyncService.updatePatientsFromFHIR(results, PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                         }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     } else {
@@ -1522,59 +1599,103 @@ public class SyncFHIRRecord {
 
 
     private String addReferencesMappingToObservation(String observation) {
-        ConceptService conceptService = Context.getConceptService();
-        JSONObject jsonObject = new JSONObject(observation);
-        JSONObject observationResource = jsonObject.getJSONObject("resource");
-        String conceptUUid = observationResource.getJSONObject("code").getJSONArray("coding").getJSONObject(0).getString("code");
+        try {
+            ConceptService conceptService = Context.getConceptService();
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode root = (ObjectNode) mapper.readTree(observation);
+            ObjectNode observationResource = (ObjectNode) root.get("resource");
 
+            // Get concept UUID from code.coding[0].code
+            String conceptUuid = observationResource.path("code").path("coding").get(0).path("code").asText();
+            Concept concept = conceptService.getConceptByUuid(conceptUuid);
 
-        Concept concept = conceptService.getConceptByUuid(conceptUUid);
+            // Get the 'coding' array
+            ArrayNode questionCodings = (ArrayNode) observationResource.path("code").withArray("coding");
 
-        JSONArray newQuestionJson = observationResource.getJSONObject("code").getJSONArray("coding");
+            // Add UgandaEMR coding
+            ObjectNode ugandaEmrCoding = mapper.createObjectNode();
+            ugandaEmrCoding.put("system", "UgandaEMR");
+            ugandaEmrCoding.put("code", concept.getConceptId().toString());
+            ugandaEmrCoding.put("display", concept.getName().getName());
+            questionCodings.add(ugandaEmrCoding);
 
-        newQuestionJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, "UgandaEMR", concept.getConceptId(), concept.getName().getName())));
-
-        if (concept.getConceptMappings().size() > 0) {
-            for (ConceptMap conceptQuestionMap : concept.getConceptMappings()) {
-                newQuestionJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptQuestionMap.getConceptReferenceTerm().getConceptSource().getName(), conceptQuestionMap.getConceptReferenceTerm().getCode(), conceptQuestionMap.getConceptReferenceTerm().getName())));
+            // Add concept mappings
+            for (ConceptMap conceptMap : concept.getConceptMappings()) {
+                if (conceptMap.getConceptReferenceTerm() != null) {
+                    ObjectNode coding = mapper.createObjectNode();
+                    coding.put("system", conceptMap.getConceptReferenceTerm().getConceptSource().getName());
+                    coding.put("code", conceptMap.getConceptReferenceTerm().getCode());
+                    coding.put("display", conceptMap.getConceptReferenceTerm().getName());
+                    questionCodings.add(coding);
+                }
             }
-        }
 
-        if (concept.getDatatype().equals(conceptService.getConceptDatatypeByUuid("8d4a48b6-c2cc-11de-8d13-0010c6dffd0f")) && !observationResource.isNull("valueCodeableConcept")) {
-            JSONArray newValueCodeableJson = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding");
-            String valueCodedConceptUUid = observationResource.getJSONObject("valueCodeableConcept").getJSONArray("coding").getJSONObject(0).getString("code");
-            Concept valueCodedConcept = conceptService.getConceptByUuid(valueCodedConceptUUid);
-            newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, "UgandaEMR", valueCodedConcept.getConceptId(), valueCodedConcept.getName().getName())));
-            for (ConceptMap conceptMap : valueCodedConcept.getConceptMappings()) {
-                newValueCodeableJson.put(new JSONObject(String.format(FHIR_CODING_DATATYPE, conceptMap.getConceptReferenceTerm().getConceptSource().getName(), conceptMap.getConceptReferenceTerm().getCode(), conceptMap.getConceptReferenceTerm().getName())));
+            // Handle valueCodeableConcept for coded data types
+            if (concept.getDatatype().getUuid().equals("8d4a48b6-c2cc-11de-8d13-0010c6dffd0f") &&
+                    observationResource.has("valueCodeableConcept")) {
+
+                ArrayNode valueCodings = (ArrayNode) observationResource.path("valueCodeableConcept").withArray("coding");
+                String valueCodedConceptUuid = valueCodings.get(0).path("code").asText();
+                Concept valueCodedConcept = conceptService.getConceptByUuid(valueCodedConceptUuid);
+
+                ObjectNode emrValueCoding = mapper.createObjectNode();
+                emrValueCoding.put("system", "UgandaEMR");
+                emrValueCoding.put("code", valueCodedConcept.getConceptId().toString());
+                emrValueCoding.put("display", valueCodedConcept.getName().getName());
+                valueCodings.add(emrValueCoding);
+
+                for (ConceptMap conceptMap : valueCodedConcept.getConceptMappings()) {
+                    ObjectNode coding = mapper.createObjectNode();
+                    coding.put("system", conceptMap.getConceptReferenceTerm().getConceptSource().getName());
+                    coding.put("code", conceptMap.getConceptReferenceTerm().getCode());
+                    coding.put("display", conceptMap.getConceptReferenceTerm().getName());
+                    valueCodings.add(coding);
+                }
             }
-        }
 
-        return jsonObject.toString();
+            return mapper.writeValueAsString(root);
+
+        } catch (Exception e) {
+            log.error("Failed to enrich observation with concept mappings", e);
+            throw new RuntimeException("Error processing observation JSON", e);
+        }
     }
 
+
     private String addEpisodeOfCareToEncounter(String encounter, Object episodeOfcare) {
-        String episodeOfCareReference = "{\"reference\":\"EpisodeOfCare/%s\"}";
+        ObjectMapper mapper = new ObjectMapper();
 
-        JSONObject jsonObject = new JSONObject(encounter);
-
-        Date encounterDate = null;
         try {
-            encounterDate = new SimpleDateFormat("yyyy-MM-dd").parse(jsonObject.getJSONObject("period").getString("start"));
-        } catch (ParseException e) {
-            log.error(e);
-        }
+            ObjectNode encounterNode = (ObjectNode) mapper.readTree(encounter);
+            JsonNode periodNode = encounterNode.path("period");
 
-        List<PatientProgram> patientPrograms = (List<PatientProgram>) episodeOfcare;
-
-        for (PatientProgram patientProgram : patientPrograms) {
-            if ((encounterDate.equals(patientProgram.getDateEnrolled()) || encounterDate.after(patientProgram.getDateEnrolled())) && (patientProgram.getDateCompleted() == null || (patientProgram.getDateCompleted() != null && (encounterDate.equals(patientProgram.getDateCompleted()) || encounterDate.before(patientProgram.getDateCompleted()))))) {
-                jsonObject.put("episodeOfCare", new JSONObject(String.format(episodeOfCareReference, patientProgram.getUuid())));
+            if (!periodNode.has("start")) {
+                throw new IllegalArgumentException("Encounter JSON missing 'period.start'");
             }
+
+            Date encounterDate = new SimpleDateFormat("yyyy-MM-dd").parse(periodNode.get("start").asText());
+            List<PatientProgram> patientPrograms = (List<PatientProgram>) episodeOfcare;
+
+            for (PatientProgram patientProgram : patientPrograms) {
+                Date enrolled = patientProgram.getDateEnrolled();
+                Date completed = patientProgram.getDateCompleted();
+
+                boolean inProgram = (encounterDate.equals(enrolled) || encounterDate.after(enrolled))
+                        && (completed == null || encounterDate.before(completed) || encounterDate.equals(completed));
+
+                if (inProgram) {
+                    ObjectNode referenceNode = mapper.createObjectNode();
+                    referenceNode.put("reference", "EpisodeOfCare/" + patientProgram.getUuid());
+                    encounterNode.set("episodeOfCare", referenceNode);
+                    break; // Add only the first matching episode
+                }
+            }
+
+            return mapper.writeValueAsString(encounterNode);
+        } catch (Exception e) {
+            log.error("Failed to add episodeOfCare to encounter", e);
+            throw new RuntimeException("Error processing encounter JSON", e);
         }
-
-
-        return jsonObject.toString();
     }
 
 
@@ -1595,15 +1716,21 @@ public class SyncFHIRRecord {
         List<Order> orders = new ArrayList<>();
         SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID("f947128e-93d7-46d5-aa32-645e38a125fe");
         for (SyncFhirResource syncFhirResource : syncFhirResources) {
-            JSONObject jsonObject = new JSONObject(syncFhirResource.getResource());
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode jsonObject;
+            try {
+                jsonObject = (ObjectNode) objectMapper.readTree(syncFhirResource.getResource());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
 
-            JSONArray jsonArray = jsonObject.getJSONArray("entry");
 
-            for (Object o : jsonArray) {
-                JSONObject jsonObject1 = new JSONObject(o.toString());
+            ArrayNode jsonArray = (ArrayNode) jsonObject.get("entry");
 
-                if (jsonObject1.getJSONObject("resource").get("resourceType").equals("ServiceRequest")) {
-                    Order order = Context.getOrderService().getOrderByUuid(jsonObject1.getJSONObject("resource").getString("id"));
+            for (JsonNode jsonObject1 : jsonArray) {
+
+                if (jsonObject1.get("resource").get("resourceType").equals("ServiceRequest")) {
+                    Order order = Context.getOrderService().getOrderByUuid(jsonObject1.get("resource").get("id").asText());
 
                     if (!order.isActive() || !ugandaEMRSyncService.getSyncTaskBySyncTaskId(order.getOrderNumber()).equals(null)) {
                         continue;

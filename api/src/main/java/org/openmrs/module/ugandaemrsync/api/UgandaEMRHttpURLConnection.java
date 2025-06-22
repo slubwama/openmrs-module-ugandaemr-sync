@@ -4,6 +4,10 @@ package org.openmrs.module.ugandaemrsync.api;
  * Created by lubwamasamuel on 11/10/16.
  */
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jdk.nashorn.internal.ir.ObjectNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
@@ -27,10 +31,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.openmrs.Location;
 import org.openmrs.User;
 import org.openmrs.api.LocationService;
@@ -40,17 +40,14 @@ import org.openmrs.module.ugandaemrsync.server.SyncConstant;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig;
 import org.openmrs.notification.Alert;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.HostnameVerifier;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
-import java.io.InputStream;
+
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -61,9 +58,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -290,17 +285,26 @@ public class UgandaEMRHttpURLConnection {
         return sendPostByWithBasicAuth(contentTypeJSON, data, facilitySyncId, url, username, password, token);
     }
 
-    public Map getMapOfResults(HttpEntity inputStreamReader, int responseCode) throws IOException {
-        Map map = new HashMap();
-        String responseString = EntityUtils.toString(inputStreamReader);
+    public Map<String, Object> getMapOfResults(HttpEntity httpEntity, int responseCode) throws IOException {
+        final String responseString = EntityUtils.toString(httpEntity);
+        Map<String, Object> resultMap = isJSONValid(responseString)
+                ? deserializeToMap(responseString)
+                : new HashMap<>();
 
-        if (isJSONValid(responseString)) {
-            map = new JSONObject(responseString).toMap();
+        resultMap.put("responseCode", responseCode);
+        return resultMap;
+    }
+
+    private Map<String, Object> deserializeToMap(String jsonString) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final JsonNode rootNode = objectMapper.readTree(jsonString);
+
+        if (rootNode.isObject()) {
+            return objectMapper.convertValue(rootNode, new TypeReference<Map<String, Object>>() {});
+        } else {
+            // Optionally log or warn here if non-object input is unexpected
+            return new HashMap<>();
         }
-
-        map.put("responseCode", responseCode);
-
-        return map;
     }
 
     public String getStringOfResults(InputStream inputStreamReader) throws IOException {
@@ -462,14 +466,12 @@ public class UgandaEMRHttpURLConnection {
      * @return
      */
     public boolean isJSONValid(String test) {
+
+        ObjectMapper objectMapper=new ObjectMapper();
         try {
-            new JSONObject(test);
-        } catch (JSONException ex) {
-            try {
-                new JSONArray(test);
-            } catch (JSONException ex1) {
-                return false;
-            }
+            objectMapper.readTree(test);
+        } catch (IOException e) {
+            return  false;
         }
         return true;
     }
@@ -552,7 +554,9 @@ public class UgandaEMRHttpURLConnection {
             map.put("responseCode", responseCode);
             if ((responseCode == CONNECTION_SUCCESS_200 || responseCode == CONNECTION_SUCCESS_201)) {
                 InputStream inputStreamReader = connection.getInputStream();
-                map.putAll(new JSONObject(getStringOfResults(inputStreamReader)).toMap());
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> parsedMap = objectMapper.readValue(getStringOfResults(inputStreamReader), new TypeReference<Map<String, Object>>() {});
+                map.putAll(parsedMap);
             } else {
                 map.put("responseCode", responseCode);
                 log.info(responseMessage);
