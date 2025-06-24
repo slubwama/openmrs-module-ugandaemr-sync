@@ -47,6 +47,13 @@
             </dependency>
 
             <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.1.0</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>org.openmrs.api</groupId>
                 <artifactId>openmrs-api</artifactId>
                 <version>${openMRSVersion}</version>
@@ -77,6 +84,7 @@
                 <version>${openMRSVersion}</version>
                 <type>jar</type>
                 <scope>provided</scope>
+
             </dependency>
 
             <dependency>
@@ -130,6 +138,10 @@
                     <exclusion>
                         <groupId>com.fasterxml.jackson.core</groupId>
                         <artifactId>jackson-databind</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-core</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -192,20 +204,6 @@
                 <artifactId>webservices.rest-omod</artifactId>
                 <version>${webservices.restModuleVersion}</version>
                 <scope>provided</scope>
-                <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jacksonVersion}</version>
-                <scope>compile</scope>
-                <type>jar</type>
             </dependency>
 
             <dependency>
@@ -442,6 +440,5 @@
         <webservices.restModuleVersion>2.47.0</webservices.restModuleVersion>
         <ibatisVersion>3.0</ibatisVersion>
         <stockmanagementVersion>1.4.4</stockmanagementVersion>
-        <jacksonVersion>2.19.1</jacksonVersion>
     </properties>
 </project>

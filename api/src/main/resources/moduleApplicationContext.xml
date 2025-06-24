@@ -56,8 +56,6 @@
         </property>
     </bean>
 
-    <bean id="locationTypeTranslator" class="org.openmrs.module.fhir2.api.translators.impl.LocationTypeTranslatorImpl"/>
-
     <bean id="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask"
           class="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask"
           scope="prototype"/>
