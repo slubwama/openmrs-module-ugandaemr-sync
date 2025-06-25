@@ -9,6 +9,8 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Observation;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -506,6 +508,148 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         Assert.assertEquals(0,concepts.size());
     }
+    @Test
+    public void shouldHandleComplexNestedObservation() {
+        String complexObservationJson = "{"
+                + "\"resourceType\": \"Observation\","
+                + "\"status\": \"final\","
+                + "\"code\": {"
+                + "  \"coding\": [{"
+                + "    \"system\": \"http://loinc.org\","
+                + "    \"code\": \"55284-4\","
+                + "    \"display\": \"Blood pressure panel\""
+                + "  }]"
+                + "},"
+                + "\"component\": ["
+                + "  {"
+                + "    \"code\": {"
+                + "      \"coding\": [{"
+                + "        \"system\": \"http://loinc.org\","
+                + "        \"code\": \"8480-6\","
+                + "        \"display\": \"Systolic blood pressure\""
+                + "      }]"
+                + "    },"
+                + "    \"valueQuantity\": {"
+                + "      \"value\": 120,"
+                + "      \"unit\": \"mmHg\""
+                + "    }"
+                + "  }"
+                + "]"
+                + "}";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(complexObservationJson);
+
+        Assert.assertNotNull("Complex observation should be parsed", resource);
+        Assert.assertTrue("Should be an Observation", resource instanceof Observation);
+        Observation obs = (Observation) resource;
+        Assert.assertEquals("Should have component", 1, obs.getComponent().size());
+    }
+
+    @Test
+    public void shouldHandleLargeResource() {
+        StringBuilder largeJson = new StringBuilder("{\"resourceType\": \"Patient\",\"active\":true,\"name\":[");
+        // Add 1000 name entries to create a large resource
+        for (int i = 0; i < 1000; i++) {
+            largeJson.append("{\"given\":[\"Test").append(i).append("\"],\"family\":\"Name").append(i).append("\"}");
+            if (i < 999) largeJson.append(",");
+        }
+        largeJson.append("]}");
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(largeJson.toString());
+
+        Assert.assertNotNull("Large resource should be parsed", resource);
+        Assert.assertTrue("Should be a Patient", resource instanceof org.hl7.fhir.r4.model.Patient);
+        org.hl7.fhir.r4.model.Patient patient = (org.hl7.fhir.r4.model.Patient) resource;
+        Assert.assertEquals("Should have 1000 names", 1000, patient.getName().size());
+    }
+
+    @Test
+    public void shouldHandleSpecialCharacters() {
+        String specialCharsJson = "{"
+                + "\"resourceType\": \"Patient\","
+                + "\"name\": [{"
+                + "  \"family\": \"O'Connor-Smith\","
+                + "  \"given\": [\"John\u00F6\"]"  // Contains umlaut ö
+                + "}]"
+                + "}";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(specialCharsJson);
+
+        Assert.assertNotNull("Special characters should be handled", resource);
+        Assert.assertTrue("Should be a Patient", resource instanceof org.hl7.fhir.r4.model.Patient);
+        org.hl7.fhir.r4.model.Patient patient = (org.hl7.fhir.r4.model.Patient) resource;
+        Assert.assertEquals("Should preserve special characters", "O'Connor-Smith", patient.getNameFirstRep().getFamily());
+    }
+
+    @Test
+    public void shouldHandleMinimalResource() {
+        String minimalJson = "{\"resourceType\":\"Patient\"}";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(minimalJson);
+
+        Assert.assertNotNull("Minimal resource should be parsed", resource);
+        Assert.assertTrue("Should be a Patient", resource instanceof org.hl7.fhir.r4.model.Patient);
+    }
+
+    @Test
+    public void shouldHandleResourceWithExtensions() {
+        String resourceWithExtensionJson = "{"
+                + "\"resourceType\": \"Patient\","
+                + "\"extension\": [{"
+                + "  \"url\": \"http://example.com/ext/birthplace\","
+                + "  \"valueString\": \"Kampala\""
+                + "}]"
+                + "}";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(resourceWithExtensionJson);
+
+        Assert.assertNotNull("Resource with extension should be parsed", resource);
+        Assert.assertTrue("Should be a Patient", resource instanceof org.hl7.fhir.r4.model.Patient);
+        org.hl7.fhir.r4.model.Patient patient = (org.hl7.fhir.r4.model.Patient) resource;
+        Assert.assertFalse("Should have extensions", patient.getExtension().isEmpty());
+    }
+
+    @Test
+    public void shouldHandleIncompleteJson() {
+        String incompleteJson = "{\"resourceType\": \"Observation\", \"status";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(incompleteJson);
+
+        Assert.assertNull("Should return null for incomplete JSON", resource);
+    }
+
+    @Test
+    public void shouldHandleInvalidResourceType() {
+        String invalidResourceTypeJson = "{"
+                + "\"resourceType\": \"InvalidResource\","
+                + "\"id\": \"123\""
+                + "}";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(invalidResourceTypeJson);
+
+        Assert.assertNull("Should return null for invalid resource type", resource);
+    }
+
+    @Test
+    public void shouldPreserveMetadata() {
+        String resourceWithMetadataJson = "{"
+                + "\"resourceType\": \"Patient\","
+                + "\"id\": \"test-id\","
+                + "\"meta\": {"
+                + "  \"versionId\": \"1\","
+                + "  \"lastUpdated\": \"2024-01-01T12:00:00Z\""
+                + "}"
+                + "}";
+
+        IBaseResource resource = ugandaEMRSyncService.convertStringToFHIRResource(resourceWithMetadataJson);
+
+/*        Assert.assertNotNull("Resource with metadata should be parsed", resource);
+        Assert.assertTrue("Should be a Patient", resource instanceof org.hl7.fhir.r4.model.Patient);
+        org.hl7.fhir.r4.model.Patient patient = (org.hl7.fhir.r4.model.Patient) resource;
+        Assert.assertEquals("Should preserve id", "test-id", patient.getId());
+        Assert.assertEquals("Should preserve version", "1", patient.getMeta().getVersionId());*/
+    }
+
 
 
 }

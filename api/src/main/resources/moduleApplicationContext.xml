@@ -27,8 +27,7 @@
 
     <!-- Wraps UgandaEMRSyncService methods in DB transactions and OpenMRS interceptors,
     which set audit info like dateCreated, changedBy, etc.-->
-    <bean id="ugandaemrsync.UgandaEMRSyncService"
-            class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+    <bean id="ugandaemrsync.UgandaEMRSyncService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
         <property name="transactionManager">
             <ref bean="transactionManager" />
         </property>
@@ -45,8 +44,6 @@
         </property>
     </bean>
 
-    <!-- Adds UgandaEMRSyncService to OpenMRS context so it can be accessed
-    calling Context.getService(UgandaEMRSyncService.class) -->
     <bean parent="serviceContext">
         <property name="moduleService">
             <list>
@@ -56,8 +53,6 @@
         </property>
     </bean>
 
-    <bean id="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask"
-          class="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask"
-          scope="prototype"/>
+    <bean id="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask" class="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask" scope="prototype"/>
 
 </beans>

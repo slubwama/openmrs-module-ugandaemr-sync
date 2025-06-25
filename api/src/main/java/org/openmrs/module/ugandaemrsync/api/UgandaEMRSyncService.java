@@ -11,6 +11,7 @@ package org.openmrs.module.ugandaemrsync.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Concept;
@@ -518,5 +519,14 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
 
     public List getReferralOrderConcepts();
+
+
+    /**
+     * Converts a FHIR resource JSON string to its corresponding FHIR object without requiring explicit class type
+     *
+     * @param resourceJson The JSON string representing the FHIR resource
+     * @return IBaseResource FHIR resource object, or null if conversion fails
+     */
+    public IBaseResource convertStringToFHIRResource(String resourceJson);
 }
 

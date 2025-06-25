@@ -9,16 +9,21 @@
  */
 package org.openmrs.module.ugandaemrsync.api.impl;
 
+import ca.uhn.fhir.parser.StrictErrorHandler;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DiagnosticReport;
 import org.hl7.fhir.r4.model.Observation;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
@@ -826,6 +831,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
             // Filter DiagnosticReport and Observation entries
             List<JsonNode> diagnosticReports = searchJsonObjectsByKey(entryArray, "resourceType", "DiagnosticReport");
+
             List<JsonNode> observations = searchJsonObjectsByKey(entryArray, "resourceType", "Observation");
 
             for (JsonNode diagnosticReport : diagnosticReports) {
@@ -848,6 +854,19 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             JsonNode resource = entry.get("resource");
             if (resource != null && value.equals(resource.path(key).asText())) {
                 result.add(resource);
+
+                convertStringToFHIRResource(entry.asText());
+            }
+        }
+        return result;
+    }
+
+    private List<IBaseResource> searchResourceByKey(ArrayNode array, String key, String value) {
+        List<IBaseResource> result = new ArrayList<>();
+        for (JsonNode entry : array) {
+            JsonNode resource = entry.get("resource");
+            if (resource != null && value.equals(resource.path(key).asText())) {
+                result.add(convertStringToFHIRResource(entry.asText())) ;
             }
         }
         return result;
@@ -3284,6 +3303,55 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         return referralOrderConceptList;
     }
+
+    public IBaseResource convertStringToFHIRResource(String resourceJson) {
+        if (resourceJson == null || resourceJson.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Create FHIR context for R4
+            FhirContext fhirContext = FhirContext.forR4();
+            IParser parser = fhirContext.newJsonParser();
+
+            // Configure parser
+            parser.setPrettyPrint(true);
+            parser.setParserErrorHandler(new StrictErrorHandler());
+
+            // Parse the resource - HAPI FHIR will automatically detect the resource type
+            return parser.parseResource(resourceJson);
+        } catch (Exception e) {
+            log.error("Error converting FHIR resource string to object: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+
+
+    /**
+     * Helper method to get the resource type from a FHIR JSON string
+     *
+     * @param resourceJson The JSON string representing the FHIR resource
+     * @return String representing the resource type, or null if not found
+     */
+    public String getResourceType(String resourceJson) {
+        if (resourceJson == null || resourceJson.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(resourceJson);
+            if (rootNode.has("resourceType")) {
+                return rootNode.get("resourceType").asText();
+            }
+        } catch (Exception e) {
+            log.error("Error extracting resource type from FHIR JSON: " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+
 }
 
 
