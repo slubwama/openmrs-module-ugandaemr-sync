@@ -3,8 +3,10 @@ package org.openmrs.module.ugandaemrsync.tasks;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
-import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
@@ -107,14 +109,16 @@ public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
 		return map;
 	}
 	public boolean isJSONValid(String test) {
-
-        ObjectMapper objectMapper=new ObjectMapper();
-        try {
-            objectMapper.readTree(test);
-        } catch (IOException e) {
-            return  false;
-        }
-        return true;
+		try {
+			new JSONObject(test);
+		} catch (JSONException ex) {
+			try {
+				new JSONArray(test);
+			} catch (JSONException ex1) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

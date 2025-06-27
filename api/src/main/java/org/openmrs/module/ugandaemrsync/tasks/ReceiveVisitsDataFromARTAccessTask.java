@@ -1,11 +1,9 @@
 package org.openmrs.module.ugandaemrsync.tasks;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.openmrs.EncounterType;
 import org.openmrs.Encounter;
 import org.openmrs.Visit;
@@ -97,13 +95,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         }
 
          if (results != null && !results.isEmpty() ) {
-             ObjectMapper objectMapper=new ObjectMapper();
-             JsonNode object = null;
-             try {
-                 object = objectMapper.readTree(results);
-             } catch (JsonProcessingException e) {
-                 throw new RuntimeException(e);
-             }
+             JSONObject object = new JSONObject(results);
              processData(object, resultMap);
 
          }else{
@@ -139,15 +131,16 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         return newUrl;
     }
 
-    private void processData(JsonNode jsonObject, Map resultsMap) {
-      ArrayNode patientRecords =  (ArrayNode) jsonObject.get("entry");
+    private void processData(JSONObject jsonObject, Map resultsMap) {
+      JSONArray patientRecords =  jsonObject.getJSONArray("entry");
 
-      if(patientRecords.size()>0 && patientRecords!=null) {
-          for (JsonNode patientRecord : patientRecords) {
-           JsonNode patientAttributes = patientRecord.get("entry").get(0);
-           int no_of_days =(int) patientRecord.get("entry").get(1).get("number_of_days").asInt();
-           int no_of_pills =(int) patientRecord.get("entry").get(1).get("number_of_pills").asInt();
-           JsonNode patientEncounterDetails = patientRecord.get("entry").get(3);
+      if(patientRecords.length()>0 && patientRecords!=null) {
+          for (Object o : patientRecords) {
+             JSONObject patientRecord = (JSONObject)o;
+           JSONObject patientAttributes = patientRecord.getJSONArray("entry").getJSONObject(0);
+           int no_of_days =(int) patientRecord.getJSONArray("entry").getJSONObject(1).get("number_of_days");
+           int no_of_pills =(int) patientRecord.getJSONArray("entry").getJSONObject(1).get("number_of_pills");
+           JSONObject patientEncounterDetails = patientRecord.getJSONArray("entry").getJSONObject(3);
 
            String patientARTNo = getIdentifier(patientAttributes);
            Patient patient = ugandaEMRSyncService.getPatientByPatientIdentifier(patientARTNo);
@@ -162,7 +155,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 
     }
 
-    private void processPatientBundle(JsonNode jsonObject, Patient patient,Integer no_of_days,Integer no_of_pills){
+    private void processPatientBundle(JSONObject jsonObject, Patient patient,Integer no_of_days,Integer no_of_pills){
         HashMap conceptsCaptured = getARTAccessRecordsConcepts();
         UserService userService = Context.getUserService();
         User user = userService.getUserByUuid("9bd6584f-33e0-11e7-9528-1866da16840d");
@@ -170,23 +163,23 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         Set<Obs> obsList =new HashSet<>();
 
         try {
-            String visit_date = getJSONObjectValue(jsonObject.get("0"), "visit_date");
+            String visit_date = getJSONObjectValue(jsonObject.getJSONObject("0"), "visit_date");
             String dateFormat = ugandaEMRSyncService.getDateFormat(visit_date);
             Date startVisitDate = ugandaEMRSyncService.convertStringToDate(visit_date, "00:00:00", dateFormat);
             Date stopVisitDate = ugandaEMRSyncService.convertStringToDate(visit_date, "23:59:59", dateFormat);
 
-            String next_visit_date = getJSONObjectValue(jsonObject.get("1"), "next_visit_date");
+            String next_visit_date = getJSONObjectValue(jsonObject.getJSONObject("1"), "next_visit_date");
            try{ Date return_date = ugandaEMRSyncService.convertStringToDate(next_visit_date, "00:00:00", ugandaEMRSyncService.getDateFormat(next_visit_date));
             if(next_visit_date!=""&&next_visit_date!=null) {
                 addObs(obsList, next_visit_date, conceptService.getConcept((int) conceptsCaptured.get("next_visit_date")), null, return_date, null, patient, user, startVisitDate);
             }}catch (Exception e){e.printStackTrace();}
 
-            String adherence = getJSONObjectValue(jsonObject.get("4"),"adherence");
+            String adherence = getJSONObjectValue(jsonObject.getJSONObject("4"),"adherence");
             Concept adherence_concept = conceptService.getConcept((int)conceptsCaptured.get("adherence"));
             Concept adherence_answer = convertAdherence(adherence);
             addObs(obsList,adherence,adherence_concept, adherence_answer, null, null, patient, user, startVisitDate);
 
-            String regimen= convertObjectToStringIfNotNull(jsonObject.get("regimen").get("coding").get("code"));
+            String regimen= convertObjectToStringIfNotNull(jsonObject.getJSONObject("regimen").getJSONObject("coding").get("code"));
             Concept regimenConcept = conceptService.getConcept((int) conceptsCaptured.get("regimen"));
             Concept regimenAnswer = convertRegimen(regimen);
             if(regimenAnswer!=null){
@@ -200,11 +193,11 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
                 obsList.add(groupObs);
             }
 
-            String other_drugs = getJSONObjectValue(jsonObject.get("13"),"other_drugs");
+            String other_drugs = getJSONObjectValue(jsonObject.getJSONObject("13"),"other_drugs");
             Concept other_medicationsConcept = conceptService.getConcept((int)conceptsCaptured.get("other_drugs"));
             addObs(obsList,other_drugs,other_medicationsConcept,null,null,other_drugs,patient,user,startVisitDate);
 
-            String complaint = getJSONObjectValue(jsonObject.get("6"),"complaints");
+            String complaint = getJSONObjectValue(jsonObject.getJSONObject("6"),"complaints");
             Concept complaintQuestion  = conceptService.getConcept((int) conceptsCaptured.get("complaints"));
             if(!(complaint.contains("null"))&& complaint!=null){
                 if(complaint.contains(",")){
@@ -246,7 +239,7 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
 //        String adherence = getJSONObjectValue(jsonObject.getJSONObject("4"),"adherence");
 //        String viral_load = getJSONObjectValue(jsonObject.getJSONObject("5"),"viral_load");
 
-        String other_complaints = getJSONObjectValue(jsonObject.get("7"),"other_complaints");
+        String other_complaints = getJSONObjectValue(jsonObject.getJSONObject("7"),"other_complaints");
 //        String reference_reason = getJSONObjectValue(jsonObject.getJSONObject("8"),"reference_reason");
 //        String client_representative = getJSONObjectValue(jsonObject.getJSONObject("9"),"client_representative");
 //        String discontinue_reason = getJSONObjectValue(jsonObject.getJSONObject("10"),"discontinue_reason");
@@ -259,11 +252,11 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         }
     }
 
-    private String getIdentifier(JsonNode jsonObject){
+    private String getIdentifier(JSONObject jsonObject){
         String identifier="";
         if(jsonObject!=null) {
-            identifier = (String) jsonObject.get("resource").get("identifier").
-                    get(0).get("type").get("coding").get("0").get("code").asText();
+            identifier = (String) jsonObject.getJSONObject("resource").getJSONArray("identifier").
+                    getJSONObject(0).getJSONObject("type").getJSONObject("coding").getJSONObject("0").get("code");
         }
         return identifier;
     }
@@ -290,10 +283,10 @@ public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
         return map;
     }
 
-    private String getJSONObjectValue(JsonNode jsonObject,String objectName){
+    private String getJSONObjectValue(JSONObject jsonObject,String objectName){
         Object value = "";
         if(jsonObject!=null){
-          value = jsonObject.get(objectName).get("coding").get("code");
+          value = jsonObject.getJSONObject(objectName).getJSONObject("coding").get("code");
         }
         try {
             return (String)value;

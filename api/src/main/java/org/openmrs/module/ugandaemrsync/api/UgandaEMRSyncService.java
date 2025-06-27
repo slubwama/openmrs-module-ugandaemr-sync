@@ -9,8 +9,7 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.Concept;
@@ -356,7 +355,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param order the order which was used to order the test. this can be null.
      * @return Encounter the encounter where the test results have been added.
      */
-    public List<Encounter> addTestResultsToEncounter(String bundleResults, Order order);
+    public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order);
 
 
     /**
@@ -452,17 +451,17 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param patientData The Patient Fhir Payload to be used to create a patient
      * @return a list of expired resources
      */
-    public Patient createPatientsFromFHIR(JsonNode patientData) throws ParseException;
+    public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException;
 
     /**
      * Checks if the patient coming from the fhir server already exists
      * @param patientData The Patient Fhir Payload to be used to check if the patient exists
      * @return wether the patient exists or not.
      */
-    public boolean patientFromFHIRExists(JsonNode patientData);
+    public boolean patientFromFHIRExists(JSONObject patientData);
 
 
-    public Patient updatePatientsFromFHIR(JsonNode bundle,String identifierUUID,String identifierName) throws ParseException;
+    public Patient updatePatientsFromFHIR(JSONObject bundle,String identifierUUID,String identifierName) throws ParseException;
 
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date  dateSyncedFrom, Date dateSyncedTo);
 
@@ -495,9 +494,10 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public SyncTaskType setAccessTokenToSyncTaskType();
 
-    public List<ObjectNode> generateDrugOrderToOtherSystem(Collection<Concept> conceptList);
+    public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> conceptList);
 
     public void sendPrescription();
+
 
     public List<Map<String, String>> generateAndSyncBulkViralLoadRequest();
 

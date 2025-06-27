@@ -1,7 +1,6 @@
 package org.openmrs.module.ugandaemrsync.web.resource;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -41,36 +40,27 @@ public class RecieveLabResultResource extends DelegatingCrudResource<TestResultD
 
     @Override
     public Object create(SimpleObject propertiesToCreate, RequestContext context) throws ResponseException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            // Convert SimpleObject directly to JsonNode
-            JsonNode jsonNode = objectMapper.convertValue(propertiesToCreate, JsonNode.class);
 
-            // Convert JsonNode back to string if needed by your service
-            String jsonPayload = objectMapper.writeValueAsString(jsonNode);
+        JSONObject jsonObject = new JSONObject(propertiesToCreate);
 
-            List<Encounter> encounters = Context.getService(UgandaEMRSyncService.class)
-                    .addTestResultsToEncounter(jsonPayload, null);
+        List<Encounter> encounters = Context.getService(UgandaEMRSyncService.class).addTestResultsToEncounter(jsonObject, null);
 
-            TestResultDTO delegate = new TestResultDTO();
-            if (!encounters.isEmpty()) {
-                delegate.setPatient(encounters.get(0).getPatient());
-                delegate.setEncounterList(encounters);
-                delegate.setUuid(encounters.get(0).getUuid());
-            }
+        TestResultDTO delegate = new TestResultDTO();
 
-            ValidateUtil.validate(delegate);
-            SimpleObject ret = (SimpleObject) ConversionUtil.convertToRepresentation(delegate, context.getRepresentation());
-
-            if (hasTypesDefined()) {
-                ret.add(RestConstants.PROPERTY_FOR_TYPE, getTypeName(delegate));
-            }
-
-            return ret;
-
-        } catch (Exception ex) {
-            throw new ResponseException("Failed to process lab result payload", ex) {};
+        if (encounters.size() > 0) {
+            delegate.setPatient(encounters.get(0).getPatient());
+            delegate.setEncounterList(encounters);
+            delegate.setUuid(encounters.get(0).getUuid());
         }
+
+        ValidateUtil.validate(delegate);
+        SimpleObject ret = (SimpleObject) ConversionUtil.convertToRepresentation(delegate, context.getRepresentation());
+        // add the 'type' discriminator if we support subclasses
+        if (hasTypesDefined()) {
+            ret.add(RestConstants.PROPERTY_FOR_TYPE, getTypeName(delegate));
+        }
+
+        return ret;
     }
 
     @Override

@@ -1,10 +1,9 @@
 package org.openmrs.module.ugandaemrsync.tasks;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONObject;
 import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -35,13 +34,13 @@ public class SendPatientsToFacilitySHRTask extends AbstractTask {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-            JsonNode results = objectMapper.readTree(patientDataObject);
-            ArrayNode entries=(ArrayNode) results.get("entry");
-            for (JsonNode jsonObject : entries) {
+            JSONObject results = new JSONObject(patientDataObject);
+            for (Object jsonObject : results.getJSONArray("entry")) {
+                JSONObject patientData = new JSONObject(jsonObject.toString()).getJSONObject("resource");
                 Patient patient = null;
-                String healthCenterFrom = jsonObject.get("resource").get("managingOrganization").get("display").toString();
-                if (!ugandaEMRSyncService.patientFromFHIRExists(jsonObject.get("resource"))) {
-                    patient = ugandaEMRSyncService.createPatientsFromFHIR(jsonObject.get("resource"));
+                String healthCenterFrom = patientData.getJSONObject("managingOrganization").get("display").toString();
+                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData)) {
+                    patient = ugandaEMRSyncService.createPatientsFromFHIR(patientData);
                 }
                 if (patient != null) {
                     log.info("Patient " + patient.getNames() + "Successfully Created");

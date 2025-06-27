@@ -1,11 +1,9 @@
 package org.openmrs.module.ugandaemrsync.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
@@ -117,31 +115,22 @@ public class SyncDataRecord {
     }
 
 
-    public static Map<String, String> convertListOfMapsToJsonString(List<Object[]> list, List<String> columns) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode resultArray = mapper.createArrayNode();
+    public static Map<String, String> convertListOfMapsToJsonString(List list, List<String> columns) throws IOException {
+        JSONArray result = new JSONArray();
+        Iterator it = list.iterator();
+        Map<String, String> vals = new HashMap<String, String>();
+        while (it.hasNext()) {
+            Object rows[] = (Object[]) it.next();
+            JSONObject row = new JSONObject();
 
-        for (Object[] row : list) {
-            ObjectNode rowNode = mapper.createObjectNode();
             for (int i = 0; i < columns.size(); i++) {
-                Object value = row[i];
-                // Add value based on its type
-                if (value == null) {
-                    rowNode.putNull(columns.get(i));
-                } else if (value instanceof Number) {
-                    rowNode.putPOJO(columns.get(i), value);
-                } else if (value instanceof Boolean) {
-                    rowNode.put(columns.get(i), (Boolean) value);
-                } else {
-                    rowNode.put(columns.get(i), value.toString());
-                }
+                row.put(columns.get(i), rows[i]);
             }
-            resultArray.add(rowNode);
-        }
 
-        Map<String, String> resultMap = new HashMap<>();
-        resultMap.put("json", mapper.writeValueAsString(resultArray));
-        return resultMap;
+            result.put(row);
+        }
+        vals.put("json", result.toString());
+        return vals;
     }
 
     private void processData(Integer mySize, String url, String query, int datesToBeReplaced, List<String> columns, Integer max) throws Exception {

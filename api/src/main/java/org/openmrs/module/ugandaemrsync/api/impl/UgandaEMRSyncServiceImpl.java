@@ -9,17 +9,16 @@
  */
 package org.openmrs.module.ugandaemrsync.api.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.EncounterRole;
@@ -108,7 +107,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     private StockOperation stockOperation = null;
 
-    private List<ObjectNode> productCatelogList;
+    private JSONArray productCatelogList;
     private List<SyncTask> eAFYATaskListForToday;
 
 
@@ -389,10 +388,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         newObs.setEncounter(encounter);
         newObs.setOrder(order);
         newObs.setPerson(encounter.getPatient());
-
-        if (encounter.getEncounterDatetime() != null) {
-            newObs.setObsDatetime(encounter.getEncounterDatetime());
-        }
         return newObs;
     }
 
@@ -809,325 +804,140 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#addTestResultsToEncounter(String, Order)
+     * @see UgandaEMRSyncService#addTestResultsToEncounter(JSONObject, Order)
      */
-    public List<Encounter> addTestResultsToEncounter(String bundleResultsJson, Order order) {
-        ObjectMapper objectMapper = new ObjectMapper();
+    public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order) {
         Encounter encounter = null;
+
         if (order != null) {
             encounter = order.getEncounter();
         }
 
-        List<Encounter> returningEncounters = new ArrayList<>();
+        List<Encounter> returningEncounter = new ArrayList<>();
+        JSONArray jsonArray = bundleResults.getJSONArray("entry");
 
-        try {
-            JsonNode root = objectMapper.readTree(bundleResultsJson);
-            ArrayNode entryArray = (ArrayNode) root.get("entry");
+        JSONArray filteredDiagnosticReportArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "DiagnosticReport");
 
-            // Filter DiagnosticReport and Observation entries
-            List<JsonNode> diagnosticReports = searchJsonObjectsByKey(entryArray, "resourceType", "DiagnosticReport");
-            List<JsonNode> observations = searchJsonObjectsByKey(entryArray, "resourceType", "Observation");
+        JSONArray filteredObservationArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "Observation");
 
-            for (JsonNode diagnosticReport : diagnosticReports) {
-                returningEncounters = processTestResults(diagnosticReport, encounter, observations, order);
-            }
+        for (Object jsonObject : filteredDiagnosticReportArray) {
+            JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
 
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse bundle results JSON", e);
+            returningEncounter = processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
         }
 
-        return returningEncounters;
-    }
-
-    /**
-     * Filters entries by a field value.
-     */
-    private List<JsonNode> searchJsonObjectsByKey(ArrayNode array, String key, String value) {
-        List<JsonNode> result = new ArrayList<>();
-        for (JsonNode entry : array) {
-            JsonNode resource = entry.get("resource");
-            if (resource != null && value.equals(resource.path(key).asText())) {
-                result.add(resource);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Processes one DiagnosticReport and its associated Observations.
-     * Replace this with your real processing logic.
-     */
-    private List<Encounter> processTestResults(JsonNode diagnosticReport, Encounter encounter, List<JsonNode> observations, Order order) {
-        List<Encounter> result = new ArrayList<>();
-
-        if (diagnosticReport == null || !diagnosticReport.has("result")) {
-            return result;
-        }
-
-        // Try to resolve encounter from basedOn if not already provided
-        if (order == null) {
-            order = getEncounterFromServiceRequestReference(diagnosticReport);
-        }
-
-        if (encounter == null) {
-            encounter = (order != null) ? order.getEncounter() : null;
-        }
-
-        if (encounter == null || order == null) {
-            return result;
-        }
-
-        JsonNode resultArray = diagnosticReport.get("result");
-
-        for (JsonNode ref : resultArray) {
-            String reference = ref.get("reference").asText(); // e.g. Observation/p1
-
-            JsonNode parentObservation = findObservationByReference(reference, observations);
-            if (parentObservation == null) continue;
-
-            // Handle hasMember: multiple child observations
-            if (parentObservation.has("hasMember")) {
-                for (JsonNode member : parentObservation.get("hasMember")) {
-                    String childRef = member.get("reference").asText(); // e.g. Observation/observation-1
-                    JsonNode childObservation = findObservationByReference(childRef, observations);
-                    if (childObservation != null) {
-                        saveObservationToEncounter(childObservation, encounter, order);
-                    }
-                }
-            } else {
-                // If no hasMember, treat the observation itself as standalone
-                saveObservationToEncounter(parentObservation, encounter, order);
-            }
-        }
-
-        Context.getEncounterService().saveEncounter(encounter);
-        result.add(encounter);
-        return result;
-    }
-
-    private void saveObservationToEncounter(JsonNode observationNode, Encounter encounter, Order order) {
-        if (observationNode == null || encounter == null || order == null) return;
-
-        try {
-
-            Obs obs = createObsFromFHIRObervation(observationNode, order, false);
-
-            if (obs != null) {
-                Context.getObsService().saveObs(obs, null);
-                encounter.addObs(obs);
-            }
-        } catch (Exception e) {
-            log.warn("Failed to save observation to encounter: " + observationNode, e);
-        }
+        return returningEncounter;
     }
 
 
-    private JsonNode findObservationByReference(String reference, List<JsonNode> observations) {
-        if (reference == null) return null;
-        String refId = reference.contains("/") ? reference.substring(reference.lastIndexOf("/") + 1) : reference;
-        for (JsonNode obs : observations) {
-            if (obs.has("id") && refId.equals(obs.get("id").asText())) {
-                return obs;
-            }
-        }
-        return null;
-    }
-
-
-    private Order getEncounterFromServiceRequestReference(JsonNode diagnosticReport) {
-        if (diagnosticReport == null || !diagnosticReport.has("basedOn")) {
-            return null;
-        }
-
-        JsonNode basedOnArray = diagnosticReport.get("basedOn");
-        if (!basedOnArray.isArray()) {
-            return null;
-        }
-
-        for (JsonNode basedOn : basedOnArray) {
-            if (basedOn.has("reference")) {
-                String reference = basedOn.get("reference").asText();
-                if (reference.startsWith("ServiceRequest/")) {
-                    String orderUuid = reference.substring("ServiceRequest/".length());
-                    OrderService orderService = Context.getOrderService();
-                    Order order = orderService.getOrderByUuid(orderUuid);
-                    if (order != null && order.getEncounter() != null) {
-                        return order;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-
-    private List<JsonNode> searchForObjectsByKey(ArrayNode array, String key, String searchValue) {
-        List<JsonNode> filteredList = new ArrayList<>();
-
-        if (array == null || key == null || searchValue == null) {
-            return filteredList;
-        }
-
-        for (JsonNode node : array) {
+    private JSONArray searchForJSONOBJECTSByKey(JSONArray array, String key, String searchValue) {
+        JSONArray filtedArray = new JSONArray();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject obj = null;
             try {
-                JsonNode resource = node.path("resource");
-                if (resource.has(key) && searchValue.equals(resource.get(key).asText())) {
-                    filteredList.add(resource);
+                obj = array.getJSONObject(i);
+                if (obj.getJSONObject("resource").getString(key).equals(searchValue)) {
+                    filtedArray.put(obj);
                 }
-            } catch (Exception e) {
-                log.error(String.format("Failed to filter object by key [%s]: %s", key, e.getMessage(), e));
+            } catch (JSONException e) {
+                log.error(e);
             }
         }
 
-        return filteredList;
+        return filtedArray;
     }
 
+    private JSONObject searchForJSONOBJECTByKey(JSONArray array, String key, String searchValue) {
 
-    private Order getOrderFromFHIRObs(JsonNode observationNode) {
-        if (observationNode == null || !observationNode.has("basedOn")) {
-            return null;
+        JSONObject obj = null;
+        for (int i = 0; i < array.length(); i++) {
+
+            try {
+                obj = array.getJSONObject(i);
+                if (obj.getJSONObject("resource").getString(key).equals(searchValue)) {
+                    return obj;
+                }
+            } catch (JSONException e) {
+                log.error(e);
+            }
         }
 
-        JsonNode basedOnArray = observationNode.get("basedOn");
-        if (!basedOnArray.isArray() || basedOnArray.size() == 0) {
-            return null;
-        }
+        return obj;
+    }
 
-        JsonNode referenceNode = basedOnArray.get(0).get("reference");
-        if (referenceNode == null || referenceNode.isNull()) {
-            return null;
-        }
-
-        String reference = referenceNode.asText();
-        if (!reference.startsWith("ServiceRequest/")) {
-            return null;
-        }
-
-        String orderUUID = reference.replace("ServiceRequest/", "");
+    private Order getOrderFromFHIRObs(JSONObject jsonObject) {
+        String orderUUID = jsonObject.getJSONArray("basedOn").getJSONObject(0).getString("reference").replace("ServiceRequest/", "");
         return Context.getOrderService().getOrderByUuid(orderUUID);
     }
 
-    private Concept getConceptFromCodableConcept(JsonNode codableConcept) {
-        if (codableConcept == null || !codableConcept.has("coding")) {
-            return null;
-        }
-
-        JsonNode codingArray = codableConcept.get("coding");
-        if (!codingArray.isArray()) {
-            return null;
-        }
-
-        for (JsonNode codeNode : codingArray) {
-            String code = codeNode.path("code").asText(null);
-            String system = codeNode.path("system").asText(null);
-
-            if (code != null && system != null) {
-                ConceptSource conceptSource = getConceptSourceBySystemURL(system);
-                if (conceptSource != null) {
-                    Concept concept = Context.getConceptService().getConceptByMapping(code, conceptSource.getName());
-                    if (concept != null) {
-                        return concept;
-                    }
-                }
+    private Concept getConceptFromCodableConcept(JSONObject codableConcept) {
+        for (int i = 0; i < codableConcept.getJSONArray("coding").length(); i++) {
+            JSONObject orderFHIRConcept = codableConcept.getJSONArray("coding").getJSONObject(i);
+            String orderCode = orderFHIRConcept.getString("code");
+            Concept concept = null;
+            String orderCodeSystem = orderFHIRConcept.getString("system");
+            if (getConceptSourceBySystemURL(orderCodeSystem) != null) {
+                concept = Context.getConceptService().getConceptByMapping(orderCode, getConceptSourceBySystemURL(orderCodeSystem).getName());
             }
+            return concept;
         }
-
         return null;
     }
 
-    /*private List<Encounter> processTestResults(JsonNode diagnosisReportJson, Encounter encounter, List<JsonNode> observationList, Order order) {
+    private List<Encounter> processTestResults(JSONObject diagonisisReportJsonObject, Encounter encounter, JSONArray observationArray, Order order) {
+        JSONObject diagnosticReport = diagonisisReportJsonObject.getJSONObject("resource");
+
         List<Encounter> encounters = new ArrayList<>();
 
-        if (diagnosisReportJson == null || !diagnosisReportJson.has("resource")) {
-            return encounters;
-        }
+        JSONArray jsonArray = diagnosticReport.getJSONArray("result");
+        for (Object resultReferenceObject : jsonArray) {
+            JSONObject resultReference = new JSONObject(resultReferenceObject.toString());
 
-        JsonNode diagnosticReport = diagnosisReportJson.get("resource");
-        if (!diagnosticReport.has("result")) {
-            return encounters;
-        }
+            String searchKey = resultReference.getString("reference").replace("Observation/", "");
 
-        for (JsonNode resultRef : diagnosticReport.get("result")) {
-            String obsId = resultRef.get("reference").asText().replace("Observation/", "");
-            JsonNode observationNode = findObservationById(obsId, observationList);
+            JSONObject observation = searchForJSONOBJECTByKey(observationArray, "id", searchKey).getJSONObject("resource");
 
-            if (observationNode == null) continue;
-
-            // Load order and encounter if not already provided
             if (order == null) {
-                order = getOrderFromFHIRObs(observationNode);
-                if (order == null) continue;
+                order = getOrderFromFHIRObs(observation);
+
                 encounter = order.getEncounter();
             }
 
-            if (encounter == null) continue;
+            if (!resultsEnteredOnEncounter(order)) {
 
-            if (resultsEnteredOnEncounter(order)) continue;
+                Obs obs = createObsFromFHIRObervation(observation, order, observation.has("hasMember"));
 
-            boolean isSet = observationNode.has("hasMember");
-            Obs obs = createObsFromFHIRObervation(observationNode, order, isSet);
-            if (obs == null) continue;
-
-            if (isSet) {
-                addGroupMembersToObs(obs, observationNode.get("hasMember"), observationList, order, encounter);
-            }
-
-            encounter.addObs(obs);
-            Context.getEncounterService().saveEncounter(encounter);
-
-            // Discontinue active orders now fulfilled
-            discontinueCompletedOrders(encounter);
-
-            logResultsRecieved(order);
-            encounters.add(encounter);
-        }
-
-        return encounters;
-    }*/
-
-    private JsonNode findObservationById(String id, List<JsonNode> observations) {
-        for (JsonNode obs : observations) {
-            JsonNode resource = obs.get("resource");
-            if (resource != null && resource.has("id") && id.equals(resource.get("id").asText())) {
-                return resource;
-            }
-        }
-        return null;
-    }
-
-    private void addGroupMembersToObs(Obs parentObs, JsonNode hasMemberArray, List<JsonNode> allObservations, Order order, Encounter encounter) {
-        for (JsonNode member : hasMemberArray) {
-            String refId = member.get("reference").asText().replace("Observation/", "");
-            JsonNode childObsNode = findObservationById(refId, allObservations);
-
-            if (childObsNode != null) {
-                Obs childObs = createObsFromFHIRObervation(childObsNode, order, false);
-                if (childObs != null) {
-                    parentObs.addGroupMember(childObs);
-                    encounter.addObs(childObs);
+                if (!order.getConcept().getSetMembers().isEmpty() && observation.has("hasMember") && observation.getJSONArray("hasMember").length() > 0) {
+                    for (int i = 0; i < observation.getJSONArray("hasMember").length(); i++) {
+                        String paramReference = observation.getJSONArray("hasMember").getJSONObject(i).getString("reference").replace("Observation/", "");
+                        JSONObject parameters = searchForJSONOBJECTByKey(observationArray, "id", paramReference).getJSONObject("resource");
+                        Obs parameterObs = createObsFromFHIRObervation(parameters, order, parameters.has("hasMember"));
+                        if (parameterObs != null) {
+                            obs.addGroupMember(parameterObs);
+                            encounter.addObs(parameterObs);
+                        }
+                    }
                 }
+                encounter.addObs(obs);
+
+                Context.getEncounterService().saveEncounter(encounter);
+
+                List<Order> activeOrdersWithResults = encounter.getAllObs().stream().filter(obs1 -> obs1.getOrder() != null && obs1.getOrder().isActive()).map(Obs::getOrder).collect(Collectors.toList());
+
+                for (Order resultedOrder : activeOrdersWithResults) {
+                    try {
+                        Context.getOrderService().discontinueOrder(resultedOrder, "Completed", new Date(), resultedOrder.getOrderer(), resultedOrder.getEncounter());
+                        logResultsRecieved(resultedOrder);
+                    } catch (Exception e) {
+                        log.error(e);
+                    }
+                }
+
+                encounters.add(encounter);
             }
         }
+        return encounters;
     }
-
-
-    private void discontinueCompletedOrders(Encounter encounter) {
-        List<Order> ordersToStop = encounter.getAllObs().stream()
-                .filter(o -> o.getOrder() != null && o.getOrder().isActive())
-                .map(Obs::getOrder)
-                .distinct()
-                .collect(Collectors.toList());
-
-        for (Order o : ordersToStop) {
-            try {
-                Context.getOrderService().discontinueOrder(o, "Completed", new Date(), o.getOrderer(), o.getEncounter());
-            } catch (Exception e) {
-                log.error("Failed to discontinue order: " + o.getUuid(), e);
-            }
-        }
-    }
-
 
     private SyncTask logResultsRecieved(Order order) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
@@ -1144,69 +954,40 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     }
 
-    private Obs createObsFromFHIRObervation(JsonNode observation, Order order, boolean isSet) {
-        if (observation == null || !observation.has("code") || order == null || order.getEncounter() == null) {
-            return null;
-        }
+    private Obs createObsFromFHIRObervation(JSONObject observation, Order order, boolean isSet) {
 
-        Concept concept = getConceptFromSource(observation.get("code"));
-        if (concept == null) {
-            return null;
-        }
-
-        Obs obs = createObs(order.getEncounter(), order, concept, null, null, null);
-        if (obs == null) {
-            return null;
-        }
-
-        if (!isSet) {
-            String datatypeUuid = concept.getDatatype().getUuid();
-
-            try {
-                switch (datatypeUuid) {
+        Concept concept = getConceptFromCodableConcept(observation.getJSONObject("code"));
+        if (concept != null) {
+            Obs obs = createObs(order.getEncounter(), order, concept, null, null, null);
+            assert obs != null;
+            if (!isSet) {
+                switch (concept.getDatatype().getUuid()) {
                     case ConceptDatatype.CODED_UUID:
-                        if (observation.has("valueCodeableConcept")) {
-                            Concept valueCoded = getConceptFromSource(observation.get("valueCodeableConcept"));
-                            if (valueCoded != null) {
-                                obs.setValueCoded(valueCoded);
-                            }
-                        }
+                        Concept valueCodedConcept = getConceptFromCodableConcept(observation.getJSONObject("valueCodeableConcept"));
+                        obs.setValueCoded(valueCodedConcept);
                         break;
-
                     case ConceptDatatype.NUMERIC_UUID:
-                        if (observation.has("valueQuantity") && observation.get("valueQuantity").has("value")) {
-                            obs.setValueNumeric(observation.get("valueQuantity").get("value").asDouble());
-                        }
-                        break;
+                        obs.setValueNumeric(observation.getJSONObject("valueQuantity").getDouble("value"));
 
+                        break;
                     case ConceptDatatype.BOOLEAN_UUID:
-                        if (observation.has("valueBoolean")) {
-                            obs.setValueBoolean(observation.get("valueBoolean").asBoolean());
-                        }
-                        break;
+                        obs.setValueBoolean(observation.getBoolean("valueBoolean"));
 
+                        break;
                     case ConceptDatatype.TEXT_UUID:
-                        if (observation.has("valueString")) {
-                            obs.setValueText(observation.get("valueString").asText());
-                        }
+                        obs.setValueText(observation.getString("valueString"));
                         break;
                 }
-
-                // Ensure the obs has a value before returning
-                String valueStr = obs.getValueAsString(Locale.ENGLISH);
-                if (valueStr == null || valueStr.trim().isEmpty()) {
+                if (obs.getValueAsString(Locale.ENGLISH).isEmpty()) {
                     return null;
                 }
-
-                return obs;
-
-            } catch (Exception e) {
-                log.warn("Failed to create Obs from FHIR Observation: " + observation.toPrettyString(), e);
-                return null;
             }
+
+            return obs;
+        } else {
+            return null;
         }
 
-        return obs;
     }
 
 
@@ -1240,52 +1021,39 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     @Override
-    public Patient createPatientsFromFHIR(JsonNode patientData) throws ParseException {
+    public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException {
         PatientService patientService = Context.getPatientService();
+        Date date = new SimpleDateFormat("yyyy-MM-dd").parse(patientData.get("birthDate").toString());
 
-        // Parse birthdate
-        Date date = null;
-        if (patientData.has("birthDate")) {
-            String birthDateStr = patientData.get("birthDate").asText();
-            date = new SimpleDateFormat("yyyy-MM-dd").parse(birthDateStr);
-        }
+        String gender = String.valueOf(patientData.get("gender"));
 
-        // Parse gender
-        String gender = patientData.path("gender").asText();
-
-        // Extract name (assumes you have a Jackson-compatible getPatientNames(JsonNode))
         PersonName patientName = getPatientNames(patientData);
 
-        // Build patient
         Patient patient = new Patient();
         patient.addName(patientName);
         patient.setBirthdate(date);
         patient.setGender(gender);
+        JSONArray patientIdentifiersObject = (JSONArray) patientData.getJSONArray("identifier");
 
-        // Handle identifiers
-        ArrayNode identifierArray = (ArrayNode) patientData.path("identifier");
-        if (identifierArray.isArray()) {
-            patient = getPatientIdentifiers(identifierArray, patient);
-        }
+        patient = getPatientIdentifiers(patientIdentifiersObject, patient);
 
         return patientService.savePatient(patient);
     }
 
-
-    public Patient updatePatientsFromFHIR(JsonNode bundle, String identifierUUID, String identifierName) {
+    public Patient updatePatientsFromFHIR(JSONObject bundle, String identifierUUID, String identifierName) {
         Patient patient = null;
         PatientService patientService = Context.getPatientService();
-        if (bundle.has("resourceType") && bundle.get("resourceType").equals("Bundle") && bundle.get("entry").size() > 0) {
-            ArrayNode bundleResourceObjects = (ArrayNode) bundle.get("entry");
+        if (bundle.has("resourceType") && bundle.getString("resourceType").equals("Bundle") && bundle.getJSONArray("entry").length() > 0) {
+            JSONArray bundleResourceObjects = bundle.getJSONArray("entry");
 
-            for (int i = 0; i < bundleResourceObjects.size(); i++) {
-                JsonNode patientResource = bundleResourceObjects.get(i).get("resource");
-                patient = patientService.getPatientByUuid(patientResource.get("id").asText());
+            for (int i = 0; i < bundleResourceObjects.length(); i++) {
+                JSONObject patientResource = bundleResourceObjects.getJSONObject(i).getJSONObject("resource");
+                patient = patientService.getPatientByUuid(patientResource.getString("id"));
 
 
                 if (patient != null && patient.getPatientIdentifiers(patientService.getPatientIdentifierTypeByUuid(PATIENT_ID_TYPE_UIC_UUID)).size() > 0) {
-                    if (patientResource.get("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
-                        patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(patientResource.get("value").toString(), patientResource.get("type").get("text").toString()));
+                    if (patientResource.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
+                        patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(patientResource.get("value").toString(), patientResource.getJSONObject("type").get("text").toString()));
                     }
                 }
                 patientService.savePatient(patient);
@@ -1299,40 +1067,32 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return dao.getSyncedFHirResources(syncFhirProfile, dateSyncedFrom, dateSyncedTo);
     }
 
-    private PersonName getPatientNames(JsonNode jsonObject) {
+    private PersonName getPatientNames(JSONObject jsonObject) {
+        JSONObject patientNamesObject = jsonObject.getJSONArray("name").getJSONObject(0);
         PersonName personName = new PersonName();
 
-        JsonNode namesArray = jsonObject.path("name");
-        if (!namesArray.isArray() || namesArray.size() == 0) {
-            return personName; // return empty name object if no names found
+        if (patientNamesObject.get("family") != null) {
+            personName.setFamilyName(patientNamesObject.get("family").toString());
         }
 
-        JsonNode nameObject = namesArray.get(0);
-
-        // Set family name
-        JsonNode family = nameObject.path("family");
-        if (!family.isMissingNode() && !family.isNull()) {
-            personName.setFamilyName(family.asText());
+        if (jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").length() >= 2
+                && jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(1) != null) {
+            personName.setMiddleName(jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(1)
+                    .toString());
         }
 
-        // Set given and middle names
-        JsonNode givenArray = nameObject.path("given");
-        if (givenArray.isArray()) {
-            if (givenArray.size() >= 1 && !givenArray.get(0).isNull()) {
-                personName.setGivenName(givenArray.get(0).asText());
-            }
-            if (givenArray.size() >= 2 && !givenArray.get(1).isNull()) {
-                personName.setMiddleName(givenArray.get(1).asText());
-            }
+        if (jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").length() >= 1
+                && jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0) != null) {
+            personName.setGivenName(jsonObject.getJSONArray("name").getJSONObject(0).getJSONArray("given").get(0).toString());
         }
 
         return personName;
     }
 
-    private List<Identifier> getPatientIdentifiers(ArrayNode jsonArray) {
+    private List<Identifier> getPatientIdentifiers(JSONArray jsonArray) {
         List<Identifier> identifiers = new ArrayList<Identifier>();
-        for (JsonNode jsonObject : jsonArray) {
-            ;
+        for (Object idenrifierobject : jsonArray) {
+            JSONObject jsonObject = new JSONObject(idenrifierobject.toString());
             Identifier identifier = new Identifier();
             identifier.setIdentifier(jsonObject.get("identifier").toString());
             identifier.setIdentifierType(jsonObject.get("identifierType").toString());
@@ -1343,19 +1103,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return identifiers;
     }
 
-    private Patient getPatientIdentifiers(ArrayNode jsonArray, Patient patient) {
+    private Patient getPatientIdentifiers(JSONArray jsonArray, Patient patient) {
         PatientService patientService = Context.getPatientService();
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-
-        if (jsonArray != null && jsonArray.size() > 0) {
-            for (JsonNode jsonObject : jsonArray) {
-                JsonNode typeNode = jsonObject.path("type");
-                String idTypeText = typeNode.path("text").asText();
-
-                if (PATIENT_ID_TYPE_NIN_NAME.equals(idTypeText) || PATIENT_ID_TYPE_UIC_NAME.equals(idTypeText)) {
-                    String value = jsonObject.path("value").asText();
-                    PatientIdentifier identifier = createPatientIdentifierByIdentifierTypeName(value, idTypeText);
-                    patient.addIdentifier(identifier);
+        if (jsonArray.length() > 0) {
+            for (Object o : jsonArray) {
+                JSONObject jsonObject = new JSONObject(o.toString());
+                if (jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_NIN_NAME) || jsonObject.getJSONObject("type").get("text").toString().equals(PATIENT_ID_TYPE_UIC_NAME)) {
+                    patient.addIdentifier(createPatientIdentifierByIdentifierTypeName(
+                            jsonObject.get("value").toString(), jsonObject.getJSONObject("type").get("text").toString()));
                 }
             }
         }
@@ -1393,13 +1149,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientIdentifier;
     }
 
-    public boolean patientFromFHIRExists(JsonNode patientData) {
+    public boolean patientFromFHIRExists(JSONObject patientData) {
         boolean patientExists = false;
-        for (JsonNode jsonObject : (ArrayNode) patientData.get("identifier")) {
+        for (Object o : patientData.getJSONArray("identifier")) {
+            JSONObject jsonObject = new JSONObject(o.toString());
             PatientService patientService = Context.getPatientService();
             List<PatientIdentifier> patientIdentifier = patientService.getPatientIdentifiers(jsonObject.get("value").toString(), null, null, null, null);
 
-            if (!patientIdentifier.isEmpty()) {
+            if (patientIdentifier.size() > 0) {
                 patientExists = true;
             }
         }
@@ -1453,7 +1210,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      *
      * @return A list of JSON objects representing requisitions to sync.
      */
-    private List<ObjectNode> processRequisitionsToSync() {
+    private List<JSONObject> processRequisitionsToSync() {
         try {
             // Fetch required global properties
             String storeId = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.storeId");
@@ -1486,7 +1243,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
             // Fetch stock operations
             Result<StockOperationDTO> results = stockManagementService.findStockOperations(filter);
-            List<ObjectNode> requisitions = new ArrayList<>();
+            List<JSONObject> requisitions = new ArrayList<>();
 
             for (StockOperationDTO stockOperationDTO : results.getData()) {
                 StockOperation stockOperation = stockManagementService.getStockOperationByUuid(stockOperationDTO.getUuid());
@@ -1499,16 +1256,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 Provider provider = fetchProviderForUser(stockOperationDTO.getCreator());
 
                 // Process stock operation items
-                ArrayNode items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider, providerAttributeType);
+                JSONArray items = processRequisitionItems(stockOperation.getStockOperationItems(), stockSource, provider, providerAttributeType);
 
                 if (!items.isEmpty()) {
-                    ObjectMapper mapper = new ObjectMapper();
-
-                    ObjectNode requisition = mapper.createObjectNode();
-
+                    JSONObject requisition = new JSONObject();
                     String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
 
-                    requisition.put("created_by_id", String.valueOf(parseIntegerOrReturnString(eaFYAID)));
+                    requisition.put("created_by_id", parseIntegerOrReturnString(eaFYAID));
                     requisition.put("destination_store_id", destinationStoreId);
                     requisition.put("source_store_id", sourceStoreIdInt);
                     requisition.put("requester_comment", stockOperation.getOperationNumber() + ": " + stockOperation.getRemarks());
@@ -1532,67 +1286,35 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             if (order != null) {
                 String specimenString = "{\"fullUrl\":\"urn:uuid:%s\",\"resource\":{\"resourceType\":\"Specimen\",\"id\":\"%s\",\"type\":{\"coding\":[{\"system\":\"http://snomed.info/sct\",\"code\":\"%s\",\"display\":\"Plasma specimen\"}]},\"subject\":{\"reference\":\"urn:uuid:%s\"},\"collection\":{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}},\"processing\":[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]},\"request\":{\"method\":\"POST\",\"url\":\"Specimen\"}}";
                 TestOrder testOrder = (TestOrder) order;
-                ObjectMapper objectMapper = new ObjectMapper();
-                ObjectNode jsonObject = (ObjectNode) objectMapper.readTree(specimenString);
-
-                ArrayNode coding = objectMapper.createArrayNode();
-                ObjectNode resource = (ObjectNode) jsonObject.get("resource");
+                JSONObject jsonObject = new JSONObject(specimenString);
+                JSONArray codding = new JSONArray();
 
                 if (testOrder.getAccessionNumber() != null) {
                     jsonObject.put("fullUrl", "urn:uuid:" + testOrder.getAccessionNumber());
-
-                    JsonNode resourceNode = jsonObject.get("resource");
-
-                    if (resourceNode != null && resourceNode.isObject()) {
-                        ((ObjectNode) resourceNode).put("id", order.getAccessionNumber());
-                    } else {
-                        // Optionally create 'resource' if missing
-                        resource = jsonObject.putObject("resource");
-                        resource.put("id", order.getAccessionNumber());
-                    }
+                    jsonObject.getJSONObject("resource").put("id", order.getAccessionNumber());
                 }
 
                 for (ConceptMap conceptMap : testOrder.getSpecimenSource().getConceptMappings()) {
+
                     if (conceptMap != null && conceptMap.getConceptReferenceTerm() != null && conceptMap.getConceptReferenceTerm().getConceptSource() != null) {
-                        String system = conceptMap.getConceptReferenceTerm().getConceptSource().getHl7Code();
-                        if (system == null) {
+                        String system = null;
+                        if (conceptMap.getConceptReferenceTerm().getConceptSource().getHl7Code() != null) {
+                            system = conceptMap.getConceptReferenceTerm().getConceptSource().getHl7Code();
+                        } else {
                             system = conceptMap.getConceptReferenceTerm().getConceptSource().getName();
                         }
-
-                        ObjectNode codingEntry = objectMapper.createObjectNode();
-                        codingEntry.put("system", system);
-                        codingEntry.put("code", conceptMap.getConceptReferenceTerm().getCode());
-                        codingEntry.put("display", conceptMap.getConceptReferenceTerm().getName());
-
-                        coding.add(codingEntry);
+                        codding.put(new JSONObject(String.format("{\"system\":\"%s\",\"code\":\"%s\",\"display\":\"%s\"}", system, conceptMap.getConceptReferenceTerm().getCode(), conceptMap.getConceptReferenceTerm().getName())));
                     }
                 }
 
 
-                ObjectNode collection = objectMapper.createObjectNode();
-                collection.put("collectedDateTime", testOrder.getDateActivated().toInstant().toString());
+                jsonObject.getJSONObject("resource").put("collection", new JSONObject(String.format("{\"collectedDateTime\":\"%s\",\"collector\":{\"reference\":\"Practitioner/%s\"}}", testOrder.getDateActivated().toString().replace(" ", "T"), testOrder.getOrderer().getUuid())));
 
-                ObjectNode collector = objectMapper.createObjectNode();
-                collector.put("reference", "Practitioner/" + testOrder.getOrderer().getUuid());
-                collection.set("collector", collector);
+                jsonObject.getJSONObject("resource").put("processing", new JSONArray(String.format("[{\"description\":\"Centrifugation\",\"timeDateTime\":\"%s\"}]", testOrder.getDateActivated().toString().replace(" ", "T"))));
 
-                resource.set("collection", collection);
+                jsonObject.getJSONObject("resource").getJSONObject("type").put("coding", codding);
+                jsonObject.getJSONObject("resource").getJSONObject("subject").put("reference", "urn:uuid:" + order.getPatient().getUuid());
 
-
-                ArrayNode processingArray = objectMapper.createArrayNode();
-                ObjectNode processing = objectMapper.createObjectNode();
-                processing.put("description", "Centrifugation");
-                processing.put("timeDateTime", testOrder.getDateActivated().toInstant().toString());
-                processingArray.add(processing);
-                resource.set("processing", processingArray);
-
-
-                ObjectNode type = (ObjectNode) resource.get("type");
-                type.set("coding", coding);
-
-
-                ObjectNode subject = (ObjectNode) resource.get("subject");
-                subject.put("reference", "urn:uuid:" + order.getPatient().getUuid());
                 return jsonObject.toString();
             }
         } catch (Exception exception) {
@@ -1657,20 +1379,20 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         List<String> successfulRequisitions = new ArrayList<>();
 
         try {
-            for (ObjectNode jsonObject : processRequisitionsToSync()) {
-                if (jsonObject.get("internal_requisition_uuid").isEmpty()) {
+            for (JSONObject jsonObject : processRequisitionsToSync()) {
+                if (jsonObject.optString("internal_requisition_uuid", "").isEmpty()) {
                     log.warn(String.format("Skipping requisition due to missing UUID: %s", jsonObject));
                     continue;
                 }
 
-                if (getSyncTaskBySyncTaskId(jsonObject.get("internal_requisition_no").asText()) != null) {
-                    log.info(String.format("Requisition %s already synced, skipping.", jsonObject.get("internal_requisition_no")));
+                if (getSyncTaskBySyncTaskId(jsonObject.getString("internal_requisition_no")) != null) {
+                    log.info(String.format("Requisition %s already synced, skipping.", jsonObject.getString("internal_requisition_no")));
                     continue;
                 }
 
                 boolean success = sendRequisition(jsonObject, syncTaskType, stockManagementService, ugandaEMRHttpURLConnection, url, token);
                 if (success) {
-                    successfulRequisitions.add(jsonObject.get("internal_requisition_no").asText());
+                    successfulRequisitions.add(jsonObject.getString("internal_requisition_no"));
                 }
             }
         } catch (Exception e) {
@@ -1684,15 +1406,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     /**
      * Sends a single requisition to the external system.
      */
-    private boolean sendRequisition(JsonNode jsonObject, SyncTaskType syncTaskType, StockManagementService stockManagementService,
+    private boolean sendRequisition(JSONObject jsonObject, SyncTaskType syncTaskType, StockManagementService stockManagementService,
                                     UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection, String url, String token) {
         try {
-            StockOperation stockOperation = stockManagementService.getStockOperationByUuid(jsonObject.get("internal_requisition_uuid").asText());
+            StockOperation stockOperation = stockManagementService.getStockOperationByUuid(jsonObject.getString("internal_requisition_uuid"));
             Map<String, Object> response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, jsonObject.toString(), false);
 
             return parseResponse(response, jsonObject, syncTaskType, stockManagementService, stockOperation, url);
         } catch (Exception e) {
-            log.error(String.format("Error sending requisition %s to ", jsonObject.get("internal_requisition_no").asText(), url), e);
+            log.error(String.format("Error sending requisition %s to ", jsonObject.getString("internal_requisition_no"), url), e);
             logTransaction(syncTaskType, 500, "Error sending requisition", EAFYA_SMART_ERP_SEND_STOCK, e.getMessage(), new Date(), url, false, false);
             return false;
         }
@@ -1701,24 +1423,23 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     /**
      * Parses and handles the response from the external system.
      */
-    private boolean parseResponse(Map<String, Object> response, JsonNode jsonObject, SyncTaskType syncTaskType,
+    private boolean parseResponse(Map<String, Object> response, JSONObject jsonObject, SyncTaskType syncTaskType,
                                   StockManagementService stockManagementService, StockOperation stockOperation, String url) {
         if (response.isEmpty()) {
-            log.warn(String.format("Empty response received while syncing requisition %s", jsonObject.get("internal_requisition_no")));
+            log.warn(String.format("Empty response received while syncing requisition %s", jsonObject.getString("internal_requisition_no")));
             return false;
         }
 
         int responseCode = Integer.parseInt(response.get("responseCode").toString());
         if (responseCode == 200 || responseCode == 201) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonResponse = objectMapper.valueToTree(response);
-            String externalRequisitionNumber = jsonResponse.get("data").get("requisition_number").asText();
-            String statusMessage = jsonResponse.get("message").asText();
+            JSONObject jsonResponse = new JSONObject(response);
+            String externalRequisitionNumber = jsonResponse.getJSONObject("data").getString("requisition_number");
+            String statusMessage = jsonResponse.getString("message");
 
-            log.info(String.format("Requisition %s synced successfully. External ID: %s", jsonObject.get("internal_requisition_no").asText(), externalRequisitionNumber));
+            log.info(String.format("Requisition %s synced successfully. External ID: %s", jsonObject.getString("internal_requisition_no"), externalRequisitionNumber));
 
             logTransaction(syncTaskType, responseCode, null, externalRequisitionNumber, statusMessage, new Date(), url, true, false);
-            logTransaction(syncTaskType, responseCode, null, jsonObject.get("internal_requisition_no").asText(), statusMessage, new Date(), url, false, false);
+            logTransaction(syncTaskType, responseCode, null, jsonObject.getString("internal_requisition_no"), statusMessage, new Date(), url, false, false);
 
             // Update stock operation with external reference
             StockOperationDTO stockOperationDTO = generateStockOperationDTO(stockOperation);
@@ -1728,7 +1449,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             return true;
         } else {
             String errorMessage = String.format("Failed to sync requisition %s: %s",
-                    jsonObject.get("internal_requisition_no"),
+                    jsonObject.getString("internal_requisition_no"),
                     response.get("responseMessage").toString());
             log.error(errorMessage);
 
@@ -1747,15 +1468,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param stockSource           The source of the stock references.
      * @param provider              The provider associated with the stock operation.
      * @param providerAttributeType The attribute type used to fetch provider details.
-     * @return A ArrayNode containing the processed stock operation items.
+     * @return A JSONArray containing the processed stock operation items.
      */
-    private ArrayNode processRequisitionItems(Set<StockOperationItem> stockOperationItems,
-                                              StockSource stockSource,
-                                              Provider provider,
-                                              ProviderAttributeType providerAttributeType) {
-
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode arrayNode = mapper.createArrayNode();
+    private JSONArray processRequisitionItems(Set<StockOperationItem> stockOperationItems, StockSource stockSource, Provider provider, ProviderAttributeType providerAttributeType) {
+        JSONArray jsonArray = new JSONArray();
 
         for (StockOperationItem stockOperationItem : stockOperationItems) {
             try {
@@ -1767,32 +1483,20 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     StockItemReference stockItemReference = stockItemReferenceOpt.get();
                     String eaFYAID = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
 
-                    ObjectNode jsonObject = mapper.createObjectNode();
+                    JSONObject jsonObject = new JSONObject();
                     jsonObject.put("quantity", stockOperationItem.getQuantity());
                     jsonObject.put("expected_quantity", stockOperationItem.getQuantity());
+                    jsonObject.put("product_id", parseIntegerOrReturnString(stockItemReference.getStockReferenceCode()));
+                    jsonObject.put("created_by_id", parseIntegerOrReturnString(eaFYAID));
 
-                    // Handle integer or string fallback for product_id and created_by_id
-                    String productId = stockItemReference.getStockReferenceCode();
-                    if (isInteger(productId)) {
-                        jsonObject.put("product_id", Integer.parseInt(productId));
-                    } else {
-                        jsonObject.put("product_id", productId);
-                    }
-
-                    if (isInteger(eaFYAID)) {
-                        jsonObject.put("created_by_id", Integer.parseInt(eaFYAID));
-                    } else {
-                        jsonObject.put("created_by_id", eaFYAID);
-                    }
-
-                    arrayNode.add(jsonObject);
+                    jsonArray.put(jsonObject);
                 }
             } catch (Exception e) {
-                log.error(String.format("Error processing stock operation item: %s", stockOperationItem), e);
+                log.error(String.format("Error processing stock operation item: {}", stockOperationItem), e);
             }
         }
 
-        return arrayNode;
+        return jsonArray;
     }
 
     /**
@@ -1816,8 +1520,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         for (SyncTask syncTask : syncTasks) {
             this.stockOperation = null;
             try {
-                ObjectMapper objectMapper=new ObjectMapper();
-                ObjectNode requisition = objectMapper.createObjectNode();
+                JSONObject requisition = new JSONObject();
                 requisition.put("store_requisition_number", syncTask.getSyncTask());
                 response = ugandaEMRHttpURLConnection.sendPostBy(url, syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), null, requisition.toString(), false);
                 if (!response.isEmpty() && response.get("responseCode").equals(200)) {
@@ -2188,14 +1891,22 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param drugs A collection of drug concepts to filter the orders by.
      * @return A list of JSON objects representing patient orders with drug prescriptions.
      */
-    public List<ObjectNode> generateDrugOrderToOtherSystem(Collection<Concept> drugs) {
-        List<ObjectNode> patientOrders = new ArrayList<>();
+    public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> drugs) {
+        // Initialize the list to hold the patient orders
+        List<JSONObject> patientOrders = new ArrayList<>();
 
+        // Retrieve the OrderService and CareSetting for the specific care setting (OPD)
         OrderService orderService = Context.getOrderService();
         CareSetting careSetting = orderService.getCareSettingByUuid(CARE_SETTING_UUID_OPD);
+
+        // Initialize a list to hold unique encounters related to drug orders
+        List<Encounter> drugOrderEncounters = new ArrayList<>();
+
+        // Fetch the order type for drug orders
         OrderType orderType = orderService.getOrderTypeByUuid(ORDER_TYPE_DRUG_UUID);
 
-        OrderSearchCriteria criteria = new OrderSearchCriteria(
+        // Define the order search criteria for active drug orders within the care setting
+        OrderSearchCriteria orderSearchCriteria = new OrderSearchCriteria(
                 null,
                 careSetting,
                 drugs,
@@ -2215,47 +1926,45 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 false
         );
 
-        List<Order> orders = orderService.getOrders(criteria);
-        List<Integer> syncedEncounterIds = extractEncounterIdFromSyncTasks(eAFYATaskListForToday);
+        // Fetch the orders matching the search criteria
+        List<Order> orders = orderService.getOrders(orderSearchCriteria);
 
-        // Filter unique drug order encounters not already synced
-        Set<Encounter> uniqueEncounters = new HashSet<>();
+        List<Integer> encounterIds = extractEncounterIdFromSyncTasks(eAFYATaskListForToday);
+
+        // Process orders and collect unique encounters
         for (Order order : orders) {
-            Encounter encounter = order.getEncounter();
-            if (order.isActive() && encounter != null && !syncedEncounterIds.contains(encounter.getEncounterId())) {
-                uniqueEncounters.add(encounter);
+            // If the order is active and the encounter is not already processed, add it to the list
+
+            if (order.isActive() && !drugOrderEncounters.contains(order.getEncounter()) && !encounterIds.contains(order.getEncounter().getEncounterId())) {
+                drugOrderEncounters.add(order.getEncounter());
             }
         }
 
-        ObjectMapper mapper = new ObjectMapper();
+        // Iterate through each unique encounter and generate the corresponding patient order JSON
+        for (Encounter encounter : drugOrderEncounters) {
+            JSONObject patientOrder = new JSONObject();
 
-        for (Encounter encounter : uniqueEncounters) {
-            ObjectNode patientOrder = mapper.createObjectNode();
+            // Translate patient information and add to the JSON object
+            patientOrder = translatePatientToEAFYAFormat(encounter.getPatient(), patientOrder);
 
-            try {
-                // Translate patient details
-                translatePatientToEAFYAFormat(encounter.getPatient(), patientOrder);
+            // Translate drug order information and add to the JSON object
+            patientOrder = translateDrugOrderToEAFYAFormat(encounter.getOrders(), patientOrder);
 
-                // Translate drug order details
-                translateDrugOrderToEAFYAFormat(encounter.getOrders(), patientOrder);
+            // Add clinic and provider information
+            patientOrder = addClinicAndProviderInformation(encounter, patientOrder);
 
-                // Add clinic and provider information
-                addClinicAndProviderInformation(encounter, patientOrder);
+            // Ensure the JSON object contains valid prescription data and patient ID
+            if (patientOrder.has("prescription") &&
+                    !patientOrder.getJSONArray("prescription").isEmpty() &&
+                    patientOrder.has("patient") &&
+                    patientOrder.getJSONObject("patient").has("id")) {
 
-                // Ensure minimum data requirements
-                if (patientOrder.has("prescription")
-                        && patientOrder.get("prescription").isArray()
-                        && patientOrder.get("prescription").size() > 0
-                        && patientOrder.path("patient").has("id")) {
-
-                    patientOrders.add(patientOrder);
-                }
-
-            } catch (Exception e) {
-                log.warn("Skipping encounter " + encounter.getEncounterId() + " due to error: ", e);
+                // Add valid patient order to the result list
+                patientOrders.add(patientOrder);
             }
         }
 
+        // Return the list of patient orders
         return patientOrders;
     }
 
@@ -2291,45 +2000,54 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param patientOrder The patient-level JSON object to which prescription details will be added.
      * @return The updated patient order JSON object containing the "prescription" array.
      */
-    private ObjectNode translateDrugOrderToEAFYAFormat(Set<Order> orders, ObjectNode patientOrder) {
+    private JSONObject translateDrugOrderToEAFYAFormat(Set<Order> orders, JSONObject patientOrder) {
         if (orders == null || orders.isEmpty()) {
             return patientOrder;
         }
 
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode prescriptionArray = mapper.createArrayNode();
+        JSONArray prescriptionArray = new JSONArray();
 
         for (Order order : orders) {
+            // Process only DrugOrder instances
             if (order instanceof DrugOrder) {
                 DrugOrder drugOrder = (DrugOrder) order;
+
+                // Attempt to retrieve reference code for the drug
                 String drugReferenceCode = getPharmacology(getStockItemReferenceFromDrug(drugOrder.getDrug()));
 
                 if (drugReferenceCode != null) {
-                    ObjectNode patientDrugOrder = mapper.createObjectNode();
+                    JSONObject patientDrugOrder = new JSONObject();
 
+                    // Add drug name
                     patientDrugOrder.put("drug_name",
                             drugOrder.getDrug() != null ? drugOrder.getDrug().getName() : "");
 
+                    // Add reference ID
                     patientDrugOrder.put("drug_id", drugReferenceCode);
 
-                    patientDrugOrder.put("dosage", String.valueOf(drugOrder.getDose() != null ? drugOrder.getDose() : ""));
+                    // Add dose (default to "" if null)
+                    patientDrugOrder.put("dosage", drugOrder.getDose() != null ? drugOrder.getDose() : "");
 
-                    patientDrugOrder.put("duration", String.valueOf(drugOrder.getDuration() != null ? drugOrder.getDuration() : ""));
+                    // Add duration (default to "" if null)
+                    patientDrugOrder.put("duration", drugOrder.getDuration() != null ? drugOrder.getDuration() : "");
 
+                    // Add frequency (default to "" if null)
                     patientDrugOrder.put("frequency",
                             drugOrder.getFrequency() != null ? drugOrder.getFrequency().getName() : "");
 
+                    // Add route (default to "" if null)
                     patientDrugOrder.put("route",
                             (drugOrder.getRoute() != null && drugOrder.getRoute().getName() != null)
                                     ? drugOrder.getRoute().getName().getName() : "");
 
-                    prescriptionArray.add(patientDrugOrder);
+                    // Append to prescription array
+                    prescriptionArray.put(patientDrugOrder);
                 }
             }
         }
 
-        // Attach the prescription array to the patient order JSON
-        patientOrder.set("prescription", prescriptionArray);
+        // Attach the prescription array to the JSON
+        patientOrder.put("prescription", prescriptionArray);
         return patientOrder;
     }
 
@@ -2344,14 +2062,13 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
         for (Object object : productCatelogList) {
             try {
-                ObjectMapper objectMapper=new ObjectMapper();
-                JsonNode jsonObject =objectMapper.readTree(object.toString());
+                JSONObject jsonObject = new JSONObject(object.toString());
 
                 if (jsonObject.has("product_id") &&
                         jsonObject.has("pharmacology_id") &&
-                        referenceCode.equals(jsonObject.get("product_id"))) {
+                        referenceCode.equals(jsonObject.getString("product_id"))) {
 
-                    return jsonObject.get("pharmacology_id").asText();
+                    return jsonObject.getString("pharmacology_id");
                 }
             } catch (Exception e) {
                 log.warn("Invalid object in productCatalogList: " + object, e);
@@ -2388,9 +2105,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param patientOrder The JSONObject to which the translated patient data will be added.
      * @return The updated patientOrder containing the patient data in EAFYA format.
      */
-    private ObjectNode translatePatientToEAFYAFormat(Patient patient, ObjectNode patientOrder) {
+    private JSONObject translatePatientToEAFYAFormat(Patient patient, JSONObject patientOrder) {
+        // Retrieve necessary services
         PatientService patientService = Context.getPatientService();
 
+        // Retrieve patient identifiers
         PatientIdentifier opdNumber = patient.getPatientIdentifier(
                 patientService.getPatientIdentifierTypeByUuid(OPD_IDENTIFIER_TYPE_UUID));
         PatientIdentifier artNo = patient.getPatientIdentifier(
@@ -2400,9 +2119,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         PatientIdentifier nationalId = patient.getPatientIdentifier(
                 patientService.getPatientIdentifierTypeByUuid(NATIONAL_ID_IDENTIFIER_TYPE_UUID));
 
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode patientObject = mapper.createObjectNode();
+        // Initialize the patient JSON object
+        JSONObject patientObject = new JSONObject();
 
+        // Check if OPD number is null or does not contain "UG-"
         if (opdNumber == null || (opdNumber.getIdentifier() != null && !opdNumber.getIdentifier().contains("UG-"))) {
             // Full patient details when OPD number is invalid or missing
             patientObject.put("birth_date", patient.getBirthdate() != null ? patient.getBirthdate().toString() : "");
@@ -2410,50 +2130,43 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             patientObject.put("last_name", patient.getFamilyName() != null ? patient.getFamilyName() : "");
             patientObject.put("gender", convertGenderToFullWord(patient.getGender() != null ? patient.getGender() : ""));
 
-            // Address
+            // Address information
             PersonAddress address = patient.getPersonAddress();
-            patientObject.put("city", (address != null && address.getCountyDistrict() != null) ? address.getCountyDistrict() : "");
-            patientObject.put("village", (address != null && address.getAddress5() != null) ? address.getAddress5() : "Not available");
+            patientObject.put("city", address != null && address.getCountyDistrict() != null ? address.getCountyDistrict() : "");
+            patientObject.put("village", address != null && address.getAddress5() != null ? address.getAddress5() : "Not available");
 
-            // Marital Status
-            PersonAttribute maritalStatus = patient.getAttribute(Context.getPersonService()
-                    .getPersonAttributeTypeByUuid(MARITAL_STATUS_ATTRIBUTE_TYPE));
+            // Marital status
+            PersonAttribute maritalStatus = patient.getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid(MARITAL_STATUS_ATTRIBUTE_TYPE));
             patientObject.put("marital_status", (maritalStatus != null && maritalStatus.getValue() != null) ? maritalStatus.getValue() : "");
 
-            // Phone Number
-            PersonAttribute phoneNo = patient.getAttribute(Context.getPersonService()
-                    .getPersonAttributeTypeByUuid(PHONE_NO_ATTRIBUTE_TYPE));
+            // Phone number
+            PersonAttribute phoneNo = patient.getAttribute(Context.getPersonService().getPersonAttributeTypeByUuid(PHONE_NO_ATTRIBUTE_TYPE));
             patientObject.put("phone_number", (phoneNo != null && phoneNo.getValue() != null) ? phoneNo.getValue() : "");
 
-            // Identifiers
+            // Identifiers: Priority given to ART No, then fallback to OPD number
             String patientId = "";
             if (artNo != null && artNo.getIdentifier() != null) {
-                patientId = artNo.getIdentifier();
+                patientId = artNo.getIdentifier();  // Use ART number if available
             } else if (opdNumber != null && opdNumber.getIdentifier() != null) {
-                patientId = opdNumber.getIdentifier();
+                patientId = opdNumber.getIdentifier();  // Use OPD number if ART is not available
             }
-
             patientObject.put("patient_id", patientId);
             patientObject.put("id", patientId);
-            patientObject.put("id_no", (nationalId != null && nationalId.getIdentifier() != null) ? nationalId.getIdentifier() : "");
-            patientObject.put("internal_patient_id", (openmrsId != null && openmrsId.getIdentifier() != null) ? openmrsId.getIdentifier() : "");
 
+            // National ID and internal patient ID
+            patientObject.put("id_no", nationalId != null && nationalId.getIdentifier() != null ? nationalId.getIdentifier() : "");
+            patientObject.put("internal_patient_id", openmrsId != null && openmrsId.getIdentifier() != null ? openmrsId.getIdentifier() : "");
         } else {
-            // Use only OPD number if it contains "UG-"
-            String opdId = opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "";
-            patientObject.put("patient_id", opdId);
-            patientObject.put("id", opdId);
-            patientObject.put("internal_patient_id", (openmrsId != null && openmrsId.getIdentifier() != null) ? openmrsId.getIdentifier() : "");
+            // If OPD number is valid and contains "UG-", use only OPD identifier for patient_id
+            patientObject.put("patient_id", opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "");
+            patientObject.put("id", opdNumber.getIdentifier() != null ? opdNumber.getIdentifier() : "");
+            patientObject.put("internal_patient_id", openmrsId != null && openmrsId.getIdentifier() != null ? openmrsId.getIdentifier() : "");
         }
 
-        // Attach the patientObject to the patientOrder JSON
-        if (patientOrder instanceof ObjectNode) {
-            ((ObjectNode) patientOrder).set("patient", patientObject);
-        }
-
+        // Attach the patient object to the patient order and return
+        patientOrder.put("patient", patientObject);
         return patientOrder;
     }
-
 
     /**
      * Converts a single-character gender code to its full word equivalent.
@@ -2494,7 +2207,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @return The updated JSON object with clinic and provider EAFYA identifiers.
      * @throws IllegalStateException if either the clinic ID or provider EAFYA ID is missing.
      */
-    private ObjectNode addClinicAndProviderInformation(Encounter encounter, ObjectNode patientOrder) {
+    private JSONObject addClinicAndProviderInformation(Encounter encounter, JSONObject patientOrder) {
         // Retrieve the provider attribute type used for the EAFYA ID
         ProviderAttributeType providerAttributeType = Objects.requireNonNull(
                 Context.getProviderService().getProviderAttributeTypeByUuid("d376f27c-cb93-45b4-be0a-6be88c520233"),
@@ -2505,7 +2218,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String clinicId = Context.getAdministrationService()
                 .getGlobalProperty(MODULE_ID + ".eafya.clinicid");
 
-        // Validate clinic ID
+        // Validate that clinic ID is not null or blank
         if (clinicId == null || clinicId.trim().isEmpty()) {
             throw new IllegalStateException("Clinic ID global property (" + MODULE_ID + ".eafya.clinicid) is not configured.");
         }
@@ -2513,14 +2226,15 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         // Find the provider linked to the encounter's creator
         Provider provider = fetchProviderForUser(encounter.getCreator().getUserId());
 
-        // Extract the EAFYA ID
+        // Extract the EAFYA ID from the provider attributes
         String eafyaId = getProviderAttributeByType(provider.getAttributes(), providerAttributeType);
 
+        // Validate that provider EAFYA ID is not null or blank
         if (eafyaId == null || eafyaId.trim().isEmpty()) {
             throw new IllegalStateException("Provider EAFYA ID attribute is missing for provider: " + provider.getName());
         }
 
-        // Add to JSON
+        // Add clinic ID and provider EAFYA ID to the JSON object
         patientOrder.put("clinic_id", clinicId);
         patientOrder.put("created_by_id", eafyaId);
         patientOrder.put("encounter_id", encounter.getEncounterId());
@@ -2603,10 +2317,10 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 .collect(Collectors.toList());
 
         // Generate prescription orders
-        List<ObjectNode> drugOrders = generateDrugOrderToOtherSystem(concepts);
+        List<JSONObject> drugOrders = generateDrugOrderToOtherSystem(concepts);
 
         try {
-            for (ObjectNode drugOrder : drugOrders) {
+            for (JSONObject drugOrder : drugOrders) {
                 // Send prescription via POST
                 Map<String, Object> response = httpConnection.sendPostBy(
                         url,
@@ -2622,9 +2336,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         : Integer.parseInt(response.get("responseCode").toString());
 
                 if (responseCode == 200 || responseCode == 201) {
-                    String internalPatientId = drugOrder.has("internal_patient_id") && !drugOrder.get("internal_patient_id").isNull()
-                            ? drugOrder.get("internal_patient_id").asText()
-                            : null;
+                    String internalPatientId = drugOrder.optString("internal_patient_id", null);
                     String externalPatientId = extractPatientIdFromResponse(response);
 
                     if (internalPatientId != null && !externalPatientId.isEmpty()) {
@@ -2883,14 +2595,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             );
 
             if (syncResponse != null) {
-                String responseFromCPHLServer = String.format("Response From CPHL Server: %s", syncResponse.get("responseMessage"));
+                String responseFromCPHLServer=String.format("Response From CPHL Server: %s",syncResponse.get("responseMessage"));
                 Map responseType = handleReturnedResponses(order, syncResponse);
                 int responseCode = Integer.parseInt(syncResponse.getOrDefault("responseCode", "500").toString());
 
                 // Handle duplicate case with a 400 response
                 if (responseCode == 400 && "Duplicate".equalsIgnoreCase(String.valueOf(responseType.get("responseType")))) {
                     responseCode = 200;
-                    responseFromCPHLServer = String.format("Response From CPHL Server: %s", responseType.get("responseMessage"));
+                    responseFromCPHLServer = String.format("Response From CPHL Server: %s",responseType.get("responseMessage"));
                 }
 
                 boolean isSuccess = responseCode == 200 || responseCode == 201 || responseCode == 202 || responseCode == 208;
@@ -2985,40 +2697,18 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     private Collection<String> addSpecimenSource(Collection<String> serviceRequests, Order order) {
-        ObjectMapper objectMapper = new ObjectMapper();
         TestOrder testOrder = (TestOrder) order;
         Collection<String> serviceRequestList = new ArrayList<>();
-
         for (String serviceRequest : serviceRequests) {
-            try {
-                if (testOrder.getAccessionNumber() != null) {
-                    JsonNode node = objectMapper.readTree(serviceRequest);
+            if (testOrder.getAccessionNumber() != null) {
+                JSONObject jsonObject = new JSONObject(serviceRequest);
 
-                    if (node.isObject()) {
-                        ObjectNode jsonObject = (ObjectNode) node;
-                        ObjectNode resourceNode = (ObjectNode) jsonObject.get("resource");
-
-                        ArrayNode specimenArray = objectMapper.createArrayNode();
-                        ObjectNode specimenObject = objectMapper.createObjectNode();
-                        specimenObject.put("reference", "Specimen/" + testOrder.getAccessionNumber());
-                        specimenArray.add(specimenObject);
-
-                        resourceNode.set("specimen", specimenArray);
-
-                        serviceRequestList.add(objectMapper.writeValueAsString(jsonObject));
-                    } else {
-                        serviceRequestList.add(serviceRequest);
-                    }
-                } else {
-                    serviceRequestList.add(serviceRequest);
-                }
-            } catch (Exception e) {
-                // Log and fallback to original JSON if parsing or modification fails
-                log.warn("Failed to add specimen to service request", e);
+                jsonObject.getJSONObject("resource").put("specimen", new JSONArray(String.format("[{\"reference\":\"Specimen/%s\"}]", testOrder.getAccessionNumber())));
+                serviceRequestList.add(jsonObject.toString());
+            } else {
                 serviceRequestList.add(serviceRequest);
             }
         }
-
         return serviceRequestList;
     }
 
@@ -3027,23 +2717,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      */
     private String extractPatientIdFromResponse(Map<String, Object> response) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            // Convert Map to JSON string, then parse it into a JsonNode
-            String jsonString = objectMapper.writeValueAsString(response);
-            JsonNode rootNode = objectMapper.readTree(jsonString);
-
-            JsonNode dataNode = rootNode.path("data");
-            JsonNode patientNode = dataNode.path("patient");
-            JsonNode idNode = patientNode.path("id");
-
-            if (!idNode.isMissingNode() && !idNode.asText().trim().isEmpty()) {
-                return idNode.asText().trim();
+            JSONObject json = new JSONObject(response);
+            if (json.has("data")) {
+                JSONObject data = json.getJSONObject("data");
+                return data.getJSONObject("patient").optString("id", "").trim();
             }
-
         } catch (Exception e) {
             log.warn("Failed to extract patient ID from response.", e);
         }
-
         return "";
     }
 
@@ -3087,10 +2768,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @return A JSONArray containing the product catalog data retrieved from eAFYA.
      * @throws RuntimeException if the request fails or an error occurs while processing the response.
      */
-    private List<ObjectNode> getProductCatalogFromEAFYA(SyncTaskType syncTaskType) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<ObjectNode> eAFYAProductList = new ArrayList<>();
-
+    private JSONArray getProductCatalogFromEAFYA(SyncTaskType syncTaskType) {
+        JSONArray eAFYAProductList = new JSONArray();
         String apiEndpoint = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.GetProductList");
         String fullUrl = syncTaskType.getUrl() + apiEndpoint;
 
@@ -3106,17 +2785,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
             int responseCode = Integer.parseInt(response.get("responseCode").toString());
             if (responseCode == 200 || responseCode == 201) {
-                // Parse result string to ArrayNode
-                String resultJson = response.get("result").toString();
-                JsonNode resultNode = objectMapper.readTree(resultJson);
-
-                if (resultNode.isArray()) {
-                    for (JsonNode node : resultNode) {
-                        if (node.isObject()) {
-                            eAFYAProductList.add((ObjectNode) node);
-                        }
-                    }
-                }
+                eAFYAProductList = new JSONArray(response.get("result").toString());
             } else {
                 log.warn("Received unexpected response code: " + responseCode + " from URL: " + fullUrl);
             }
@@ -3128,7 +2797,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         return eAFYAProductList;
     }
-
 
     public boolean validateVLFHIRBundle(String bundleJson) {
         List<String> targetCodes = Arrays.asList(Context.getAdministrationService().getGlobalProperty("ugandaemrsync.viralloadRequiredProgramData").split(","));
@@ -3173,30 +2841,30 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         try {
             bundle = parser.parseResource(Bundle.class, bundleJson);
 
-            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-                if (entry.getResource() instanceof Observation) {
-                    Observation obs = (Observation) entry.getResource();
-                    for (Coding coding : obs.getCode().getCoding()) {
-                        if (targetCodes.contains(coding.getCode())) {
-                            foundCodes.add(coding.getCode());
-                        }
+        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+            if (entry.getResource() instanceof Observation) {
+                Observation obs = (Observation) entry.getResource();
+                for (Coding coding : obs.getCode().getCoding()) {
+                    if (targetCodes.contains(coding.getCode())) {
+                        foundCodes.add(coding.getCode());
                     }
                 }
             }
+        }
 
-            // Identify missing codes
+        // Identify missing codes
 
-            for (String code : targetCodes) {
-                if (!foundCodes.contains(code)) {
+        for (String code : targetCodes) {
+            if (!foundCodes.contains(code)) {
 
-                    Concept concept = getVLMissingCconcept(code);
-                    if (concept != null) {
-                        missingCodes.add(concept.getName().getName());
-                    } else {
-                        missingCodes.add(code);
-                    }
+                Concept concept = getVLMissingCconcept(code);
+                if (concept != null) {
+                    missingCodes.add(concept.getName().getName());
+                } else {
+                    missingCodes.add(code);
                 }
             }
+        }
         } catch (Exception exception) {
             log.error(exception);
         }
@@ -3217,31 +2885,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
         if (snomed != null) {
             return snomed;
-        }
-
-        return null;
-    }
-
-    private Concept getConceptFromSource(JsonNode codeNode) {
-        if (codeNode == null || !codeNode.has("coding")) {
-            return null;
-        }
-
-        for (JsonNode innerCodeNode : codeNode.get("coding")) {
-            if (!innerCodeNode.has("code")) {
-                continue;
-            }
-
-            String code = innerCodeNode.get("code").asText();
-
-            for (ConceptSource conceptSource : Context.getConceptService().getAllConceptSources(false)) {
-                Concept concept = Context.getConceptService().getConceptByMapping(code, conceptSource.getName());
-                if (concept != null) {
-                    return concept;
-                }
-            }
-
-            return Context.getConceptService().getConcept(code);
         }
 
         return null;
