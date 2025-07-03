@@ -10,9 +10,7 @@
 package org.openmrs.module.ugandaemrsync.api.dao;
 
 import org.hibernate.Criteria;
-import org.hibernate.Query;
 import org.hibernate.SQLQuery;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.StringType;

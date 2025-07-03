@@ -11,6 +11,7 @@ package org.openmrs.module.ugandaemrsync;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.BaseModuleActivator;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 

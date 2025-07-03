@@ -22,11 +22,7 @@
   		    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
-
-    <context:component-scan base-package="org.openmrs.module.ugandaemrsync" />
-
-    <!-- Wraps UgandaEMRSyncService methods in DB transactions and OpenMRS interceptors,
-    which set audit info like dateCreated, changedBy, etc.-->
+    <!-- Wraps UgandaEMRSyncService methods in DB transactions and OpenMRS interceptors, which set audit info like dateCreated, changedBy, etc.-->
     <bean id="ugandaemrsync.UgandaEMRSyncService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
         <property name="transactionManager">
             <ref bean="transactionManager" />
@@ -52,7 +48,4 @@
             </list>
         </property>
     </bean>
-
-    <bean id="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask" class="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask" scope="prototype"/>
-
 </beans>
