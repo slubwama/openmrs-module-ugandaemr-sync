@@ -22,9 +22,6 @@
   		    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
-
-    <context:component-scan base-package="org.openmrs.module.ugandaemrsync" />
-
     <!-- Wraps UgandaEMRSyncService methods in DB transactions and OpenMRS interceptors,
     which set audit info like dateCreated, changedBy, etc.-->
     <bean id="ugandaemrsync.UgandaEMRSyncService"
@@ -34,7 +31,13 @@
         </property>
         <property name="target">
             <bean class="org.openmrs.module.ugandaemrsync.api.impl.UgandaEMRSyncServiceImpl">
-                <property name="dao" ref="ugandaemrsync.UgandaEMRSyncDao" />
+                <property name="dao">
+                    <bean class="org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao">
+                        <property name="sessionFactory">
+                            <ref bean="dbSessionFactory"/>
+                        </property>
+                    </bean>
+                </property>
             </bean>
         </property>
         <property name="preInterceptors">
@@ -55,11 +58,4 @@
             </list>
         </property>
     </bean>
-
-    <bean id="locationTypeTranslator" class="org.openmrs.module.fhir2.api.translators.impl.LocationTypeTranslatorImpl"/>
-
-    <bean id="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask"
-          class="org.openmrs.module.ugandaemrsync.tasks.SendAnalyticsDataToCentralServerTask"
-          scope="prototype"/>
-
 </beans>

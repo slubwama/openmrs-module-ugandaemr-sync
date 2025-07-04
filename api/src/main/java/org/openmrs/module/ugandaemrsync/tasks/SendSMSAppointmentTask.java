@@ -19,8 +19,6 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.server.TaskType;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,7 +47,6 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.SMS_APPOINTME
  * Posts SMS Appointment Remainder data to the central server
  */
 
-@Component
 public class SendSMSAppointmentTask extends AbstractTask {
 
     protected Log log = LogFactory.getLog(getClass());

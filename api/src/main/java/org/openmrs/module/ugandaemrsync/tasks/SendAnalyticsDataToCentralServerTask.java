@@ -27,8 +27,6 @@ import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
 
-import org.springframework.stereotype.Component;
-
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,7 +45,6 @@ import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.*;
  * Posts Analytics data to the central server
  */
 
-@Component
 public class SendAnalyticsDataToCentralServerTask extends AbstractTask {
 
     protected Log log = LogFactory.getLog(getClass());
