@@ -1745,10 +1745,13 @@
 
 
     <!--Mortality surveillance profile-->
-    <changeSet id="ugandaemrsync-20240112-0901" author="solema">
+    <changeSet id="ugandaemrsync-20251027-0901" author="solema">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = '6acc9390-1049-41a5-979b-c57d895ca674'
+            </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
             </sqlCheck>
         </preConditions>
         <comment>Creating Mortality Surveillance</comment>
@@ -1777,6 +1780,9 @@
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid = 'ef2afcf1-e2f7-4bb4-aa68-b18266e0b35f'
             </sqlCheck>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM patient_identifier_type WHERE uuid = 'e1731641-30ab-102d-86b0-7a5022ba4115'
+            </sqlCheck>
         </preConditions>
         <comment>Creating Mpox screening </comment>
         <insert tableName="sync_fhir_profile">
@@ -1798,7 +1804,12 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-20250302-2047" author="slubwama" dbms="mysql">
+    <changeSet id="ugandaemrsync-20251027-2047" author="slubwama" dbms="mysql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="13">
+                SELECT COUNT(*) FROM sync_fhir_profile WHERE uuid in ("0a7fff77-6ac7-416c-831e-4e3f1f2c853b","6a675910-8b97-43d6-8956-ec5d5e3dda9f","e060d3ed-9cf4-4421-94f9-6b9b3b3fe6f0","ef2afcf1-e2f7-4bb4-aa68-b18266e0b35f","0b7eb397-4488-4a88-9967-a054b3c26d6f","4e0d3ff6-82ac-45a8-bcf3-7367a9098d65","84242661-aadf-42e4-9431-bf8afefb4433","e8a37e2f-6c78-476e-93a5-14aec653c406","f2190cf4-2236-11ee-be56-0242ac120002","8adee026-d795-4f2a-aa29-6bafaf56b90e","99c4d715-4fcf-4d95-a946-257c6de05cf7","6511be5a-72f2-4638-a60b-78e31c3e2b28","2f0ef683-c988-448b-b928-e3e2cf6657af")
+            </sqlCheck>
+        </preConditions>
         <comment>Update all sync_fhir_profile resource_search_parameter to include MedicationDispense,MedicationRequest,Condition,DiagnosticReport filter Variables</comment>
         <sql>
             UPDATE sync_fhir_profile t SET t.resource_search_parameter = '{"observationFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"patientFilter":{"name":[],"given":[],"family":[],"identifier":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deathDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"encounterFilter":{"date":{"lowerBound":"","myUpperBound":""},"location":[],"participant":[],"subject":[],"type":["e75c856a-9e91-4ffb-bf43-1b0450b4ff8c"],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"personFilter":{"name":[],"gender":[],"birthDate":{"lowerBound":"","myUpperBound":""},"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"practitionerFilter":{"identifier":[],"name":[],"given":[],"family":[],"deceased":[],"city":[],"state":[],"postalCode":[],"country":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"episodeofcareFilter":{"type":[""],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"medicationdispenseFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"medicationrequestFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"diagnosticreportFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"conditionFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}},"servicerequestFilter":{"encounterReference":[],"patientReference":[],"hasMemberReference":[],"valueConcept":"valueConceptUUIDS","valueDateParam":{"lowerBound":"","myUpperBound":""},"valueQuantityParam":[],"valueStringParam":[],"date":{"lowerBound":"","myUpperBound":""},"code":[],"category":[],"id":[],"lastUpdated":{"lowerBound":"","myUpperBound":""}}}' WHERE t.uuid = '6acc9390-1049-41a5-979b-c57d895ca674';
@@ -1886,10 +1897,14 @@
         </insert>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-2025-03-08-1503" author="slubwama">
+    <changeSet id="ugandaemrsync-2025-10-27-1503" author="slubwama">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM stockmgmt_stock_source WHERE uuid='9babcc02-fc0b-11ef-ab84-28977ca9db4b';
+            </sqlCheck>
+
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM concept WHERE uuid='da1e84f1-ae41-47d5-b11a-399417285244';
             </sqlCheck>
         </preConditions>
         <comment>Add AHF as a Stock source </comment>
