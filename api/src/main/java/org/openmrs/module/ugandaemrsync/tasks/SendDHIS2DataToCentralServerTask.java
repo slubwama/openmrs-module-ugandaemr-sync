@@ -8,7 +8,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
-import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,7 +23,6 @@ import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_DHIS2_SERV
  * Posts DHIS 2 data data to the central server
  */
 
-@Component
 public class SendDHIS2DataToCentralServerTask extends AbstractTask  {
 
 	protected Log log = LogFactory.getLog(getClass());

@@ -49,18 +49,27 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.ART_ACCESS_PU
 public class ReceiveVisitsDataFromARTAccessTask extends AbstractTask {
     protected final Log log = LogFactory.getLog(ReceiveVisitsDataFromARTAccessTask.class);
 
-    SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
-    UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-    ConceptService conceptService = Context.getConceptService();
-    VisitService visitService = Context.getVisitService();
-    EncounterService encounterService =Context.getEncounterService();
-    LocationService locationService = Context.getLocationService();
-    Location pharmacyLocation = locationService.getLocationByUuid("3ec8ff90-3ec1-408e-bf8c-22e4553d6e17");
-    EncounterType artCardEncounterType = encounterService.getEncounterTypeByUuid("8d5b2be0-c2cc-11de-8d13-0010c6dffd0f");
-    SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(ART_ACCESS_PULL_TYPE_UUID);
+    SyncGlobalProperties syncGlobalProperties;
+    UgandaEMRSyncService ugandaEMRSyncService;
+    ConceptService conceptService;
+    VisitService visitService;
+    EncounterService encounterService;
+    LocationService locationService;
+    Location pharmacyLocation;
+    EncounterType artCardEncounterType;
+    SyncTaskType syncTaskType;
 
     @Override
     public void execute() {
+        ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        conceptService = Context.getConceptService();
+        visitService = Context.getVisitService();
+        encounterService =Context.getEncounterService();
+        locationService = Context.getLocationService();
+        pharmacyLocation = locationService.getLocationByUuid("3ec8ff90-3ec1-408e-bf8c-22e4553d6e17");
+        artCardEncounterType = encounterService.getEncounterTypeByUuid("8d5b2be0-c2cc-11de-8d13-0010c6dffd0f");
+        ugandaEMRSyncService.getSyncTaskTypeByUUID(ART_ACCESS_PULL_TYPE_UUID);
+
         UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
 
         if (!isGpDhis2OrganizationUuidSet()) {

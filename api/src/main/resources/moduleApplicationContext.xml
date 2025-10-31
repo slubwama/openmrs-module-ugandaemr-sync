@@ -29,7 +29,13 @@
         </property>
         <property name="target">
             <bean class="org.openmrs.module.ugandaemrsync.api.impl.UgandaEMRSyncServiceImpl">
-                <property name="dao" ref="ugandaemrsync.UgandaEMRSyncDao" />
+                <property name="dao">
+                    <bean class="org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao">
+                        <property name="sessionFactory">
+                            <ref bean="dbSessionFactory"/>
+                        </property>
+                    </bean>
+                </property>
             </bean>
         </property>
         <property name="preInterceptors">

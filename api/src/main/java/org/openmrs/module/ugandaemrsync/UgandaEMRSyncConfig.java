@@ -9,12 +9,9 @@
  */
 package org.openmrs.module.ugandaemrsync;
 
-import org.springframework.stereotype.Component;
-
 /**
  * Contains module's config.
  */
-@Component("ugandaemrsync.UgandaemrSyncConfig")
 public class UgandaEMRSyncConfig {
 	
 	public final static String MODULE_PRIVILEGE = "UgandaemrSync Privilege";

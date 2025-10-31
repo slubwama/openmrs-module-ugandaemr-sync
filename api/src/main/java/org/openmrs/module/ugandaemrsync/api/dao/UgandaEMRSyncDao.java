@@ -24,23 +24,28 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
 
-@Repository("ugandaemrsync.UgandaEMRSyncDao")
 public class UgandaEMRSyncDao {
 
-    @Autowired
     DbSessionFactory sessionFactory;
 
     /**
      * @return
      */
     private DbSession getSession() {
-        return sessionFactory.getCurrentSession();
+        return getSessionFactory().getCurrentSession();
+    }
+
+
+    public DbSessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+
+    public void setSessionFactory(DbSessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
     /**

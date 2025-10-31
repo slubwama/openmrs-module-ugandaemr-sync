@@ -20,8 +20,6 @@ import org.openmrs.module.ugandaemrsync.server.SyncGlobalProperties;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.scheduler.tasks.AbstractTask;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +48,6 @@ import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.GP_RECENCY_SE
  * Posts recency data to the central server
  */
 
-@Component
 public class SendRecencyDataToCentralServerTask extends AbstractTask {
 	
 	protected Log log = LogFactory.getLog(getClass());
