@@ -9,8 +9,6 @@
  */
 package org.openmrs.module.ugandaemrsync.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
@@ -341,7 +339,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param syncFhirProfile the profile
      * @return all cases that belong to a profile.
      */
-     List<SyncFhirCase> getSyncFhirCasesByProfile(SyncFhirProfile syncFhirProfile);
+    List<SyncFhirCase> getSyncFhirCasesByProfile(SyncFhirProfile syncFhirProfile);
 
     /**
      * This Method Checks if a test order has results entered on it either through an encounter or on the order it self
@@ -453,17 +451,17 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @param patientData The Patient Fhir Payload to be used to create a patient
      * @return a list of expired resources
      */
-    public Patient createPatientsFromFHIR(JsonNode patientData) throws ParseException;
+    public Patient createPatientsFromFHIR(String patientData) throws ParseException;
 
     /**
      * Checks if the patient coming from the fhir server already exists
      * @param patientData The Patient Fhir Payload to be used to check if the patient exists
      * @return wether the patient exists or not.
      */
-    public boolean patientFromFHIRExists(JsonNode patientData);
+    public boolean patientFromFHIRExists(String patientData);
 
 
-    public Patient updatePatientsFromFHIR(JsonNode bundle,String identifierUUID,String identifierName) throws ParseException;
+    public Patient updatePatientsFromFHIR(String bundleJson,String identifierUUID,String identifierName) throws ParseException;
 
     public List<SyncFhirResource> getSyncedFHirResources(SyncFhirProfile syncFhirProfile, Date  dateSyncedFrom, Date dateSyncedTo);
 
@@ -492,11 +490,11 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public List<String>  getSendRequisitionStock();
 
-   public List<String> getIssuedStock();
+    public List<String> getIssuedStock();
 
     public SyncTaskType setAccessTokenToSyncTaskType();
 
-    public List<ObjectNode> generateDrugOrderToOtherSystem(Collection<Concept> conceptList);
+    public List<String> generateDrugOrderToOtherSystem(List<Concept> conceptList);
 
     public void sendPrescription();
 

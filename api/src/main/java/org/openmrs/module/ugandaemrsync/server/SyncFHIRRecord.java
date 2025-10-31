@@ -1576,7 +1576,7 @@ public class SyncFHIRRecord {
                         if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
                             ObjectMapper objectMapper = new ObjectMapper();
                             JsonNode results = objectMapper.readTree(map.get("result").toString());
-                            ugandaEMRSyncService.updatePatientsFromFHIR(results, PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                            ugandaEMRSyncService.updatePatientsFromFHIR(results.toString(), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                         }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     } else {

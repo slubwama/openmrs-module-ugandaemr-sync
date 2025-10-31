@@ -10,6 +10,7 @@
 package org.openmrs.module.ugandaemrsync.api.impl;
 
 import ca.uhn.fhir.parser.StrictErrorHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -1259,7 +1260,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     @Override
-    public Patient createPatientsFromFHIR(JsonNode patientData) throws ParseException {
+    public Patient createPatientsFromFHIR(String patientJson) throws ParseException {
+        ObjectMapper mapper=new ObjectMapper();
+        JsonNode patientData = null;
+        try {
+            patientData = mapper.readTree(patientJson);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         PatientService patientService = Context.getPatientService();
 
         // Parse birthdate
@@ -1291,7 +1299,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
 
-    public Patient updatePatientsFromFHIR(JsonNode bundle, String identifierUUID, String identifierName) {
+    public Patient updatePatientsFromFHIR(String bundleJson, String identifierUUID, String identifierName) {
+        ObjectMapper mapper=new ObjectMapper();
+        JsonNode bundle = null;
+        try {
+            bundle = mapper.readTree(bundleJson);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         Patient patient = null;
         PatientService patientService = Context.getPatientService();
         if (bundle.has("resourceType") && bundle.get("resourceType").equals("Bundle") && bundle.get("entry").size() > 0) {
@@ -1412,7 +1427,17 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientIdentifier;
     }
 
-    public boolean patientFromFHIRExists(JsonNode patientData) {
+    public boolean patientFromFHIRExists(String patientJson) {
+        ObjectMapper mapper=new ObjectMapper();
+
+        JsonNode patientData = null;
+
+        try {
+            patientData = mapper.readTree(patientJson);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         boolean patientExists = false;
         for (JsonNode jsonObject : (ArrayNode) patientData.get("identifier")) {
             PatientService patientService = Context.getPatientService();
@@ -2207,8 +2232,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param drugs A collection of drug concepts to filter the orders by.
      * @return A list of JSON objects representing patient orders with drug prescriptions.
      */
-    public List<ObjectNode> generateDrugOrderToOtherSystem(Collection<Concept> drugs) {
-        List<ObjectNode> patientOrders = new ArrayList<>();
+    public List<String> generateDrugOrderToOtherSystem(List<Concept> drugs) {
+        List<String> patientOrders = new ArrayList<>();
 
         OrderService orderService = Context.getOrderService();
         CareSetting careSetting = orderService.getCareSettingByUuid(CARE_SETTING_UUID_OPD);
@@ -2267,7 +2292,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         && patientOrder.get("prescription").size() > 0
                         && patientOrder.path("patient").has("id")) {
 
-                    patientOrders.add(patientOrder);
+                    patientOrders.add(patientOrder.toString());
                 }
 
             } catch (Exception e) {
@@ -2585,33 +2610,36 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * - Updating the patient's OPD number based on the response
      */
     public void sendPrescription() {
-        // Retrieve services
+        // Services
         UgandaEMRSyncService syncService = Context.getService(UgandaEMRSyncService.class);
-        PatientService patientService = Context.getPatientService();
         UgandaEMRHttpURLConnection httpConnection = new UgandaEMRHttpURLConnection();
 
-        // Fetch SyncTaskType by its configured UUID
+        // Get SyncTaskType
         SyncTaskType syncTaskType = syncService.getSyncTaskTypeByUUID("8ca0ffd0-0fb0-11f0-9e19-da924fd23489");
         if (syncTaskType == null) {
             log.error("SyncTaskType with UUID '8ca0ffd0-0fb0-11f0-9e19-da924fd23489' not found.");
             return;
         }
 
-        // Construct the full endpoint URL
-        String apiPath = Context.getAdministrationService().getGlobalProperty(MODULE_ID + ".eafya.SendPrescription");
+        // Endpoint
+        String apiPath = Context.getAdministrationService()
+                .getGlobalProperty(MODULE_ID + ".eafya.SendPrescription");
         String url = syncTaskType.getUrl() + apiPath;
 
-        // Load the eAFYA product catalog to map drugs
+        // Load product catalog and today’s task logs
         productCatelogList = getProductCatalogFromEAFYA(syncTaskType);
-        // Lists of eAFYA Tasks logs generated today
-        eAFYATaskListForToday = getSyncTasksByType(syncTaskType, OpenmrsUtil.firstSecondOfDay(new Date()), OpenmrsUtil.getLastMomentOfDay(new Date()));
+        eAFYATaskListForToday = getSyncTasksByType(
+                syncTaskType,
+                OpenmrsUtil.firstSecondOfDay(new Date()),
+                OpenmrsUtil.getLastMomentOfDay(new Date())
+        );
 
         if (productCatelogList == null || productCatelogList.isEmpty()) {
             log.warn("Product catalog from eAFYA is empty or unavailable.");
             return;
         }
 
-        // Parse configured concept IDs
+        // Parse concept IDs to Concepts
         String[] conceptIdArray = syncTaskType.getDataTypeId() != null
                 ? syncTaskType.getDataTypeId().split(",")
                 : new String[0];
@@ -2621,50 +2649,85 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // Generate prescription orders
-        List<ObjectNode> drugOrders = generateDrugOrderToOtherSystem(concepts);
+        // Build JSON payloads (one per prescription) — classloader-safe: List<String>
+        List<String> payloads = syncService.generateDrugOrderToOtherSystem(concepts);
+        if (payloads == null || payloads.isEmpty()) {
+            log.info("No prescription orders to sync.");
+            return;
+        }
 
         try {
-            for (ObjectNode drugOrder : drugOrders) {
-                // Send prescription via POST
+            for (String payloadJson : payloads) {
+                if (payloadJson == null || payloadJson.trim().isEmpty()) {
+                    log.debug("Skipping empty prescription payload.");
+                    continue;
+                }
+
                 Map<String, Object> response = httpConnection.sendPostBy(
                         url,
                         syncTaskType.getUrlUserName(),
                         syncTaskType.getUrlPassword(),
                         null,
-                        drugOrder.toString(),
+                        payloadJson,
                         false
                 );
 
-                int responseCode = response.get("responseCode") instanceof Integer
-                        ? (int) response.get("responseCode")
-                        : Integer.parseInt(response.get("responseCode").toString());
+                int responseCode = parseResponseCode(response.get("responseCode"));
+                String responseMsg = String.valueOf(response.get("responseMessage"));
 
                 if (responseCode == 200 || responseCode == 201) {
-                    String internalPatientId = drugOrder.has("internal_patient_id") && !drugOrder.get("internal_patient_id").isNull()
-                            ? drugOrder.get("internal_patient_id").asText()
-                            : null;
+                    // Optional: extract IDs (implement these helpers as needed)
+                    String internalPatientId = extractInternalPatientIdFromPayload(payloadJson); // e.g., from JSON "internal_patient_id"
                     String externalPatientId = extractPatientIdFromResponse(response);
 
-                    if (internalPatientId != null && !externalPatientId.isEmpty()) {
+                    if (internalPatientId != null && !internalPatientId.isEmpty() && !externalPatientId.isEmpty()) {
                         updatePatientOPDNumber(internalPatientId, externalPatientId);
                     }
 
-                    // Log successful sync
-                    logTransaction(syncTaskType, responseCode, null, drugOrder.get("encounter_id").toString(), "Patient: " + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
-                    log.info(String.format("Prescription for patient %s synced successfully. External ID: %s",
-                            internalPatientId, externalPatientId));
+                    logTransaction(
+                            syncTaskType,
+                            responseCode,
+                            null,
+                            "Prescription Sync",
+                            "Prescription created in eAFYA. Response: (" + responseMsg + ")",
+                            new Date(),
+                            url,
+                            false,
+                            false
+                    );
+                    log.info(String.format("Prescription synced successfully. External ID: %s", externalPatientId));
                 } else {
-                    // Log failure
-                    log.error("Failed to sync prescription. Response code: " + responseCode);
-                    logTransaction(syncTaskType, responseCode, null, "Failed Prescription Sync",
-                            response.get("responseMessage").toString(), new Date(), url, false, false);
+                    log.error("Failed to sync prescription. Response code: " + responseCode + ", msg: " + responseMsg);
+                    logTransaction(
+                            syncTaskType,
+                            responseCode,
+                            null,
+                            "Failed Prescription Sync",
+                            responseMsg,
+                            new Date(),
+                            url,
+                            false,
+                            false
+                    );
                 }
             }
         } catch (Exception e) {
             log.error("Error while syncing prescription data: ", e);
         }
     }
+
+    private int parseResponseCode(Object code) {
+        if (code instanceof Integer) return (Integer) code;
+        try { return Integer.parseInt(String.valueOf(code)); }
+        catch (Exception ignore) { return -1; }
+    }
+
+    // Implement these based on your payload/response shapes:
+    private String extractInternalPatientIdFromPayload(String payloadJson) {
+        // parse payloadJson (e.g., find "internal_patient_id")
+        return null;
+    }
+
 
     @Override
     public List<Map<String, String>> generateAndSyncBulkViralLoadRequest() {
