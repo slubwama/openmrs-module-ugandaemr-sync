@@ -403,7 +403,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         Integer numberOfObs = order.getEncounter().getObs().size();
 
-        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCd4Test), order);
+        ugandaEMRSyncService.addTestResultsToEncounter(sampleResultsForCd4Test, order);
 
         Assert.assertTrue(Context.getOrderService().getOrder(6).getEncounter().getObs().size() > numberOfObs);
         Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(cd4Concept)));
@@ -418,7 +418,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
 
         Integer numberOfObs = order.getEncounter().getObs().size();
 
-        ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCBCTest), order);
+        ugandaEMRSyncService.addTestResultsToEncounter(sampleResultsForCBCTest, order);
 
         Assert.assertTrue(Context.getOrderService().getOrder(15).getEncounter().getObs().size() > numberOfObs);
         Assert.assertTrue(order.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(WBCCountConcept)));
@@ -428,7 +428,7 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     @Test
     public void addTestResultsToEncounter_shouldSaveCBCResultsWithOutKnownOrderToEncounter() {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
-        List<Encounter> encounters = ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(sampleResultsForCBCTest), null);
+        List<Encounter> encounters = ugandaEMRSyncService.addTestResultsToEncounter(sampleResultsForCBCTest, null);
         Order cbcOrder = new ArrayList<>(encounters.get(0).getOrders()).get(0);
         Assert.assertNotNull(cbcOrder);
         Assert.assertTrue(cbcOrder.getEncounter().getObs().stream().map(Obs::getConcept).collect(Collectors.toSet()).contains(Context.getConceptService().getConcept(WBCCountConcept)));

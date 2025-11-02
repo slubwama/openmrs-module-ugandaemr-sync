@@ -41,9 +41,7 @@ public class RecieveLabResultResource extends DelegatingCrudResource<TestResultD
     @Override
     public Object create(SimpleObject propertiesToCreate, RequestContext context) throws ResponseException {
 
-        JSONObject jsonObject = new JSONObject(propertiesToCreate);
-
-        List<Encounter> encounters = Context.getService(UgandaEMRSyncService.class).addTestResultsToEncounter(jsonObject, null);
+        List<Encounter> encounters = Context.getService(UgandaEMRSyncService.class).addTestResultsToEncounter(propertiesToCreate.toString(), null);
 
         TestResultDTO delegate = new TestResultDTO();
 

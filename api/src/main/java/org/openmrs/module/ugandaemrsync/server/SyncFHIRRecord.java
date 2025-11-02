@@ -1499,7 +1499,7 @@ public class SyncFHIRRecord {
                         syncFhirResource.setStatusCodeDetail(map.get("responseMessage").toString());
                         syncFhirResource.setExpiryDate(UgandaEMRSyncUtil.addDaysToDate(date, syncFhirProfile.getDurationToKeepSyncedResources()));
                         if (syncFhirProfile.getUuid().equals(FSHR_SYNC_FHIR_PROFILE_UUID) || syncFhirProfile.getUuid().equals(CROSS_BORDER_CR_SYNC_FHIR_PROFILE_UUID)) {
-                            ugandaEMRSyncService.updatePatientsFromFHIR(new JSONObject((String) map.get("result")), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                            ugandaEMRSyncService.updatePatientsFromFHIR((String) map.get("result"), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                         }
                         ugandaEMRSyncService.saveFHIRResource(syncFhirResource);
                     } else {

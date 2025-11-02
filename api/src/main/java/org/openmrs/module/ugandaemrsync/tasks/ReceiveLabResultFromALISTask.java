@@ -43,7 +43,7 @@ public class ReceiveLabResultFromALISTask extends AbstractTask {
                 ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
                 //Save Lab Results
                 if (order.getEncounter() != null) {
-                   ugandaEMRSyncService.addTestResultsToEncounter(new JSONObject(""), order);
+                   ugandaEMRSyncService.addTestResultsToEncounter("", order);
                     syncTask.setActionCompleted(true);
                     ugandaEMRSyncService.saveSyncTask(syncTask);
                     try {
