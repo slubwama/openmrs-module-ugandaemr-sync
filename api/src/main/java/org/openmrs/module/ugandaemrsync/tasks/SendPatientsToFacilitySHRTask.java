@@ -39,8 +39,8 @@ public class SendPatientsToFacilitySHRTask extends AbstractTask {
                 JSONObject patientData = new JSONObject(jsonObject.toString()).getJSONObject("resource");
                 Patient patient = null;
                 String healthCenterFrom = patientData.getJSONObject("managingOrganization").get("display").toString();
-                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData)) {
-                    patient = ugandaEMRSyncService.createPatientsFromFHIR(patientData);
+                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData.toString())) {
+                    patient = ugandaEMRSyncService.createPatientsFromFHIR(patientData.toString());
                 }
                 if (patient != null) {
                     log.info("Patient " + patient.getNames() + "Successfully Created");

@@ -804,9 +804,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     /**
-     * @see UgandaEMRSyncService#addTestResultsToEncounter(JSONObject, Order)
+     * @see UgandaEMRSyncService#addTestResultsToEncounter(String, Order)
      */
-    public List<Encounter> addTestResultsToEncounter(JSONObject bundleResults, Order order) {
+    public List<Encounter> addTestResultsToEncounter(String bundleResults, Order order) {
         Encounter encounter = null;
 
         if (order != null) {
@@ -814,7 +814,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
 
         List<Encounter> returningEncounter = new ArrayList<>();
-        JSONArray jsonArray = bundleResults.getJSONArray("entry");
+        JSONArray jsonArray = new JSONObject(bundleResults).getJSONArray("entry");
 
         JSONArray filteredDiagnosticReportArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "DiagnosticReport");
 
@@ -1021,8 +1021,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     @Override
-    public Patient createPatientsFromFHIR(JSONObject patientData) throws ParseException {
+    public Patient createPatientsFromFHIR(String patientDataString) throws ParseException {
         PatientService patientService = Context.getPatientService();
+
+        JSONObject patientData = new JSONObject(patientDataString);
+
         Date date = new SimpleDateFormat("yyyy-MM-dd").parse(patientData.get("birthDate").toString());
 
         String gender = String.valueOf(patientData.get("gender"));
@@ -1040,9 +1043,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientService.savePatient(patient);
     }
 
-    public Patient updatePatientsFromFHIR(JSONObject bundle, String identifierUUID, String identifierName) {
+    public Patient updatePatientsFromFHIR(String bundleString, String identifierUUID, String identifierName) {
         Patient patient = null;
         PatientService patientService = Context.getPatientService();
+        JSONObject bundle = new JSONObject(bundleString);
+
         if (bundle.has("resourceType") && bundle.getString("resourceType").equals("Bundle") && bundle.getJSONArray("entry").length() > 0) {
             JSONArray bundleResourceObjects = bundle.getJSONArray("entry");
 
@@ -1149,9 +1154,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return patientIdentifier;
     }
 
-    public boolean patientFromFHIRExists(JSONObject patientData) {
+    public boolean patientFromFHIRExists(String patientDataString) {
         boolean patientExists = false;
-        for (Object o : patientData.getJSONArray("identifier")) {
+        for (Object o : new JSONObject(patientDataString).getJSONArray("identifier")) {
             JSONObject jsonObject = new JSONObject(o.toString());
             PatientService patientService = Context.getPatientService();
             List<PatientIdentifier> patientIdentifier = patientService.getPatientIdentifiers(jsonObject.get("value").toString(), null, null, null, null);
@@ -1891,9 +1896,9 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param drugs A collection of drug concepts to filter the orders by.
      * @return A list of JSON objects representing patient orders with drug prescriptions.
      */
-    public List<JSONObject> generateDrugOrderToOtherSystem(Collection<Concept> drugs) {
+    public List<String> generateDrugOrderToOtherSystem(Collection<Concept> drugs) {
         // Initialize the list to hold the patient orders
-        List<JSONObject> patientOrders = new ArrayList<>();
+        List<String> patientOrders = new ArrayList<>();
 
         // Retrieve the OrderService and CareSetting for the specific care setting (OPD)
         OrderService orderService = Context.getOrderService();
@@ -1960,7 +1965,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     patientOrder.getJSONObject("patient").has("id")) {
 
                 // Add valid patient order to the result list
-                patientOrders.add(patientOrder);
+                patientOrders.add(patientOrder.toString());
             }
         }
 
@@ -2317,26 +2322,30 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 .collect(Collectors.toList());
 
         // Generate prescription orders
-        List<JSONObject> drugOrders = generateDrugOrderToOtherSystem(concepts);
+        List<String> drugOrders = generateDrugOrderToOtherSystem(concepts);
+
+
 
         try {
-            for (JSONObject drugOrder : drugOrders) {
+            for (String drugOrderString : drugOrders) {
                 // Send prescription via POST
                 Map<String, Object> response = httpConnection.sendPostBy(
                         url,
                         syncTaskType.getUrlUserName(),
                         syncTaskType.getUrlPassword(),
                         null,
-                        drugOrder.toString(),
+                        drugOrderString,
                         false
                 );
+
+
 
                 int responseCode = response.get("responseCode") instanceof Integer
                         ? (int) response.get("responseCode")
                         : Integer.parseInt(response.get("responseCode").toString());
 
                 if (responseCode == 200 || responseCode == 201) {
-                    String internalPatientId = drugOrder.optString("internal_patient_id", null);
+                    String internalPatientId = new JSONObject(drugOrderString).optString("internal_patient_id", null);
                     String externalPatientId = extractPatientIdFromResponse(response);
 
                     if (internalPatientId != null && !externalPatientId.isEmpty()) {
@@ -2344,7 +2353,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                     }
 
                     // Log successful sync
-                    logTransaction(syncTaskType, responseCode, null, drugOrder.get("encounter_id").toString(), "Patient: " + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
+                    logTransaction(syncTaskType, responseCode, null, new JSONObject(drugOrderString).get("encounter_id").toString(), "Patient: " + externalPatientId + "'s Prescription has been created in eAFYA. eAFYA Server responded back with message: (" + response.get("responseMessage").toString() + ")", new Date(), url, false, false);
                     log.info(String.format("Prescription for patient %s synced successfully. External ID: %s",
                             internalPatientId, externalPatientId));
                 } else {
