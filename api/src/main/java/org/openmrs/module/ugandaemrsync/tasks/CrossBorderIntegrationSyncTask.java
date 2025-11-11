@@ -42,8 +42,8 @@ public class CrossBorderIntegrationSyncTask extends AbstractTask {
             for (Object jsonObject : results.getJSONArray("entry")) {
                 JSONObject patientData = new JSONObject(jsonObject.toString()).getJSONObject("resource");
                 Patient patient = null;
-                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData)) {
-                    patient = ugandaEMRSyncService.updatePatientsFromFHIR(patientData, PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
+                if (!ugandaEMRSyncService.patientFromFHIRExists(patientData.toString())) {
+                    patient = ugandaEMRSyncService.updatePatientsFromFHIR(patientData.toString(), PATIENT_ID_TYPE_CROSS_BORDER_UUID, PATIENT_ID_TYPE_CROSS_BORDER_NAME);
                 }
                 if (patient != null) {
                     log.info("Patient " + patient.getNames() + "Successfully Updated");
