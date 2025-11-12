@@ -8,7 +8,7 @@
     <name>UgandaemrSync</name>
     <description>Provides data sharing capabilities from the facility level installation with other systems</description>
 
-    <url>https://github.com/mohuganda/openmrs-module-ugandaemr-sync</url>
+    <url>https://github.com/METS-Programme/openmrs-module-ugandaemr-sync</url>
 
     <developers>
         <developer>
@@ -25,9 +25,9 @@
     </organization>
 
     <scm>
-        <connection>scm:git:git@github.com:mohuganda/openmrs-module-ugandaemr-sync.git</connection>
-        <developerConnection>scm:git:git@github.com:mohuganda/openmrs-module-ugandaemr-sync.git</developerConnection>
-        <url>scm:git:https://github.com/mohuganda/openmrs-module-ugandaemr-sync/</url>
+        <connection>scm:git:git@github.com:METS-Programme/openmrs-module-ugandaemr-sync.git</connection>
+        <developerConnection>scm:git:git@github.com:METS-Programme/openmrs-module-ugandaemr-sync.git</developerConnection>
+        <url>scm:git:https://github.com/METS-Programme/openmrs-module-ugandaemr-sync/</url>
         <tag>HEAD</tag>
     </scm>
 
