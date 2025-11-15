@@ -5,5 +5,6 @@
     <global_property  property="ugandaemrsync.viralloadRequiredProgramData"  property_value="413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2,202501021"  description="The Viral load required fields codes "  uuid="b1b706ca-3080-11f0-be8b-d08c4bd23cb6"/>
     <global_property  property="ugandaemrsync.minimumCPHLBarCodeLength"  property_value="9"  description="The minimum Length of a CPHL Barcode."  uuid="42d82a3e-309b-11f0-be8b-d08c4bd23cb6"/>
     <global_property  property="ugandaemrsync.cphlReferralOrderConceptIds"  property_value="165412"  description="The Concept ID for allowable referral orders to be synced to CPHL"  uuid="86154180-3198-11f0-9bf9-e786e6f00235"/>
+    <global_property  property="ugandaemrsync.testRefferalValidators"  property_value='{"validatableTest":["1eb05918-f50c-4cad-a827-3c78f296a10a","163610AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","dc8d4af2-30ab-102d-86b0-7a5022ba4115"],"testValidators":{"1eb05918-f50c-4cad-a827-3c78f296a10a":"413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2,202501021","163610AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA":"413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2,202501021","dc8d4af2-30ab-102d-86b0-7a5022ba4115":""}}'  description="The validator of required fields a test by another system"  uuid="9807cd6a-4060-45e7-ad69-0ef7370a01d4"/>
 </dataset>
 

@@ -4,11 +4,15 @@ import io.swagger.models.Model;
 import io.swagger.models.ModelImpl;
 import io.swagger.models.properties.RefProperty;
 import io.swagger.models.properties.StringProperty;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.*;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
+import org.openmrs.module.ugandaemrsync.api.impl.UgandaEMRSyncServiceImpl;
 import org.openmrs.module.ugandaemrsync.model.SyncTask;
 import org.openmrs.module.ugandaemrsync.model.SyncTaskType;
 import org.openmrs.module.ugandaemrsync.web.resource.DTO.ReferralOrder;
@@ -35,6 +39,7 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.*;
 
 @Resource(name = RestConstants.VERSION_1 + "/referredorders", supportedClass = ReferralOrder.class, supportedOpenmrsVersions = {"1.9.* - 9.*"})
 public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder> {
+
 
     @Override
     public ReferralOrder newDelegate() {
@@ -66,6 +71,8 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
 
     @Override
     public NeedsPaging<ReferralOrder> doGetAll(RequestContext context) throws ResponseException {
+
+        List<Concept> concepts = getConceptsFromSyncTaskType();
         OrderService orderService = Context.getOrderService();
         CareSetting careSetting = orderService.getCareSettingByUuid(CARE_SETTING_UUID_OPD);
 
@@ -74,7 +81,7 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
         OrderSearchCriteria orderSearchCriteria = new OrderSearchCriteria(
                 null,
                 careSetting,
-                Collections.singletonList(Context.getConceptService().getConcept(165412)),
+                concepts,
                 Collections.singletonList(orderType),
                 null,
                 null,
@@ -278,5 +285,59 @@ public class ReferralOrderResource extends DelegatingCrudResource<ReferralOrder>
             default:
                 return Order.FulfillerStatus.IN_PROGRESS;
         }
+    }
+
+    /**
+     * Builds a list of Concepts from the SyncTaskType configured for Viral Load sync.
+     * The SyncTaskType.getDataType() must contain a comma-separated list of Concept IDs, UUIDs, or Names.
+     *
+     * @return List of Concepts resolved from the SyncTaskType dataType.
+     */
+    public static List<Concept> getConceptsFromSyncTaskType() {
+
+        UgandaEMRSyncService syncService = Context.getService(UgandaEMRSyncService.class);
+        SyncTaskType syncTaskType = syncService.getSyncTaskTypeByUUID(VIRAL_LOAD_SYNC_TYPE_UUID);
+
+        List<Concept> concepts = new ArrayList<>();
+
+        // Early exit if syncTaskType or dataType is missing
+        if (syncTaskType == null) {
+            //log.warning("SyncTaskType not found for UUID: " + VIRAL_LOAD_SYNC_TYPE_UUID);
+            return concepts;
+        }
+
+        String dataType = syncTaskType.getDataType();
+        if (StringUtils.isBlank(dataType)) {
+            //log.warning("SyncTaskType dataType is blank for UUID: " + VIRAL_LOAD_SYNC_TYPE_UUID);
+            return concepts;
+        }
+
+        // Parse and resolve each token
+        for (String token : dataType.split(",")) {
+            token = token.trim();
+            if (token.isEmpty()) {
+                continue;
+            }
+
+            Concept concept = null;
+            if (StringUtils.isNumeric(token)) {
+                // Concept ID
+                concept = Context.getConceptService().getConcept(Integer.parseInt(token));
+            } else {
+                // Try UUID, then Name
+                concept = Context.getConceptService().getConceptByUuid(token);
+                if (concept == null) {
+                    concept = Context.getConceptService().getConceptByName(token);
+                }
+            }
+
+            if (concept != null) {
+                concepts.add(concept);
+            } else {
+                //log.warning("No concept found for token: " + token);
+            }
+        }
+
+        return concepts;
     }
 }

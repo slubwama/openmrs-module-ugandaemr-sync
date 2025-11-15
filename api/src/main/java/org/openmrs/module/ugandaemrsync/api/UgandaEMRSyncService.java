@@ -508,10 +508,11 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public Order getOrderByAccessionNumber(String assessionNumber);
 
-    public boolean validateVLFHIRBundle(String bundleJson);
+    public boolean validateTestFHIRBundle(String bundleJson,String orderConceptUuid);
 
     public boolean isValidCPHLBarCode(String accessionNumber);
-    public String getMissingVLFHIRCodesAsString(String bundleJson);
+
+    public String getMissingVLFHIRCodesAsString(String bundleJson,String orderConceptUuid);
 
     public Concept getVLMissingCconcept(String code);
 
