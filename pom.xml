@@ -3,7 +3,7 @@
 
     <groupId>org.openmrs.module</groupId>
     <artifactId>ugandaemrsync</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>UgandaemrSync</name>
     <description>Provides data sharing capabilities from the facility level installation with other systems</description>
