@@ -2836,11 +2836,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     private List<String> getTargetCodes(String orderConceptUuid) {
         List<String> targetCodes = new ArrayList<>();
-        String testRefferalValidators = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.testRefferalValidators");
-        JSONObject testRefferalValidatorsObject = new JSONObject(testRefferalValidators);
+        String testReferralValidators = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.testReferralValidators");
+        JSONObject testReferralValidatorsObject = new JSONObject(testReferralValidators);
 
         try {
-            targetCodes = Arrays.asList(testRefferalValidatorsObject.getJSONObject("testValidators").getString(orderConceptUuid).split(","));
+            targetCodes = Arrays.asList(testReferralValidatorsObject.getJSONObject("testValidators").getString(orderConceptUuid).split(","));
         } catch (Exception exception) {
             log.error(exception.getMessage());
         }
