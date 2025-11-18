@@ -425,6 +425,14 @@
           The Concept ID for allowable referral orders to be synced to CPHL
         </description>
     </globalProperty>
+
+    <globalProperty>
+        <property>ugandaemrsync.testReferralValidators</property>
+        <defaultValue>{"validatableTest":["1eb05918-f50c-4cad-a827-3c78f296a10a","163610AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","dc8d4af2-30ab-102d-86b0-7a5022ba4115"],"testValidators":{"1eb05918-f50c-4cad-a827-3c78f296a10a":"413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2","163610AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA":"413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2","dc8d4af2-30ab-102d-86b0-7a5022ba4115":""}}</defaultValue>
+        <description>
+            The allowable test order to be referred and their data requirements.
+        </description>
+    </globalProperty>
     
     <!-- Internationalization -->
     <!-- All message codes should start with ugandaemrsync.* -->

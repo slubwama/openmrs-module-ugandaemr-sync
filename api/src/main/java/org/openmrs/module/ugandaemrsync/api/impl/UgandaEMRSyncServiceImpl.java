@@ -16,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.ServiceRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -2325,7 +2326,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         List<String> drugOrders = generateDrugOrderToOtherSystem(concepts);
 
 
-
         try {
             for (String drugOrderString : drugOrders) {
                 // Send prescription via POST
@@ -2337,7 +2337,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                         drugOrderString,
                         false
                 );
-
 
 
                 int responseCode = response.get("responseCode") instanceof Integer
@@ -2433,11 +2432,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String payload = processResourceFromOrder(order);
 
             if (payload != null) {
-                if (!validateVLFHIRBundle(payload)) {
+                if (!validateTestFHIRBundle(payload,order.getConcept().getUuid())) {
                     String missingObsInPayload = String.format(
                             "Order: %s is not valid due to missing %s in the required field",
                             order.getAccessionNumber(),
-                            getMissingVLFHIRCodesAsString(payload)
+                            getMissingVLFHIRCodesAsString(payload,order.getConcept().getUuid())
                     );
                     logTransaction(syncTaskType, 500, missingObsInPayload, order.getAccessionNumber(),
                             missingObsInPayload,
@@ -2604,14 +2603,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             );
 
             if (syncResponse != null) {
-                String responseFromCPHLServer=String.format("Response From CPHL Server: %s",syncResponse.get("responseMessage"));
+                String responseFromCPHLServer = String.format("Response From CPHL Server: %s", syncResponse.get("responseMessage"));
                 Map responseType = handleReturnedResponses(order, syncResponse);
                 int responseCode = Integer.parseInt(syncResponse.getOrDefault("responseCode", "500").toString());
 
                 // Handle duplicate case with a 400 response
                 if (responseCode == 400 && "Duplicate".equalsIgnoreCase(String.valueOf(responseType.get("responseType")))) {
                     responseCode = 200;
-                    responseFromCPHLServer = String.format("Response From CPHL Server: %s",responseType.get("responseMessage"));
+                    responseFromCPHLServer = String.format("Response From CPHL Server: %s", responseType.get("responseMessage"));
                 }
 
                 boolean isSuccess = responseCode == 200 || responseCode == 201 || responseCode == 202 || responseCode == 208;
@@ -2807,8 +2806,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return eAFYAProductList;
     }
 
-    public boolean validateVLFHIRBundle(String bundleJson) {
-        List<String> targetCodes = Arrays.asList(Context.getAdministrationService().getGlobalProperty("ugandaemrsync.viralloadRequiredProgramData").split(","));
+    public boolean validateTestFHIRBundle(String bundleJson,String orderConceptUuid) {
+        List<String> targetCodes = getTargetCodes(orderConceptUuid);
         Set<String> foundCodes = new HashSet<>();
 
         FhirContext ctx = FhirContext.forR4();
@@ -2835,12 +2834,23 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return foundCodes.containsAll(targetCodes);
     }
 
-    public String getMissingVLFHIRCodesAsString(String bundleJson) {
-        List<String> targetCodes = Arrays.asList(
-                Context.getAdministrationService()
-                        .getGlobalProperty("ugandaemrsync.viralloadRequiredProgramData")
-                        .split(",")
-        );
+    private List<String> getTargetCodes(String orderConceptUuid) {
+        List<String> targetCodes = new ArrayList<>();
+        String testReferralValidators = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.testReferralValidators");
+        JSONObject testReferralValidatorsObject = new JSONObject(testReferralValidators);
+
+        try {
+            targetCodes = Arrays.asList(testReferralValidatorsObject.getJSONObject("testValidators").getString(orderConceptUuid).split(","));
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+        }
+
+        return targetCodes;
+    }
+
+    public String getMissingVLFHIRCodesAsString(String bundleJson,String orderConceptUuid) {
+        List<String> targetCodes = getTargetCodes(orderConceptUuid);
+
         Set<String> foundCodes = new HashSet<>();
 
         FhirContext ctx = FhirContext.forR4();
@@ -2850,30 +2860,30 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         try {
             bundle = parser.parseResource(Bundle.class, bundleJson);
 
-        for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof Observation) {
-                Observation obs = (Observation) entry.getResource();
-                for (Coding coding : obs.getCode().getCoding()) {
-                    if (targetCodes.contains(coding.getCode())) {
-                        foundCodes.add(coding.getCode());
+            for (Bundle.BundleEntryComponent entry : bundle.getEntry()) {
+                if (entry.getResource() instanceof Observation) {
+                    Observation obs = (Observation) entry.getResource();
+                    for (Coding coding : obs.getCode().getCoding()) {
+                        if (targetCodes.contains(coding.getCode())) {
+                            foundCodes.add(coding.getCode());
+                        }
                     }
                 }
             }
-        }
 
-        // Identify missing codes
+            // Identify missing codes
 
-        for (String code : targetCodes) {
-            if (!foundCodes.contains(code)) {
+            for (String code : targetCodes) {
+                if (!foundCodes.contains(code)) {
 
-                Concept concept = getVLMissingCconcept(code);
-                if (concept != null) {
-                    missingCodes.add(concept.getName().getName());
-                } else {
-                    missingCodes.add(code);
+                    Concept concept = getVLMissingCconcept(code);
+                    if (concept != null) {
+                        missingCodes.add(concept.getName().getName());
+                    } else {
+                        missingCodes.add(code);
+                    }
                 }
             }
-        }
         } catch (Exception exception) {
             log.error(exception);
         }
