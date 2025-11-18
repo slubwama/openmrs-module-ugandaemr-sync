@@ -94,7 +94,8 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         bundle.addEntry().setResource(createObservation("202501021"));
 
         String json = parser.encodeResourceToString(bundle);
-        boolean result = ugandaEMRSyncService.validateVLFHIRBundle(json);
+        boolean result = ugandaEMRSyncService.validateTestFHIRBundle(json,"1eb05918-f50c-4cad-a827-3c78f296a10a");
+
         Assert.assertTrue(result);
     }
 
@@ -110,7 +111,8 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         // Missing "868642"
 
         String json = parser.encodeResourceToString(bundle);
-        boolean result = ugandaEMRSyncService.validateVLFHIRBundle(json);
+        boolean result = ugandaEMRSyncService.validateTestFHIRBundle(json,"1eb05918-f50c-4cad-a827-3c78f296a10a");
+
         Assert.assertFalse("Payload Missing some data", result);
     }
 
@@ -135,7 +137,7 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         String json = parser.encodeResourceToString(bundle);
 
 
-        String result = service.getMissingVLFHIRCodesAsString(json);
+        String result = service.getMissingVLFHIRCodesAsString(json,"1eb05918-f50c-4cad-a827-3c78f296a10a");
         Assert.assertEquals("", result);
     }
 
@@ -159,7 +161,7 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         String missingConceptName1 = service.getVLMissingCconcept("202501020").getName().getName();
         String missingConceptName2 = service.getVLMissingCconcept("202501021").getName().getName();
 
-        String result = service.getMissingVLFHIRCodesAsString(json);
+        String result = service.getMissingVLFHIRCodesAsString(json,"1eb05918-f50c-4cad-a827-3c78f296a10a");
         Assert.assertEquals(String.format("%s,%s", missingConceptName1, missingConceptName2), result);
     }
 
