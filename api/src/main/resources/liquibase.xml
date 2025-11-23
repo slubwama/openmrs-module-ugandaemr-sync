@@ -2048,8 +2048,16 @@
             SELECT patient_identifier_type_id, name, 'http://health.go.ug/cr/nationalid' as url, 1, '2025-04-28 08:43:43', 0, '5e8a626e-3d70-11f0-bcbd-bf35c84f3004' FROM patient_identifier_type WHERE uuid = 'f0c16a6d-dc5f-4118-a803-616d0075d282';
         </sql>
     </changeSet>
+    <changeSet id="ugandaemrsync-2025-11-23-1940" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="sync_task_type"/>
+                <not>
+                    <columnExists tableName="sync_task_type" columnName="token_expiry_date"/>
+                </not>
+            </and>
+        </preConditions>
 
-    <changeSet id="ugandaemrsync-2025-11-15-1940" author="slubwama">
         <addColumn tableName="sync_task_type">
             <column name="token_expiry_date" type="DATETIME"/>
             <column name="token_refresh_key" type="VARCHAR(255)"/>
@@ -2057,7 +2065,17 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="ugandaemrsync-2025-11-15-1945" author="slubwama">
+
+    <changeSet id="ugandaemrsync-2025-11-23-1945" author="slubwama">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="sync_fhir_profile"/>
+                <not>
+                    <columnExists tableName="sync_fhir_profile" columnName="token_expiry_date"/>
+                </not>
+            </and>
+        </preConditions>
+
         <addColumn tableName="sync_fhir_profile">
             <column name="token_expiry_date" type="DATETIME"/>
             <column name="token_refresh_key" type="VARCHAR(255)"/>
