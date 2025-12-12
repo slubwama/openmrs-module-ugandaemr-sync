@@ -2432,11 +2432,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String payload = processResourceFromOrder(order);
 
             if (payload != null) {
-                if (!validateTestFHIRBundle(payload,order.getConcept().getUuid())) {
+                if (!validateTestFHIRBundle(payload, order.getConcept().getUuid())) {
                     String missingObsInPayload = String.format(
                             "Order: %s is not valid due to missing %s in the required field",
                             order.getAccessionNumber(),
-                            getMissingVLFHIRCodesAsString(payload,order.getConcept().getUuid())
+                            getMissingVLFHIRCodesAsString(payload, order.getConcept().getUuid())
                     );
                     logTransaction(syncTaskType, 500, missingObsInPayload, order.getAccessionNumber(),
                             missingObsInPayload,
@@ -2666,45 +2666,59 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     private String processResourceFromOrder(Order order) {
+
+        String healthCenterIdentifier = "";
+        try { healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2); }
+        catch (Exception e) { log.error("Failed to fetch DHIS2 identifier", e); }
+
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
         Collection<String> resources = new ArrayList<>();
         String finalCaseBundle = null;
 
-        List<Order> orderList = new ArrayList<>();
-        orderList.add(order);
-        List<Encounter> encounter = new ArrayList<>();
+        List<Order> orderList = new ArrayList<>(); orderList.add(order);
+        List<Encounter> encounter = new ArrayList<>(); encounter.add(order.getEncounter());
 
-        List<PatientIdentifier> patientArrayList = new ArrayList<>();
-        patientArrayList.add(order.getPatient().getPatientIdentifier());
-
-        List<Person> personList = new ArrayList<>();
-        personList.add(order.getPatient().getPerson());
+        List<PatientIdentifier> patientArrayList = new ArrayList<>(); patientArrayList.add(order.getPatient().getPatientIdentifier());
+        List<Person> personList = new ArrayList<>(); personList.add(order.getPatient().getPerson());
 
         String specimenSource = generateSpecimen(order);
 
-        encounter.add(order.getEncounter());
-
         resources.addAll(addSpecimenSource(syncFHIRRecord.groupInCaseBundle("ServiceRequest", syncFHIRRecord.getServiceRequestResourceBundle(orderList), "HIV Clinic No."), order));
-
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Encounter", syncFHIRRecord.getEncounterResourceBundle(encounter), "HIV Clinic No."));
-
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Patient", syncFHIRRecord.getPatientResourceBundle(null, patientArrayList, null), "HIV Clinic No."));
-
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Practitioner", syncFHIRRecord.getPractitionerResourceBundle(null, encounter, orderList), "HIV Clinic No."));
-
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Observation", syncFHIRRecord.getObservationResourceBundle(null, encounter, personList), "HIV Clinic No."));
 
-        if (specimenSource != null) {
-            resources.add(specimenSource);
+        if (specimenSource != null) resources.add(specimenSource);
+
+        if (!resources.isEmpty() && healthCenterIdentifier != null && !healthCenterIdentifier.isEmpty() && order.getAccessionNumber() != null) {
+
+            String bundleIdentifier = String.format(FHIR_BUNDLE_IDENTIFIER, "ugandaemr", healthCenterIdentifier, order.getAccessionNumber());
+            finalCaseBundle = String.format(FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION_WITH_IDENTIFIER, bundleIdentifier, "[" + String.join(",", resources) + "]");
         }
 
-        if (!resources.isEmpty()) {
-            finalCaseBundle = String.format(FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION, resources.toString());
-        }
         return finalCaseBundle;
     }
 
+
+
     private Collection<String> addSpecimenSource(Collection<String> serviceRequests, Order order) {
+        TestOrder testOrder = (TestOrder) order;
+        Collection<String> serviceRequestList = new ArrayList<>();
+        for (String serviceRequest : serviceRequests) {
+            if (testOrder.getAccessionNumber() != null) {
+                JSONObject jsonObject = new JSONObject(serviceRequest);
+
+                jsonObject.getJSONObject("resource").put("specimen", new JSONArray(String.format("[{\"reference\":\"Specimen/%s\"}]", testOrder.getAccessionNumber())));
+                serviceRequestList.add(jsonObject.toString());
+            } else {
+                serviceRequestList.add(serviceRequest);
+            }
+        }
+        return serviceRequestList;
+    }
+
+    private Collection<String> addBundleIdentification(Collection<String> serviceRequests, Order order) {
         TestOrder testOrder = (TestOrder) order;
         Collection<String> serviceRequestList = new ArrayList<>();
         for (String serviceRequest : serviceRequests) {
@@ -2806,7 +2820,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return eAFYAProductList;
     }
 
-    public boolean validateTestFHIRBundle(String bundleJson,String orderConceptUuid) {
+    public boolean validateTestFHIRBundle(String bundleJson, String orderConceptUuid) {
         List<String> targetCodes = getTargetCodes(orderConceptUuid);
         Set<String> foundCodes = new HashSet<>();
 
@@ -2848,7 +2862,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return targetCodes;
     }
 
-    public String getMissingVLFHIRCodesAsString(String bundleJson,String orderConceptUuid) {
+    public String getMissingVLFHIRCodesAsString(String bundleJson, String orderConceptUuid) {
         List<String> targetCodes = getTargetCodes(orderConceptUuid);
 
         Set<String> foundCodes = new HashSet<>();

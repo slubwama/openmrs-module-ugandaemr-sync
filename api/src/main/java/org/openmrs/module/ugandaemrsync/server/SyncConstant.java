@@ -503,6 +503,8 @@ public class SyncConstant {
 
     public static final String FHIR_BUNDLE_RESOURCE_TRANSACTION ="{\"resourceType\":\"Bundle\",\"type\":\"transaction\",\"entry\":[%s]}";
     public static final String FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION ="{\"resourceType\":\"Bundle\",\"type\":\"transaction\",\"entry\":%s}";
+    public static final String FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION_WITH_IDENTIFIER ="{\"resourceType\":\"Bundle\",\"type\":\"transaction\",\"identifier\":%s,\"entry\":%s}";
+	public static final String FHIR_BUNDLE_IDENTIFIER = "{\"system\":\"https://www.cphl.go.ug/fhir/identifier/bundle/%s\",\"value\":\"%s-%s\"}";
     public static final String FHIR_BUNDLE_RESOURCE_METHOD_POST ="{\"resource\":%s,\"request\":{\"method\":\"POST\"}}";
     public static final String FHIR_BUNDLE_RESOURCE_METHOD_PUT ="{\"resource\":%s,\"request\":{\"method\":\"PUT\",\"url\":\"%s\"}}";
     public static final String FHIR_CODING_DATATYPE ="{\"system\":\"%s\",\"code\":\"%s\",\"display\":\"%s\"}";
