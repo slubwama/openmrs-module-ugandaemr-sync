@@ -158,8 +158,8 @@ public class SyncFHIRRecordTest extends BaseModuleContextSensitiveTest {
         bundle.addEntry().setResource(createObservation("33882-2"));
 
         String json = parser.encodeResourceToString(bundle);
-        String missingConceptName1 = service.getVLMissingCconcept("202501020").getName().getName();
-        String missingConceptName2 = service.getVLMissingCconcept("202501021").getName().getName();
+        String missingConceptName1 = service.getVLMissingConcept("202501020").getName().getName();
+        String missingConceptName2 = service.getVLMissingConcept("202501021").getName().getName();
 
         String result = service.getMissingVLFHIRCodesAsString(json,"1eb05918-f50c-4cad-a827-3c78f296a10a");
         Assert.assertEquals(String.format("%s,%s", missingConceptName1, missingConceptName2), result);
