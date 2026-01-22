@@ -9,8 +9,6 @@ import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.AllergyIntolerance;
-import org.hl7.fhir.r4.model.MedicationRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openmrs.*;
@@ -1442,6 +1440,37 @@ public class SyncFHIRRecord {
         return iBaseResources;
     }
 
+    public Collection<IBaseResource> getRelatedPerson(SyncFhirProfile syncFhirProfile, List<Person> personList, SyncFhirCase syncFhirCase) {
+
+        DateRangeParam lastUpdated = new DateRangeParam();
+
+        if (syncFhirProfile != null) {
+            if (syncFhirProfile.getIsCaseBasedProfile()) {
+                if (syncFhirCase != null && syncFhirCase.getLastUpdateDate() != null) {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(syncFhirCase.getLastUpdateDate());
+                } else {
+                    lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getDefaultLastSyncDate());
+                }
+            } else {
+                lastUpdated = new DateRangeParam().setUpperBoundInclusive(new Date()).setLowerBoundInclusive(getLastSyncDate(syncFhirProfile, "RelatedPerson"));
+
+            }
+        }
+
+        PersonSearchParams personSearchParams = new PersonSearchParams();
+
+        Collection<IBaseResource> iBaseResources = new ArrayList<>();
+
+        if (personList.size() > 0) {
+            Collection<String> personListUUID = personList.stream().map(Person::getUuid).collect(Collectors.toCollection(ArrayList::new));
+            iBaseResources.addAll(getApplicationContext().getBean(FhirRelatedPersonService.class).get(personListUUID));
+
+        } else if (syncFhirProfile != null && !syncFhirProfile.getIsCaseBasedProfile()) {
+            personSearchParams.setLastUpdated(lastUpdated);
+        }
+        return iBaseResources;
+    }
+
 
     private Date getLastSyncDate(SyncFhirProfile syncFhirProfile, String resourceType) {
         Date date;
@@ -1639,4 +1668,6 @@ public class SyncFHIRRecord {
         }
         return patientList;
     }
+
+
 }

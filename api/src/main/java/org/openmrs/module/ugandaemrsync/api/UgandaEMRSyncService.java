@@ -154,6 +154,27 @@ public interface UgandaEMRSyncService extends OpenmrsService {
     public Encounter addVLToEncounter(String vlQualitative, String vlQuantitative, String vlDate, Encounter encounter,
                                       Order order);
 
+
+    /**
+     * Saves an EID qualitative test result and return date to an encounter.
+     *
+     * If a valid POSITIVE or NEGATIVE result is provided, the method:
+     * <ul>
+     *   <li>Voids any existing EID result and return-date observations</li>
+     *   <li>Adds the new EID result and result return date</li>
+     *   <li>Saves the encounter</li>
+     * </ul>
+     *
+     * If EID data already exists, the associated order is discontinued
+     * and no new observations are created.
+     *
+     * @param vlQualitative qualitative EID result (POSITIVE or NEGATIVE)
+     * @param encounter encounter to update
+     * @param order associated lab order
+     * @return updated encounter, or {@code null} if the result is invalid
+     */
+    public Encounter addEIDToEncounter(String vlQualitative, Encounter encounter, Order order);
+
     /**
      * @param vlDate
      * @return
@@ -502,10 +523,27 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public Map sendSingleViralLoadOrder(Order order);
 
+    /**
+     * Pulls lab results from CPHL for the given order (or resolves the order from the sync task),
+     * and persists the results into the patient's encounter (VL or EID).
+     *
+     * For successful, non-pending responses, the method saves the result obs, marks the sync task
+     * as completed, logs the transaction, and completes/discontinues the order.
+     *
+     * @param order the lab order to fetch results for (may be null if syncTask is provided)
+     * @param syncTask the sync task containing the sample/accession identifier (may be null if order is provided)
+     * @return response map containing at least "responseMessage" describing the outcome
+     */
     public Map requestLabResult(Order order, SyncTask syncTask);
 
     public Date getDateFromString(String dateString, String format);
 
+    /**
+     * Resolves an {@link Order} using an accession/sample identifier.
+     *
+     * @param assessionNumber accession/sample identifier
+     * @return matching order, or null if none is found
+     */
     public Order getOrderByAccessionNumber(String assessionNumber);
 
     public boolean validateTestFHIRBundle(String bundleJson,String orderConceptUuid);
@@ -514,7 +552,7 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
     public String getMissingVLFHIRCodesAsString(String bundleJson,String orderConceptUuid);
 
-    public Concept getVLMissingCconcept(String code);
+    public Concept getVLMissingConcept(String code);
 
 
     public List getReferralOrderConcepts();

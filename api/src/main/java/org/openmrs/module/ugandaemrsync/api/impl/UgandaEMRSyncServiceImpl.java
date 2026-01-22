@@ -11,12 +11,12 @@ package org.openmrs.module.ugandaemrsync.api.impl;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.ServiceRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,6 +38,7 @@ import org.openmrs.PersonName;
 import org.openmrs.PersonAttribute;
 import org.openmrs.PersonAddress;
 import org.openmrs.Provider;
+import org.openmrs.ConceptReferenceTerm;
 import org.openmrs.Person;
 import org.openmrs.ProviderAttributeType;
 import org.openmrs.ProviderAttribute;
@@ -294,6 +295,74 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
     }
 
+    /**
+     * @see UgandaEMRSyncService#addEIDToEncounter(String, Encounter, Order)
+     */
+    public Encounter addEIDToEncounter(String vlQualitative, Encounter encounter, Order order) {
+        if (encounter == null) {
+            return null;
+        }
+
+        // If already saved, just discontinue the order (if applicable) and return
+        if (encounterHasVLDataAlreadySaved(encounter, order)) {
+            discontinueOrderIfActive(order);
+            return encounter;
+        }
+
+        // Concepts
+        Concept testResultConcept = Context.getConceptService().getConcept(844);     // EID result concept
+        Concept returnDateConcept = Context.getConceptService().getConcept(167944);  // return date concept
+
+        // Normalize incoming result string
+        String result = (vlQualitative == null) ? "" : vlQualitative.replace("\"", "").trim().toUpperCase();
+
+        Concept valueCoded = null;
+        if ("POSITIVE".equals(result)) {
+            valueCoded = Context.getConceptService().getConcept(703);
+        } else if ("NEGATIVE".equals(result)) {
+            valueCoded = Context.getConceptService().getConcept(664);
+        } else {
+            // Unknown/unhandled result -> don't save anything
+            return null;
+        }
+
+        // Void similar observations before adding new ones
+        voidObsFound(encounter, testResultConcept);
+        voidObsFound(encounter, returnDateConcept);
+
+        Obs testResultObs = createObs(encounter, order, testResultConcept, valueCoded, null, null);
+        Obs returnDateObs = createObs(encounter, order, returnDateConcept, null, new Date(), null);
+
+        encounter.addObs(testResultObs);
+        encounter.addObs(returnDateObs);
+
+        return Context.getEncounterService().saveEncounter(encounter);
+    }
+
+    /**
+     * Discontinues an active laboratory order.
+     *
+     * @param order order to discontinue
+     */
+    private void discontinueOrderIfActive(Order order) {
+        if (order == null || !order.isActive()) {
+            return;
+        }
+        try {
+            Context.getOrderService().discontinueOrder(
+                    order,
+                    "Completed",
+                    new Date(),
+                    order.getOrderer(),
+                    order.getEncounter()
+            );
+        } catch (Exception e) {
+            log.error("Failed to discontinue order", e);
+        }
+    }
+
+
+
     public String getDateFormat(String date) {
         String dateFormat = "";
         if (date.contains("-")) {
@@ -431,13 +500,34 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see UgandaEMRSyncService#getPatientIdentifier(Patient, String)
      */
     public String getPatientIdentifier(Patient patient, String patientIdentifierTypeUUID) {
-        String query = "select patient_identifier.identifier from patient_identifier inner join patient_identifier_type on(patient_identifier.identifier_type=patient_identifier_type.patient_identifier_type_id) where patient_identifier_type.uuid in ('" + patientIdentifierTypeUUID + "') AND patient_id=" + patient.getPatientId() + "";
-        List list = Context.getAdministrationService().executeSQL(query, true);
-        String patientARTNO = "";
-        if (!list.isEmpty()) {
-            patientARTNO = list.get(0).toString().replace("[", "").replace("]", "");
+        if (patient == null || patient.getPatientId() == null || patientIdentifierTypeUUID == null) {
+            return "";
         }
-        return patientARTNO;
+
+        // Split comma-separated UUIDs
+        String[] uuids = patientIdentifierTypeUUID.split(",");
+
+        // Validate UUIDs to avoid SQL injection
+        String inClause = Arrays.stream(uuids).map(String::trim).filter(u -> u.matches("^[0-9a-fA-F\\-]{36}$")).map(u -> "'" + u + "'").collect(Collectors.joining(","));
+
+        if (inClause.isEmpty()) {
+            return "";
+        }
+
+        String sql = "select pi.identifier from patient_identifier pi inner join patient_identifier_type pit on (pi.identifier_type = pit.patient_identifier_type_id) where pit.uuid in (" + inClause + ") and pi.patient_id = " + patient.getPatientId() + " and pi.voided = 0 order by pi.preferred desc, pi.date_created desc limit 1";
+
+        List<?> list = Context.getAdministrationService().executeSQL(sql, true);
+
+        if (list == null || list.isEmpty() || list.get(0) == null) {
+            return "";
+        }
+
+        Object result = list.get(0);
+        if (result instanceof Object[]) {
+            return ((Object[]) result)[0].toString().replace("[", "").replace("]", "");
+        }
+
+        return result.toString().replace("[", "").replace("]", "");
     }
 
     public boolean encounterHasVLDataAlreadySaved(Encounter encounter, Order order) {
@@ -449,6 +539,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             return testOrderHasResults(order);
         }
     }
+
 
     public Properties getUgandaEMRProperties() {
         Properties properties = new Properties();
@@ -1585,6 +1676,21 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return stockOperations;
     }
 
+
+    /**
+     * Records an outbound/inbound transaction related to lab result fetching, including
+     * response status and payload summary for auditing and troubleshooting.
+     *
+     * @param syncTaskType sync task type configuration (endpoint details)
+     * @param statusCode HTTP-like response code or internal error code
+     * @param statusMessage summary message to log
+     * @param logName accession/sample identifier or order reference
+     * @param status response details or server message
+     * @param date time of the transaction
+     * @param url endpoint URL
+     * @param actionRequired whether request was successful (implementation-specific)
+     * @param actionCompleted whether results were processed/saved (implementation-specific)
+     */
     private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url, boolean actionRequired, boolean actionCompleted) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
         List<SyncTask> syncTasks = ugandaEMRSyncService.getSyncTasksBySyncTaskId(logName).stream().filter(syncTask -> syncTask.getSyncTaskType().equals(syncTaskType)).collect(Collectors.toList());
@@ -2400,12 +2506,69 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return responses;
     }
 
-    public Map<String, String> generateVLFHIRResultRequestBody(String jsonRequestString, String healthCenterCode, String patientIdentifier, String sampleIdentifier) {
+
+    /**
+     * Builds the FHIR JSON payload used to request lab results from CPHL for a sample.
+     *
+     * @param healthCenterCode  the sending facility code
+     * @param patientIdentifier the patient identifier value to include in the request
+     * @param sampleIdentifier  the sample/accession identifier used to query results
+     * @param conceptMaps       concept mappings used to populate coding/mapping fields (e.g., UNHLS mappings)
+     * @return map containing generated payload values; expected key "json" holds the final request body
+     */
+    private Map<String, String> generateVLFHIRResultRequestBody(String healthCenterCode, String patientIdentifier, String sampleIdentifier, List<ConceptMap> conceptMaps) {
+
         Map<String, String> jsonMap = new HashMap<>();
-        String filledJsonFile = "";
-        filledJsonFile = String.format(jsonRequestString, healthCenterCode, patientIdentifier, sampleIdentifier);
+
+        String codingJson = buildCodingArray(conceptMaps);
+
+        String filledJsonFile = String.format(org.openmrs.module.ugandaemrsync.server.SyncConstant.VL_RECEIVE_RESULT_FHIR_JSON_STRING, healthCenterCode, codingJson, patientIdentifier, sampleIdentifier);
+
         jsonMap.put("json", filledJsonFile);
         return jsonMap;
+    }
+
+
+    private String buildCodingArray(List<ConceptMap> conceptMaps) {
+        if (conceptMaps == null || conceptMaps.isEmpty()) {
+            return "";
+        }
+
+        return conceptMaps.stream()
+                .filter(cm -> !cm.getConceptReferenceTerm().getRetired())
+                .map(this::toCodingJson)
+                .collect(Collectors.joining(","));
+    }
+
+    private String toCodingJson(ConceptMap conceptMap) {
+        ConceptReferenceTerm term = conceptMap.getConceptReferenceTerm();
+        ConceptSource source = term.getConceptSource();
+
+        String system;
+
+        if ("UNHLS".equalsIgnoreCase(source.getName())
+                || "UNHLS".equalsIgnoreCase(source.getHl7Code())) {
+            system = "http://cphl.go.ug/fhir";
+        } else if (StringUtils.isNotBlank(source.getHl7Code())) {
+            system = source.getHl7Code();
+        } else {
+            system = source.getName();
+        }
+
+        return String.format(
+                "{ \"system\": \"%s\", \"code\": \"%s\", \"display\": \"%s\" }",
+                escape(system),
+                escape(term.getCode()),
+                escape(term.getName())
+        );
+    }
+
+    private String escape(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\")
+                .replace("\"", "\\\"");
     }
 
 
@@ -2432,11 +2595,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String payload = processResourceFromOrder(order);
 
             if (payload != null) {
-                if (!validateTestFHIRBundle(payload, order.getConcept().getUuid())) {
+                if (!validateTestFHIRBundle(payload,order.getConcept().getUuid())) {
                     String missingObsInPayload = String.format(
                             "Order: %s is not valid due to missing %s in the required field",
                             order.getAccessionNumber(),
-                            getMissingVLFHIRCodesAsString(payload, order.getConcept().getUuid())
+                            getMissingVLFHIRCodesAsString(payload,order.getConcept().getUuid())
                     );
                     logTransaction(syncTaskType, 500, missingObsInPayload, order.getAccessionNumber(),
                             missingObsInPayload,
@@ -2459,97 +2622,182 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     @Override
     public Map requestLabResult(Order order, SyncTask syncTask) {
-        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
-        Map response = new HashMap<>();
-        if (!ugandaEMRHttpURLConnection.isConnectionAvailable()) {
-            response.put("responseMessage", "No Internet Connection to send order" + order.getAccessionNumber());
+        Map<String, Object> response = new HashMap<>();
+        UgandaEMRHttpURLConnection connection = new UgandaEMRHttpURLConnection();
+
+        if (!connection.isConnectionAvailable()) {
+            response.put("responseMessage", "No Internet Connection to send order " + safeAccession(order));
             return response;
         }
 
-        if (order == null && syncTask != null) {
-            order = getOrderByAccessionNumber(syncTask.getSyncTask());
-            if (order == null) {
-                response.put("responseMessage", "Order Not found for accession number: " + syncTask.getSyncTask());
-                log.info("Order Not found for accession number: " + syncTask.getSyncTask());
-                return response;
-            }
+        order = resolveOrder(order, syncTask, response);
+        if (order == null) {
+            return response;
         }
 
-        String dataOutput = generateVLFHIRResultRequestBody(VL_RECEIVE_RESULT_FHIR_JSON_STRING, getHealthCenterCode(), getPatientIdentifier(order.getEncounter().getPatient(), PATIENT_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask())).get("json");
-
-        Map results = new HashMap();
+        Map<String, String> requestPayload = buildRequestPayload(order, syncTask);
+        if (requestPayload == null) {
+            response.put("responseMessage", "Failed to generate request payload");
+            return response;
+        }
 
         SyncTaskType syncTaskType = getSyncTaskTypeByUUID(VIRAL_LOAD_RESULT_PULL_TYPE_UUID);
+        Map<String, Object> results = sendRequest(connection, syncTaskType, requestPayload, order, response);
 
-        try {
-            results = ugandaEMRHttpURLConnection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", dataOutput, false);
-        } catch (Exception e) {
-            log.error("Failed to fetch results", e);
-            logTransaction(syncTaskType, 500, e.getMessage(), order.getAccessionNumber(), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
-            response.put("responseMessage", e.getMessage());
+        if (results.isEmpty()) {
+            return response;
         }
 
-        Integer responseCode = null;
-        String responseMessage = null;
-
-        // Parsing responseCode and responseMessage
-        if (results.containsKey("responseCode") && results.containsKey("responseMessage")) {
-            responseCode = Integer.parseInt(results.get("responseCode").toString());
-            responseMessage = results.get("responseMessage").toString();
-            response.put("responseMessage", responseMessage);
-        }
-
-        // Processing results if responseCode is valid and status is not pending
-        if (responseCode != null && (responseCode == 200 || responseCode == 201) && !results.isEmpty() && results.containsKey("status") && !results.get("status").equals("pending")) {
-            Map reasonReference = (Map) results.get("reasonReference");
-            ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");
-
-            // Saving Viral Load Results
-            if (order.getEncounter() != null && !result.isEmpty()) {
-                Object qualitativeResult = result.get(0).get("valueString");
-                Object quantitativeResult = result.get(0).get("valueInteger");
-
-                if (quantitativeResult != null && qualitativeResult != null) {
-                    try {
-                        addVLToEncounter(qualitativeResult.toString(), quantitativeResult.toString(), order.getEncounter().getEncounterDatetime().toString(), order.getEncounter(), order);
-                        syncTask.setActionCompleted(true);
-                        saveSyncTask(syncTask);
-                        logTransaction(syncTaskType, responseCode, result.get(0).get("valueString").toString(), order.getAccessionNumber(), result.get(0).get("valueString").toString(), new Date(), syncTaskType.getUrl(), false, false);
-                        try {
-                            Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.COMPLETED, result.get(0).get("valueString").toString());
-                            Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
-                        } catch (Exception e) {
-                            log.error("Failed to discontinue order", e);
-                            response.put("responseMessage", String.format("Failed to discontinue order %s", e.getMessage()));
-                        }
-                    } catch (Exception e) {
-                        log.error("Failed to add results to patient encounter", e);
-                        logTransaction(syncTaskType, 500, e.getMessage(), order.getAccessionNumber(), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
-                        response.put("responseMessage", String.format("Failed to add results to patient encounter %s", e.getMessage()));
-                    }
-                } else {
-                    logTransaction(syncTaskType, 500, "Internal server error: Results of Viral load have a null value", order.getAccessionNumber(), "Internal server error: Results of Viral load have a null value", new Date(), syncTaskType.getUrl(), false, false);
-
-                    response.put("responseMessage", String.format("Internal server error: Results of Viral load order %s have a null value", order.getAccessionNumber()));
-                }
-            }
-        } else {
-            // Logging based on responseCode or status
-            if (responseCode != null && !results.containsKey("status")) {
-                String detailedResponseMessage = String.format("CPHL Server Response for order: %s while fetching results:  %s", order.getAccessionNumber(), responseMessage);
-                logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
-                response.put("responseMessage", detailedResponseMessage);
-            } else if (results.containsKey("status")) {
-
-                String detailedResponseMessage = String.format("CPHL Response : Results for order: %s are %s", order.getAccessionNumber(), results.get("status").toString());
-                logTransaction(syncTaskType, responseCode, detailedResponseMessage, order.getAccessionNumber(), detailedResponseMessage, new Date(), syncTaskType.getUrl(), false, false);
-                response.put("responseMessage", detailedResponseMessage);
-            }
-        }
+        processResults(results, order, syncTask, syncTaskType, response);
         return response;
     }
 
 
+    private Map<String, String> buildRequestPayload(Order order, SyncTask syncTask) {
+        List<ConceptMap> unhlsMappings = order.getConcept()
+                .getConceptMappings()
+                .stream()
+                .filter(cm -> "UNHLS".equals(
+                        cm.getConceptReferenceTerm()
+                                .getConceptSource()
+                                .getHl7Code()))
+                .collect(Collectors.toList());
+
+        return generateVLFHIRResultRequestBody(getHealthCenterCode(), getPatientIdentifier(order.getEncounter().getPatient(), PATIENT_IDENTIFIER_TYPE + "," + EID_IDENTIFIER_TYPE), String.valueOf(syncTask.getSyncTask()), unhlsMappings);
+    }
+
+    private Map<String, Object> sendRequest(UgandaEMRHttpURLConnection connection, SyncTaskType syncTaskType, Map<String, String> payload, Order order, Map<String, Object> response) {
+
+        try {
+            return connection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", payload.get("json").toString(), false);
+        } catch (Exception e) {
+            log.error("Failed to fetch results", e);
+            logTransaction(syncTaskType, 500, e.getMessage(), safeAccession(order), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
+            response.put("responseMessage", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    private void processResults(Map<String, Object> results, Order order, SyncTask syncTask, SyncTaskType syncTaskType, Map<String, Object> response) {
+
+        Integer responseCode = parseInt(results.get("responseCode"));
+        String responseMessage = String.valueOf(results.get("responseMessage"));
+
+        response.put("responseMessage", responseMessage);
+
+        if (responseCode == null || responseCode < 200 || responseCode > 299) {
+            String message = String.format("CPHL server response for order %s: %s", order.getAccessionNumber(), responseMessage);
+
+            logTransaction(syncTaskType, responseCode != null ? responseCode : 500, message, order.getAccessionNumber(), message, new Date(), syncTaskType.getUrl(), false, false);
+
+            response.put("responseMessage", message);
+            return;
+        }
+
+        if (results.containsKey("status") && "pending".equals(results.get("status"))) {
+            String message = String.format("CPHL response: Results for order %s are pending", order.getAccessionNumber());
+
+            logTransaction(syncTaskType, responseCode, message, order.getAccessionNumber(), message, new Date(), syncTaskType.getUrl(), false, false);
+
+            response.put("responseMessage", message);
+            return;
+        }
+
+
+        Map reasonReference = (Map) results.get("reasonReference");
+        List<Map> labResults = (List<Map>) reasonReference.get("result");
+
+        if (labResults == null || labResults.isEmpty()) {
+            response.put("responseMessage", "No lab results returned");
+            return;
+        }
+
+        Map firstResult = labResults.get(0);
+        Object qualitative = firstResult.get("valueString");
+        Object quantitative = firstResult.get("valueInteger");
+
+        try {
+            if (isViralLoad(order) && qualitative != null && quantitative != null) {
+                addVLToEncounter(qualitative.toString(), quantitative.toString(), order.getEncounter().getEncounterDatetime().toString(), order.getEncounter(), order);
+            } else if (isEID(order) && qualitative != null) {
+                addEIDToEncounter(qualitative.toString(), order.getEncounter(), order);
+            } else {
+                throw new IllegalStateException("Invalid or incomplete lab result");
+            }
+
+            completeSyncTask(order, syncTask, syncTaskType, responseCode, qualitative.toString());
+        } catch (Exception e) {
+            log.error("Failed to add results to encounter", e);
+            logTransaction(syncTaskType, 500, e.getMessage(), safeAccession(order), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
+            response.put("responseMessage", e.getMessage());
+        }
+    }
+
+
+    private void completeSyncTask(Order order, SyncTask syncTask, SyncTaskType syncTaskType, Integer responseCode, String resultValue) {
+
+        syncTask.setActionCompleted(true);
+        saveSyncTask(syncTask);
+
+        logTransaction(syncTaskType, responseCode, resultValue, order.getAccessionNumber(), resultValue, new Date(), syncTaskType.getUrl(), false, false);
+
+        try {
+            Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.COMPLETED, resultValue);
+            Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+        } catch (Exception e) {
+            log.error("Failed to discontinue order", e);
+        }
+    }
+
+
+    private Order resolveOrder(Order order, SyncTask syncTask, Map<String, Object> response) {
+        if (order != null) {
+            return order;
+        }
+
+        if (syncTask == null) {
+            response.put("responseMessage", "Order and SyncTask cannot both be null");
+            return null;
+        }
+
+        Order resolved = getOrderByAccessionNumber(syncTask.getSyncTask());
+        if (resolved == null) {
+            String msg = "Order not found for accession number: " + syncTask.getSyncTask();
+            log.info(msg);
+            response.put("responseMessage", msg);
+        }
+        return resolved;
+    }
+
+
+    private boolean isViralLoad(Order order) {
+        return order.getConcept().getConceptId() == 165412;
+    }
+
+    private boolean isEID(Order order) {
+        return order.getConcept().getConceptId() == 844;
+    }
+
+    private boolean isSuccessful(Integer code, Map<String, Object> results) {
+        return code != null && (code == 200 || code == 201) && !"pending".equals(results.get("status"));
+    }
+
+    private String safeAccession(Order order) {
+        return order != null ? order.getAccessionNumber() : "UNKNOWN";
+    }
+
+    private Integer parseInt(Object value) {
+        try {
+            return value == null ? null : Integer.parseInt(value.toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+
+    /**
+     * @see UgandaEMRSyncService#getOrderByAccessionNumber(String)
+     */
     public Order getOrderByAccessionNumber(String accessionNumber) {
         OrderService orderService = Context.getOrderService();
         List list = Context.getAdministrationService().executeSQL(String.format(VIRAL_LOAD_ORDER_QUERY, accessionNumber), true);
@@ -2668,18 +2916,25 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     private String processResourceFromOrder(Order order) {
 
         String healthCenterIdentifier = "";
-        try { healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2); }
-        catch (Exception e) { log.error("Failed to fetch DHIS2 identifier", e); }
+        try {
+            healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
+        } catch (Exception e) {
+            log.error("Failed to fetch DHIS2 identifier", e);
+        }
 
         SyncFHIRRecord syncFHIRRecord = new SyncFHIRRecord();
         Collection<String> resources = new ArrayList<>();
         String finalCaseBundle = null;
 
-        List<Order> orderList = new ArrayList<>(); orderList.add(order);
-        List<Encounter> encounter = new ArrayList<>(); encounter.add(order.getEncounter());
+        List<Order> orderList = new ArrayList<>();
+        orderList.add(order);
+        List<Encounter> encounter = new ArrayList<>();
+        encounter.add(order.getEncounter());
 
-        List<PatientIdentifier> patientArrayList = new ArrayList<>(); patientArrayList.add(order.getPatient().getPatientIdentifier());
-        List<Person> personList = new ArrayList<>(); personList.add(order.getPatient().getPerson());
+        List<PatientIdentifier> patientArrayList = new ArrayList<>();
+        patientArrayList.add(order.getPatient().getPatientIdentifier());
+        List<Person> personList = new ArrayList<>();
+        personList.add(order.getPatient().getPerson());
 
         String specimenSource = generateSpecimen(order);
 
@@ -2688,6 +2943,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Patient", syncFHIRRecord.getPatientResourceBundle(null, patientArrayList, null), "HIV Clinic No."));
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Practitioner", syncFHIRRecord.getPractitionerResourceBundle(null, encounter, orderList), "HIV Clinic No."));
         resources.addAll(syncFHIRRecord.groupInCaseBundle("Observation", syncFHIRRecord.getObservationResourceBundle(null, encounter, personList), "HIV Clinic No."));
+
+        List<Person> relatedPersons = getRelatedPersonsFromOrder(order);
+
+        if (!relatedPersons.isEmpty()) {
+            resources.addAll(syncFHIRRecord.groupInCaseBundle("RelatedPerson", syncFHIRRecord.getRelatedPerson(null, getRelatedPersonsFromOrder(order), null), "HIV Clinic No."));
+        }
 
         if (specimenSource != null) resources.add(specimenSource);
 
@@ -2700,6 +2961,77 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return finalCaseBundle;
     }
 
+    private Set<String> getRelatedPersonConceptUuids(String orderConceptUuid) {
+        if (StringUtils.isBlank(orderConceptUuid)) {
+            return Collections.emptySet();
+        }
+
+        String gpValue = Context.getAdministrationService().getGlobalProperty("ugandaemrsync.testReferralValidators");
+
+        if (StringUtils.isBlank(gpValue)) {
+            log.warn("Global property ugandaemrsync.testReferralValidators is not configured");
+            return Collections.emptySet();
+        }
+
+        try {
+            JSONObject root = new JSONObject(gpValue);
+
+            if (!root.has("relatedPersonConceptIdentifier")) {
+                log.warn("Missing 'relatedPersonConceptIdentifier' in testReferralValidators GP");
+                return Collections.emptySet();
+            }
+
+            JSONObject relatedPersonConfig = root.getJSONObject("relatedPersonConceptIdentifier");
+
+            if (!relatedPersonConfig.has(orderConceptUuid)) {
+                log.debug("No related person identifiers configured for order concept " + orderConceptUuid);
+                return Collections.emptySet();
+            }
+
+            String codesCsv = relatedPersonConfig.getString(orderConceptUuid);
+
+            return Arrays.stream(codesCsv.split(","))
+                    .map(String::trim)
+                    .filter(StringUtils::isNotBlank)
+                    .map(this::getVLMissingConcept)
+                    .filter(Objects::nonNull)
+                    .map(Concept::getUuid)
+                    .collect(Collectors.toSet());
+
+        } catch (JSONException e) {
+            log.error("Invalid JSON in global property ugandaemrsync.testReferralValidators", e);
+            return Collections.emptySet();
+        }
+    }
+
+    private List<Person> getRelatedPersonsFromOrder(Order order) {
+        if (order == null || order.getEncounter() == null) {
+            return Collections.emptyList();
+        }
+
+        Set<String> relatedConceptUuids = getRelatedPersonConceptUuids(order.getConcept().getUuid());
+        if (relatedConceptUuids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        PatientService patientService = Context.getPatientService();
+
+        return order.getEncounter()
+                .getAllObs(false)
+                .stream()
+                .filter(obs -> obs.getConcept() != null)
+                .filter(obs -> relatedConceptUuids.contains(obs.getConcept().getUuid()))
+                .map(Obs::getValueText)
+                .filter(StringUtils::isNotBlank)
+                .flatMap(identifier ->
+                        patientService
+                                .getPatientIdentifiers(identifier, null, null, null, false)
+                                .stream()
+                )
+                .map(pi -> pi.getPatient().getPerson())
+                .distinct()
+                .collect(Collectors.toList());
+    }
 
 
     private Collection<String> addSpecimenSource(Collection<String> serviceRequests, Order order) {
@@ -2862,6 +3194,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return targetCodes;
     }
 
+
+
     public String getMissingVLFHIRCodesAsString(String bundleJson, String orderConceptUuid) {
         List<String> targetCodes = getTargetCodes(orderConceptUuid);
 
@@ -2890,7 +3224,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             for (String code : targetCodes) {
                 if (!foundCodes.contains(code)) {
 
-                    Concept concept = getVLMissingCconcept(code);
+                    Concept concept = getVLMissingConcept(code);
                     if (concept != null) {
                         missingCodes.add(concept.getName().getName());
                     } else {
@@ -2904,40 +3238,56 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return missingCodes.stream().collect(Collectors.joining(","));
     }
 
-    public Concept getVLMissingCconcept(String code) {
-        Concept loinc = Context.getConceptService().getConceptByMapping(code, "LOINC");
-        Concept cphl = Context.getConceptService().getConceptByMapping(code, "UNHLS");
-        Concept snomed = Context.getConceptService().getConceptByMapping(code, "SNOMED");
-
-        if (loinc != null) {
-            return loinc;
+    public Concept getVLMissingConcept(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
         }
 
-        if (cphl != null) {
-            return cphl;
-        }
-        if (snomed != null) {
-            return snomed;
+        ConceptService conceptService = Context.getConceptService();
+
+        Concept concept = conceptService.getConceptByMapping(code, "LOINC");
+        if (concept != null) {
+            return concept;
         }
 
-        return null;
+        concept = conceptService.getConceptByMapping(code, "UNHLS");
+        if (concept != null) {
+            return concept;
+        }
+
+        return conceptService.getConceptByMapping(code, "SNOMED");
     }
 
+
     public boolean isValidCPHLBarCode(String accessionNumber) {
-        Integer minimumCPHLBarCodeLength = Integer.parseInt(Context.getAdministrationService().getGlobalProperty("ugandaemrsync.minimumCPHLBarCodeLength"));
-        if (accessionNumber == null || accessionNumber.length() < minimumCPHLBarCodeLength) {
+        if (StringUtils.isBlank(accessionNumber)) {
             return false;
         }
 
-        int currentYearSuffix = Year.now().getValue() % 100;
+        accessionNumber = accessionNumber.trim();
 
+        // Ensure barcode is numeric (without risking integer overflow)
+        if (!accessionNumber.matches("\\d+")) {
+            return false;
+        }
+
+        String minLengthGp = Context.getAdministrationService()
+                .getGlobalProperty("ugandaemrsync.minimumCPHLBarCodeLength");
+
+        if (StringUtils.isBlank(minLengthGp)) {
+            return false;
+        }
+
+        int minimumCPHLBarCodeLength;
         try {
-            int prefix = Integer.parseInt(accessionNumber.substring(0, 2));
-            return prefix == currentYearSuffix || prefix == (currentYearSuffix - 1);
+            minimumCPHLBarCodeLength = Integer.parseInt(minLengthGp);
         } catch (NumberFormatException e) {
             return false;
         }
+
+        return accessionNumber.length() >= minimumCPHLBarCodeLength;
     }
+
 
     public List<Concept> getReferralOrderConcepts() {
         List<Concept> referralOrderConceptList = new ArrayList<>();

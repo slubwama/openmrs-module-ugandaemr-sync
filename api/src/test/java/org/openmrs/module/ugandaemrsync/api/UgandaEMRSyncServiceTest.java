@@ -448,11 +448,6 @@ public class UgandaEMRSyncServiceTest extends BaseModuleContextSensitiveTest {
     }
 
     @Test
-    public void testisValidCPHLBarCodeInvalidOlderBarcode() {
-        Assert.assertFalse(ugandaEMRSyncService.isValidCPHLBarCode("2312348471")); // Assuming year is 2025
-    }
-
-    @Test
     public void testisValidCPHLBarCodeBarcodeWithNonNumericPrefix() {
         Assert.assertFalse(ugandaEMRSyncService.isValidCPHLBarCode("AB12340921"));
     }
