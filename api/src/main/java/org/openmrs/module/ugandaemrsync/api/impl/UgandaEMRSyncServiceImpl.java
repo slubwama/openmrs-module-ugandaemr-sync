@@ -14,6 +14,8 @@ import ca.uhn.fhir.parser.IParser;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
@@ -54,6 +56,7 @@ import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.api.impl.BaseOpenmrsService;
+import org.openmrs.module.fhir2.model.FhirConceptSource;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.dto.*;
 import org.openmrs.module.stockmanagement.api.model.*;
@@ -86,10 +89,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Year;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -360,7 +363,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             log.error("Failed to discontinue order", e);
         }
     }
-
 
 
     public String getDateFormat(String date) {
@@ -915,7 +917,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         for (Object jsonObject : filteredDiagnosticReportArray) {
             JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
 
-            returningEncounter = processTestResults(diagnosticReport, encounter, filteredObservationArray, order);
+            returningEncounter.addAll(processTestResults(diagnosticReport, encounter, filteredObservationArray, order));
         }
 
         return returningEncounter;
@@ -968,9 +970,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String orderCode = orderFHIRConcept.getString("code");
             Concept concept = null;
             String orderCodeSystem = orderFHIRConcept.getString("system");
+
             if (getConceptSourceBySystemURL(orderCodeSystem) != null) {
                 concept = Context.getConceptService().getConceptByMapping(orderCode, getConceptSourceBySystemURL(orderCodeSystem).getName());
             }
+
             return concept;
         }
         return null;
@@ -1085,23 +1089,82 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     private ConceptSource getConceptSourceBySystemURL(String systemURL) {
         FhirConceptSourceService fhirConceptSourceService = null;
-        ConceptSource conceptSource = null;
+
         try {
             Field serviceContextField = Context.class.getDeclaredField("serviceContext");
             serviceContextField.setAccessible(true);
 
-            ApplicationContext applicationContext = ((ServiceContext) serviceContextField.get(null)).getApplicationContext();
+            ApplicationContext applicationContext =
+                    ((ServiceContext) serviceContextField.get(null)).getApplicationContext();
             fhirConceptSourceService = applicationContext.getBean(FhirConceptSourceService.class);
-
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            log.error(e);
-        }
-        assert fhirConceptSourceService != null;
-        if (fhirConceptSourceService.getFhirConceptSourceByUrl(systemURL).isPresent()) {
-            conceptSource = fhirConceptSourceService.getFhirConceptSourceByUrl(systemURL).get().getConceptSource();
+            log.error("Failed to get FhirConceptSourceService", e);
+            return null;
         }
 
-        return conceptSource;
+        if (fhirConceptSourceService == null || systemURL == null || systemURL.trim().isEmpty()) {
+            return null;
+        }
+
+        Optional<FhirConceptSource> exactMatch = fhirConceptSourceService.getFhirConceptSourceByUrl(systemURL);
+        if (exactMatch.isPresent()) {
+            return exactMatch.get().getConceptSource();
+        }
+
+        URI systemUri;
+        try {
+            systemUri = new URI(systemURL.trim());
+        } catch (Exception e) {
+            log.error("Invalid system URL: " + systemURL, e);
+            return null;
+        }
+
+        String systemHost = systemUri.getHost();
+        if (systemHost != null && systemHost.startsWith("www.")) {
+            systemHost = systemHost.substring(4);
+        }
+
+        String systemPath = systemUri.getPath() == null || systemUri.getPath().isEmpty()
+                ? "/"
+                : systemUri.getPath();
+
+        FhirConceptSource bestMatch = null;
+        int bestPathLength = -1;
+
+        for (FhirConceptSource fhirConceptSource : fhirConceptSourceService.getFhirConceptSources()) {
+            if (fhirConceptSource.getUrl() == null || fhirConceptSource.getUrl().trim().isEmpty()) {
+                continue;
+            }
+
+            try {
+                URI candidateUri = new URI(fhirConceptSource.getUrl().trim());
+                String candidateHost = candidateUri.getHost();
+                if (candidateHost != null && candidateHost.startsWith("www.")) {
+                    candidateHost = candidateHost.substring(4);
+                }
+
+                String candidatePath = candidateUri.getPath() == null || candidateUri.getPath().isEmpty()
+                        ? "/"
+                        : candidateUri.getPath();
+
+                if (systemHost == null || candidateHost == null || !systemHost.equalsIgnoreCase(candidateHost)) {
+                    continue;
+                }
+
+                if (systemPath.equals(candidatePath)) {
+                    return fhirConceptSource.getConceptSource();
+                }
+
+                if (systemPath.startsWith(candidatePath) && candidatePath.length() > bestPathLength) {
+                    bestMatch = fhirConceptSource;
+                    bestPathLength = candidatePath.length();
+                }
+            } catch (Exception e) {
+                log.warn("Skipping invalid concept source URL: " + fhirConceptSource.getUrl(), e);
+            }
+        }
+
+        return bestMatch != null ? bestMatch.getConceptSource() : null;
     }
 
     /**
@@ -1681,14 +1744,14 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * Records an outbound/inbound transaction related to lab result fetching, including
      * response status and payload summary for auditing and troubleshooting.
      *
-     * @param syncTaskType sync task type configuration (endpoint details)
-     * @param statusCode HTTP-like response code or internal error code
-     * @param statusMessage summary message to log
-     * @param logName accession/sample identifier or order reference
-     * @param status response details or server message
-     * @param date time of the transaction
-     * @param url endpoint URL
-     * @param actionRequired whether request was successful (implementation-specific)
+     * @param syncTaskType    sync task type configuration (endpoint details)
+     * @param statusCode      HTTP-like response code or internal error code
+     * @param statusMessage   summary message to log
+     * @param logName         accession/sample identifier or order reference
+     * @param status          response details or server message
+     * @param date            time of the transaction
+     * @param url             endpoint URL
+     * @param actionRequired  whether request was successful (implementation-specific)
      * @param actionCompleted whether results were processed/saved (implementation-specific)
      */
     private void logTransaction(SyncTaskType syncTaskType, Integer statusCode, String statusMessage, String logName, String status, Date date, String url, boolean actionRequired, boolean actionCompleted) {
@@ -2595,11 +2658,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String payload = processResourceFromOrder(order);
 
             if (payload != null) {
-                if (!validateTestFHIRBundle(payload,order.getConcept().getUuid())) {
+                if (!validateTestFHIRBundle(payload, order.getConcept().getUuid())) {
                     String missingObsInPayload = String.format(
                             "Order: %s is not valid due to missing %s in the required field",
                             order.getAccessionNumber(),
-                            getMissingVLFHIRCodesAsString(payload,order.getConcept().getUuid())
+                            getMissingVLFHIRCodesAsString(payload, order.getConcept().getUuid())
                     );
                     logTransaction(syncTaskType, 500, missingObsInPayload, order.getAccessionNumber(),
                             missingObsInPayload,
@@ -2694,6 +2757,18 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             return;
         }
 
+        if (results.get("resourceType").toString().equals("Event")) {
+            processResultsEventResourceType(results, syncTaskType, order, response, syncTask);
+        } else if ((results.get("resourceType").toString().equals("Bundle"))) {
+
+            processResultsBundleResourceType(results, order, syncTaskType, syncTask, responseCode);
+        }
+    }
+
+    private void processResultsEventResourceType(Map<String, Object> results, SyncTaskType syncTaskType, Order order, Map<String, Object> response, SyncTask syncTask) {
+        Integer responseCode = parseInt(results.get("responseCode"));
+        String responseMessage = String.valueOf(results.get("responseMessage"));
+
         if (results.containsKey("status") && "pending".equals(results.get("status"))) {
             String message = String.format("CPHL response: Results for order %s are pending", order.getAccessionNumber());
 
@@ -2730,6 +2805,85 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             log.error("Failed to add results to encounter", e);
             logTransaction(syncTaskType, 500, e.getMessage(), safeAccession(order), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
             response.put("responseMessage", e.getMessage());
+        }
+    }
+
+    private void processResultsBundleResourceType(Map<String, Object> results, Order order,
+                                                  SyncTaskType syncTaskType, SyncTask syncTask, Integer responseCode) {
+        try {
+            String resultsString = new ObjectMapper().writeValueAsString(results);
+            List<Encounter> encounters = addTestResultsToEncounter(resultsString, order);
+
+            StringBuilder resultsLog = new StringBuilder();
+            List<Order> ordersToComplete = new ArrayList<>();
+            boolean hasOrdersWithoutResults = false;
+
+            for (Encounter encounter : encounters) {
+                Map<Order, Obs> obsByOrder = new HashMap<>();
+
+                for (Obs obs : encounter.getAllObs(false)) {
+                    if (obs.getOrder() != null && !obsByOrder.containsKey(obs.getOrder())) {
+                        obsByOrder.put(obs.getOrder(), obs);
+                    }
+                }
+
+                for (Order encounterOrder : encounter.getOrders()) {
+                    Obs matchingObs = obsByOrder.get(encounterOrder);
+
+                    if (matchingObs == null) {
+                        hasOrdersWithoutResults = true;
+                        break;
+                    }
+
+                    ordersToComplete.add(encounterOrder);
+
+                    if (resultsLog.length() > 0) {
+                        resultsLog.append(", ");
+                    }
+
+                    String conceptName = matchingObs.getConcept() != null
+                            ? matchingObs.getConcept().getDisplayString()
+                            : "Unknown Result";
+                    String value = matchingObs.getValueAsString(Locale.ENGLISH);
+
+                    resultsLog.append(conceptName).append(": ").append(value);
+                }
+
+                if (hasOrdersWithoutResults) {
+                    break;
+                }
+            }
+
+            String resultSummary = resultsLog.toString();
+
+            if (!hasOrdersWithoutResults) {
+                completeSyncTask(order, syncTask, syncTaskType, responseCode, resultSummary);
+            } else {
+                String message = "Partial results provided: " + resultSummary;
+                logTransaction(syncTaskType, responseCode, message, safeAccession(order), message,
+                        new Date(), syncTaskType.getUrl(), false, false);
+            }
+
+            for (Order orderToComplete : ordersToComplete) {
+                if (orderToComplete.isActive()) {
+                    Context.getOrderService().updateOrderFulfillerStatus(
+                            orderToComplete,
+                            Order.FulfillerStatus.COMPLETED,
+                            resultSummary
+                    );
+
+                    Context.getOrderService().discontinueOrder(
+                            orderToComplete,
+                            "Completed",
+                            new Date(),
+                            orderToComplete.getOrderer(),
+                            orderToComplete.getEncounter()
+                    );
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -2866,7 +3020,12 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
                 String url = syncTaskType.getUrl();
 
                 if (isSuccess) {
-                    Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.RECEIVED, responseFromCPHLServer);
+
+                    for (Order orderToComplete : order.getEncounter().getOrders().stream().filter(order1 -> order1.isActive() && order1.getAccessionNumber()!=null).collect(Collectors.toList())) {
+                        if (payload.contains(orderToComplete.getAccessionNumber())) {
+                            Context.getOrderService().updateOrderFulfillerStatus(orderToComplete, Order.FulfillerStatus.RECEIVED, responseFromCPHLServer);
+                        }
+                    }
                 }
 
                 logTransaction(syncTaskType, responseCode, responseFromCPHLServer, accessionNumber, responseFromCPHLServer, new Date(), url, isSuccess, false);
@@ -2914,7 +3073,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
 
     private String processResourceFromOrder(Order order) {
-
         String healthCenterIdentifier = "";
         try {
             healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
@@ -2927,38 +3085,120 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         String finalCaseBundle = null;
 
         List<Order> orderList = new ArrayList<>();
-        orderList.add(order);
+        if (order.getEncounter().getOrders().size() > 1 && isConceptAllowedToDuplicateAccessionNumber(order.getConcept().getConceptId())) {
+
+            for (Order orderFromEncounter : order.getEncounter().getOrders().stream().filter(order1 -> order1.getDateStopped() == null).collect(Collectors.toSet())) {
+                if (orderFromEncounter.getConcept() != null && isConceptAllowedToDuplicateAccessionNumber(orderFromEncounter.getConcept().getConceptId())) {
+
+                    if (StringUtils.isNotBlank(orderFromEncounter.getAccessionNumber())) {
+                        orderList.add(orderFromEncounter);
+                    } else {
+                        throw new IllegalArgumentException(
+                                String.format("Order: %s that is part of this test does not have a barcode or sample Id",
+                                        orderFromEncounter.getConcept().getDisplayString())
+                        );
+                    }
+                }
+            }
+        } else {
+            orderList.add(order);
+        }
+
         List<Encounter> encounter = new ArrayList<>();
         encounter.add(order.getEncounter());
 
         List<PatientIdentifier> patientArrayList = new ArrayList<>();
         patientArrayList.add(order.getPatient().getPatientIdentifier());
+
         List<Person> personList = new ArrayList<>();
         personList.add(order.getPatient().getPerson());
 
         String specimenSource = generateSpecimen(order);
 
-        resources.addAll(addSpecimenSource(syncFHIRRecord.groupInCaseBundle("ServiceRequest", syncFHIRRecord.getServiceRequestResourceBundle(orderList), "HIV Clinic No."), order));
-        resources.addAll(syncFHIRRecord.groupInCaseBundle("Encounter", syncFHIRRecord.getEncounterResourceBundle(encounter), "HIV Clinic No."));
-        resources.addAll(syncFHIRRecord.groupInCaseBundle("Patient", syncFHIRRecord.getPatientResourceBundle(null, patientArrayList, null), "HIV Clinic No."));
-        resources.addAll(syncFHIRRecord.groupInCaseBundle("Practitioner", syncFHIRRecord.getPractitionerResourceBundle(null, encounter, orderList), "HIV Clinic No."));
-        resources.addAll(syncFHIRRecord.groupInCaseBundle("Observation", syncFHIRRecord.getObservationResourceBundle(null, encounter, personList), "HIV Clinic No."));
+        resources.addAll(addSpecimenSource(
+                syncFHIRRecord.groupInCaseBundle("ServiceRequest",
+                        syncFHIRRecord.getServiceRequestResourceBundle(orderList), "HIV Clinic No."),
+                order));
+
+        resources.addAll(syncFHIRRecord.groupInCaseBundle("Encounter",
+                syncFHIRRecord.getEncounterResourceBundle(encounter), "HIV Clinic No."));
+
+        resources.addAll(syncFHIRRecord.groupInCaseBundle("Patient",
+                syncFHIRRecord.getPatientResourceBundle(null, patientArrayList, null), "HIV Clinic No."));
+
+        resources.addAll(syncFHIRRecord.groupInCaseBundle("Practitioner",
+                syncFHIRRecord.getPractitionerResourceBundle(null, encounter, orderList), "HIV Clinic No."));
+
+        resources.addAll(syncFHIRRecord.groupInCaseBundle("Observation",
+                syncFHIRRecord.getObservationResourceBundle(null, encounter, personList), "HIV Clinic No."));
 
         List<Person> relatedPersons = getRelatedPersonsFromOrder(order);
-
         if (!relatedPersons.isEmpty()) {
-            resources.addAll(syncFHIRRecord.groupInCaseBundle("RelatedPerson", syncFHIRRecord.getRelatedPerson(null, getRelatedPersonsFromOrder(order), null), "HIV Clinic No."));
+            resources.addAll(syncFHIRRecord.groupInCaseBundle("RelatedPerson",
+                    syncFHIRRecord.getRelatedPerson(null, relatedPersons, null), "HIV Clinic No."));
         }
 
-        if (specimenSource != null) resources.add(specimenSource);
+        if (specimenSource != null) {
+            resources.add(specimenSource);
+        }
 
-        if (!resources.isEmpty() && healthCenterIdentifier != null && !healthCenterIdentifier.isEmpty() && order.getAccessionNumber() != null) {
+        if (!resources.isEmpty()
+                && StringUtils.isNotBlank(healthCenterIdentifier)
+                && StringUtils.isNotBlank(order.getAccessionNumber())) {
 
-            String bundleIdentifier = String.format(FHIR_BUNDLE_IDENTIFIER, "ugandaemr", healthCenterIdentifier, order.getAccessionNumber());
-            finalCaseBundle = String.format(FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION_WITH_IDENTIFIER, bundleIdentifier, "[" + String.join(",", resources) + "]");
+            String bundleIdentifier = String.format(
+                    FHIR_BUNDLE_IDENTIFIER, "ugandaemr", healthCenterIdentifier, order.getAccessionNumber());
+
+            finalCaseBundle = String.format(
+                    FHIR_BUNDLE_CASE_RESOURCE_TRANSACTION_WITH_IDENTIFIER,
+                    bundleIdentifier,
+                    "[" + String.join(",", resources) + "]");
         }
 
         return finalCaseBundle;
+    }
+
+    private boolean isConceptAllowedToDuplicateAccessionNumber(Integer conceptId) {
+        if (conceptId == null) {
+            return false;
+        }
+
+        String gpValue = Context.getAdministrationService()
+                .getGlobalProperty("ugandaemrsync.testReferralValidators");
+
+        if (StringUtils.isBlank(gpValue)) {
+            log.warn("Global property ugandaemrsync.testReferralValidators is empty or missing");
+            return false;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(gpValue);
+            JsonNode allowable = root.path("allowableMultiTestInOneBundle");
+
+            if (!allowable.isArray()) {
+                log.warn("Missing or invalid 'allowableMultiTestInOneBundle' in testReferralValidators GP");
+                return false;
+            }
+
+            for (JsonNode node : allowable) {
+                String conceptUuid = node.getTextValue();
+                Concept concept = Context.getConceptService().getConceptByUuid(conceptUuid);
+
+                if (concept == null) {
+                    log.warn("No concept found for UUID: " + conceptUuid);
+                    continue;
+                }
+
+                if (conceptId.equals(concept.getConceptId())) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            log.error("Invalid JSON in global property ugandaemrsync.testReferralValidators", e);
+        }
+
+        return false;
     }
 
     private Set<String> getRelatedPersonConceptUuids(String orderConceptUuid) {
@@ -3193,7 +3433,6 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         return targetCodes;
     }
-
 
 
     public String getMissingVLFHIRCodesAsString(String bundleJson, String orderConceptUuid) {
