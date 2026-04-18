@@ -65,8 +65,9 @@ import org.openmrs.module.idgen.IdentifierSource;
 import org.openmrs.module.idgen.service.IdentifierSourceService;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRHttpURLConnection;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
+import org.openmrs.module.ugandaemrsync.dto.EncounterCompletionResult;
 import org.openmrs.module.ugandaemrsync.api.dao.UgandaEMRSyncDao;
-import org.openmrs.module.ugandaemrsync.mapper.Identifier;
+import org.openmrs.module.ugandaemrsync.dto.mapper.Identifier;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
@@ -288,11 +289,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             return encounter;
         } else {
             if (order != null && order.isActive()) {
-                try {
-                    Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
-                } catch (Exception e) {
-                    log.error("Failed to discontinue order", e);
-                }
+                closeOrderWithoutDuplication(order);
             }
             return encounter;
         }
@@ -348,19 +345,8 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @param order order to discontinue
      */
     private void discontinueOrderIfActive(Order order) {
-        if (order == null || !order.isActive()) {
-            return;
-        }
-        try {
-            Context.getOrderService().discontinueOrder(
-                    order,
-                    "Completed",
-                    new Date(),
-                    order.getOrderer(),
-                    order.getEncounter()
-            );
-        } catch (Exception e) {
-            log.error("Failed to discontinue order", e);
+        if (order != null && order.isActive()) {
+            closeOrderWithoutDuplication(order);
         }
     }
 
@@ -785,30 +771,57 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @return true when results have already been entered or false when results have not yet been entered
      */
     private boolean resultsEnteredOnEncounter(Order order) {
-
-        boolean resultsEnteredOnEncounter = false;
-
-        Set<Obs> allObs = order.getEncounter().getAllObs(false);
-        for (Obs obs1 : allObs) {
-            if (obs1.getConcept().getConceptId().equals(order.getConcept().getConceptId()) && (!obs1.getValueAsString(Locale.ENGLISH).equals("") || obs1.getValueAsString(Locale.ENGLISH) != null)) {
-                resultsEnteredOnEncounter = true;
-                return true;
-            }
+        if (order == null || order.getEncounter() == null || order.getConcept() == null) {
+            return false;
         }
 
-        Set<Concept> conceptSet = allObs.stream().map(Obs::getConcept).collect(Collectors.toSet());
-        List<Concept> members = order.getConcept().getSetMembers();
+        Set<Obs> allObs = order.getEncounter().getAllObs(false);
+        List<Concept> setMembers = order.getConcept().getSetMembers();
+        boolean isPanelOrder = setMembers != null && !setMembers.isEmpty();
 
-        if (members.size() > 0) {
-            for (Concept concept : members) {
-                if (conceptSet.contains(concept)) {
-                    resultsEnteredOnEncounter = true;
+        for (Obs obs : allObs) {
+            if (obs == null || obs.getConcept() == null) {
+                continue;
+            }
+
+            boolean sameOrder = obs.getOrder() != null && obs.getOrder().equals(order);
+
+            if (isPanelOrder) {
+                if ((sameOrder || setMembers.contains(obs.getConcept())) && hasObsResult(obs)) {
+                    return true;
+                }
+            } else {
+                if ((sameOrder || obs.getConcept().equals(order.getConcept())) && hasObsResult(obs)) {
                     return true;
                 }
             }
         }
 
-        return resultsEnteredOnEncounter;
+        return false;
+    }
+
+    private boolean hasObsResult(Obs obs) {
+        if (obs == null) {
+            return false;
+        }
+
+        if (obs.isObsGrouping()) {
+            Set<Obs> groupMembers = obs.getGroupMembers();
+            if (groupMembers == null || groupMembers.isEmpty()) {
+                return false;
+            }
+
+            for (Obs member : groupMembers) {
+                if (hasObsResult(member)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        String value = obs.getValueAsString(Locale.ENGLISH);
+        return value != null && !value.trim().isEmpty();
     }
 
     /**
@@ -901,26 +914,31 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
      * @see UgandaEMRSyncService#addTestResultsToEncounter(String, Order)
      */
     public List<Encounter> addTestResultsToEncounter(String bundleResults, Order order) {
-        Encounter encounter = null;
+        Encounter encounter = order != null ? order.getEncounter() : null;
 
-        if (order != null) {
-            encounter = order.getEncounter();
+        List<Encounter> touchedEncounters = new ArrayList<>();
+        JSONObject bundle = new JSONObject(bundleResults);
+
+        if (!bundle.has("entry")) {
+            return touchedEncounters;
         }
 
-        List<Encounter> returningEncounter = new ArrayList<>();
-        JSONArray jsonArray = new JSONObject(bundleResults).getJSONArray("entry");
+        JSONArray entryArray = bundle.getJSONArray("entry");
+        JSONArray diagnosticReports = searchForJSONOBJECTSByKey(entryArray, "resourceType", "DiagnosticReport");
+        JSONArray observations = searchForJSONOBJECTSByKey(entryArray, "resourceType", "Observation");
 
-        JSONArray filteredDiagnosticReportArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "DiagnosticReport");
-
-        JSONArray filteredObservationArray = searchForJSONOBJECTSByKey(jsonArray, "resourceType", "Observation");
-
-        for (Object jsonObject : filteredDiagnosticReportArray) {
+        for (Object jsonObject : diagnosticReports) {
             JSONObject diagnosticReport = new JSONObject(jsonObject.toString());
+            List<Encounter> processedEncounters = processTestResults(diagnosticReport, encounter, observations, order);
 
-            returningEncounter.addAll(processTestResults(diagnosticReport, encounter, filteredObservationArray, order));
+            for (Encounter processedEncounter : processedEncounters) {
+                if (!touchedEncounters.contains(processedEncounter)) {
+                    touchedEncounters.add(processedEncounter);
+                }
+            }
         }
 
-        return returningEncounter;
+        return touchedEncounters;
     }
 
 
@@ -980,67 +998,88 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         return null;
     }
 
-    private List<Encounter> processTestResults(JSONObject diagonisisReportJsonObject, Encounter encounter, JSONArray observationArray, Order order) {
+    private List<Encounter> processTestResults(JSONObject diagonisisReportJsonObject, Encounter encounter,
+                                               JSONArray observationArray, Order order) {
         JSONObject diagnosticReport = diagonisisReportJsonObject.getJSONObject("resource");
-
         List<Encounter> encounters = new ArrayList<>();
 
-        JSONArray jsonArray = diagnosticReport.getJSONArray("result");
-        for (Object resultReferenceObject : jsonArray) {
-            JSONObject resultReference = new JSONObject(resultReferenceObject.toString());
+        if (!diagnosticReport.has("result")) {
+            return encounters;
+        }
 
+        JSONArray resultArray = diagnosticReport.getJSONArray("result");
+
+        for (Object resultReferenceObject : resultArray) {
+            JSONObject resultReference = new JSONObject(resultReferenceObject.toString());
             String searchKey = resultReference.getString("reference").replace("Observation/", "");
 
-            JSONObject observation = searchForJSONOBJECTByKey(observationArray, "id", searchKey).getJSONObject("resource");
-
-            if (order == null) {
-                order = getOrderFromFHIRObs(observation);
-
-                encounter = order.getEncounter();
+            JSONObject observationWrapper = searchForJSONOBJECTByKey(observationArray, "id", searchKey);
+            if (observationWrapper == null || !observationWrapper.has("resource")) {
+                continue;
             }
 
-            if (!resultsEnteredOnEncounter(order)) {
+            JSONObject observation = observationWrapper.getJSONObject("resource");
 
-                Obs obs = createObsFromFHIRObervation(observation, order, observation.has("hasMember"));
+            Order currentOrder = order;
+            Encounter currentEncounter = encounter;
 
-                if (!order.getConcept().getSetMembers().isEmpty() && observation.has("hasMember") && observation.getJSONArray("hasMember").length() > 0) {
-                    for (int i = 0; i < observation.getJSONArray("hasMember").length(); i++) {
-                        String paramReference = observation.getJSONArray("hasMember").getJSONObject(i).getString("reference").replace("Observation/", "");
-                        JSONObject parameters = searchForJSONOBJECTByKey(observationArray, "id", paramReference).getJSONObject("resource");
-                        Obs parameterObs = createObsFromFHIRObervation(parameters, order, parameters.has("hasMember"));
-                        if (parameterObs != null) {
-                            obs.addGroupMember(parameterObs);
-                            encounter.addObs(parameterObs);
-                        }
+            if (currentOrder == null) {
+                currentOrder = getOrderFromFHIRObs(observation);
+                if (currentOrder == null) {
+                    continue;
+                }
+                currentEncounter = currentOrder.getEncounter();
+            }
+
+            if (currentEncounter == null) {
+                continue;
+            }
+
+            Obs obs = createObsFromFHIRObervation(observation, currentOrder, observation.has("hasMember"));
+            if (obs == null) {
+                continue;
+            }
+
+            if (observation.has("hasMember") && observation.getJSONArray("hasMember").length() > 0) {
+                JSONArray hasMemberArray = observation.getJSONArray("hasMember");
+
+                for (int i = 0; i < hasMemberArray.length(); i++) {
+                    String paramReference = hasMemberArray.getJSONObject(i).getString("reference")
+                            .replace("Observation/", "");
+
+                    JSONObject parameterWrapper = searchForJSONOBJECTByKey(observationArray, "id", paramReference);
+                    if (parameterWrapper == null || !parameterWrapper.has("resource")) {
+                        continue;
+                    }
+
+                    JSONObject parameters = parameterWrapper.getJSONObject("resource");
+                    Obs parameterObs = createObsFromFHIRObervation(parameters, currentOrder, parameters.has("hasMember"));
+
+                    if (parameterObs != null) {
+                        obs.addGroupMember(parameterObs);
                     }
                 }
-                encounter.addObs(obs);
+            }
 
-                Context.getEncounterService().saveEncounter(encounter);
+            currentEncounter.addObs(obs);
+            Context.getEncounterService().saveEncounter(currentEncounter);
 
-                List<Order> activeOrdersWithResults = encounter.getAllObs().stream().filter(obs1 -> obs1.getOrder() != null && obs1.getOrder().isActive()).map(Obs::getOrder).collect(Collectors.toList());
-
-                for (Order resultedOrder : activeOrdersWithResults) {
-                    try {
-                        Context.getOrderService().discontinueOrder(resultedOrder, "Completed", new Date(), resultedOrder.getOrderer(), resultedOrder.getEncounter());
-                        logResultsRecieved(resultedOrder);
-                    } catch (Exception e) {
-                        log.error(e);
-                    }
-                }
-
-                encounters.add(encounter);
+            if (!encounters.contains(currentEncounter)) {
+                encounters.add(currentEncounter);
             }
         }
+
         return encounters;
     }
 
     private SyncTask logResultsRecieved(Order order) {
         UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        SyncTaskType syncTaskType = ugandaEMRSyncService.getSyncTaskTypeByUUID(ALIS_SYNC_TASK_TYPE_UUID);
         SyncTask syncTask = new SyncTask();
         syncTask.setActionCompleted(true);
         syncTask.setStatusCode(CONNECTION_SUCCESS_200);
-        syncTask.setSyncTaskType(ugandaEMRSyncService.getSyncTaskTypeByUUID(ALIS_SYNC_TASK_TYPE_UUID));
+        syncTask.setSyncTaskType(syncTaskType);
+        syncTask.setSentToUrl(syncTaskType.getUrl()); // FIX: Set required URL field
         syncTask.setDateSent(order.getDateActivated());
         syncTask.setStatus("Completed");
         syncTask.setSyncTask(order.getConcept().getName().getName());
@@ -2731,14 +2770,58 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
     private Map<String, Object> sendRequest(UgandaEMRHttpURLConnection connection, SyncTaskType syncTaskType, Map<String, String> payload, Order order, Map<String, Object> response) {
 
-        try {
-            return connection.sendPostBy(syncTaskType.getUrl(), syncTaskType.getUrlUserName(), syncTaskType.getUrlPassword(), "", payload.get("json").toString(), false);
-        } catch (Exception e) {
-            log.error("Failed to fetch results", e);
-            logTransaction(syncTaskType, 500, e.getMessage(), safeAccession(order), e.getMessage(), new Date(), syncTaskType.getUrl(), false, false);
-            response.put("responseMessage", e.getMessage());
-            return Collections.emptyMap();
+        int maxAttempts = 3;
+        int attempt = 0;
+        long baseDelay = 1000; // 1 second
+
+        while (attempt < maxAttempts) {
+            attempt++;
+            try {
+                Map<String, Object> result = connection.sendPostBy(
+                        syncTaskType.getUrl(),
+                        syncTaskType.getUrlUserName(),
+                        syncTaskType.getUrlPassword(),
+                        "",
+                        payload.get("json").toString(),
+                        false
+                );
+
+                if (attempt > 1) {
+                    log.info(String.format("Request succeeded on attempt %d for order %s", attempt, safeAccession(order)));
+                }
+
+                return result;
+
+            } catch (Exception e) {
+                log.warn(String.format("Request attempt %d failed for order %s: %s", attempt, safeAccession(order), e.getMessage()));
+
+                // Log transaction for failed attempt
+                logTransaction(syncTaskType, 500, e.getMessage(),
+                              safeAccession(order), e.getMessage(),
+                              new Date(), syncTaskType.getUrl(), false, false);
+
+                if (attempt >= maxAttempts) {
+                    log.error(String.format("All %d attempts failed for order %s", maxAttempts, safeAccession(order)), e);
+                    response.put("responseMessage",
+                               "Failed after " + maxAttempts + " attempts: " + e.getMessage());
+                    return Collections.emptyMap();
+                }
+
+                // Exponential backoff
+                try {
+                    long delay = baseDelay * (1L << (attempt - 1)); // 2^(attempt-1) * baseDelay
+                    log.info(String.format("Retrying in %d ms for order %s", delay, safeAccession(order)));
+                    Thread.sleep(delay);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.error(String.format("Retry interrupted for order %s", safeAccession(order)));
+                    response.put("responseMessage", "Request interrupted: " + ie.getMessage());
+                    return Collections.emptyMap();
+                }
+            }
         }
+
+        return Collections.emptyMap();
     }
 
     private void processResults(Map<String, Object> results, Order order, SyncTask syncTask, SyncTaskType syncTaskType, Map<String, Object> response) {
@@ -2814,77 +2897,161 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
             String resultsString = new ObjectMapper().writeValueAsString(results);
             List<Encounter> encounters = addTestResultsToEncounter(resultsString, order);
 
-            StringBuilder resultsLog = new StringBuilder();
-            List<Order> ordersToComplete = new ArrayList<>();
-            boolean hasOrdersWithoutResults = false;
+            // Complete orders and get result summary
+            EncounterCompletionResult completionResult = completeOrdersForEncounter(encounters);
 
-            for (Encounter encounter : encounters) {
-                Map<Order, Obs> obsByOrder = new HashMap<>();
-
-                for (Obs obs : encounter.getAllObs(false)) {
-                    if (obs.getOrder() != null && !obsByOrder.containsKey(obs.getOrder())) {
-                        obsByOrder.put(obs.getOrder(), obs);
-                    }
-                }
-
-                for (Order encounterOrder : encounter.getOrders()) {
-                    Obs matchingObs = obsByOrder.get(encounterOrder);
-
-                    if (matchingObs == null) {
-                        hasOrdersWithoutResults = true;
-                        break;
-                    }
-
-                    ordersToComplete.add(encounterOrder);
-
-                    if (resultsLog.length() > 0) {
-                        resultsLog.append(", ");
-                    }
-
-                    String conceptName = matchingObs.getConcept() != null
-                            ? matchingObs.getConcept().getDisplayString()
-                            : "Unknown Result";
-                    String value = matchingObs.getValueAsString(Locale.ENGLISH);
-
-                    resultsLog.append(conceptName).append(": ").append(value);
-                }
-
-                if (hasOrdersWithoutResults) {
-                    break;
-                }
-            }
-
-            String resultSummary = resultsLog.toString();
-
-            if (!hasOrdersWithoutResults) {
-                completeSyncTask(order, syncTask, syncTaskType, responseCode, resultSummary);
+            // Smart sync task completion: Only complete when ALL tests on encounter have results
+            if (!completionResult.resultedOrders.isEmpty() && !completionResult.hasOrdersWithoutResults) {
+                // All tests on the encounter have results - complete ALL related sync tasks
+                completeAllSyncTasksForEncounter(encounters, syncTaskType, responseCode, completionResult.resultSummary);
             } else {
-                String message = "Partial results provided: " + resultSummary;
+                // Partial results - log but don't complete sync tasks
+                String message = String.format("Partial results provided for encounter. Completed: %d, Pending: %d. Results: %s",
+                        completionResult.resultedOrders.size(), completionResult.allActiveOrders.size() - completionResult.resultedOrders.size(), completionResult.resultSummary);
+
+                log.info(String.format("Partial results for encounter: %s", message));
                 logTransaction(syncTaskType, responseCode, message, safeAccession(order), message,
                         new Date(), syncTaskType.getUrl(), false, false);
-            }
-
-            for (Order orderToComplete : ordersToComplete) {
-                if (orderToComplete.isActive()) {
-                    Context.getOrderService().updateOrderFulfillerStatus(
-                            orderToComplete,
-                            Order.FulfillerStatus.COMPLETED,
-                            resultSummary
-                    );
-
-                    Context.getOrderService().discontinueOrder(
-                            orderToComplete,
-                            "Completed",
-                            new Date(),
-                            orderToComplete.getOrderer(),
-                            orderToComplete.getEncounter()
-                    );
-                }
             }
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Completes orders for the given encounters and returns completion status.
+     * This method processes all orders on the encounters, completes those that have results,
+     * and provides detailed status information.
+     *
+     * @param encounters List of encounters to process
+     * @return EncounterCompletionResult containing completion status and summary
+     */
+    @Override
+    public EncounterCompletionResult completeOrdersForEncounter(List<Encounter> encounters) {
+        StringBuilder resultsLog = new StringBuilder();
+        Set<Order> resultedOrders = new HashSet<>();
+        Set<Order> allActiveOrders = new HashSet<>();
+        boolean hasOrdersWithoutResults = false;
+
+        // First pass: Analyze all orders on the encounters
+        for (Encounter encounter : encounters) {
+            for (Order encounterOrder : encounter.getOrders()) {
+                if (encounterOrder == null) {
+                    continue;
+                }
+
+                // Track all active orders on the encounter
+                if (encounterOrder.isActive()) {
+                    allActiveOrders.add(encounterOrder);
+                }
+
+                if (resultsEnteredOnEncounter(encounterOrder)) {
+                    resultedOrders.add(encounterOrder);
+                    appendOrderResults(resultsLog, encounter, encounterOrder);
+                } else if (encounterOrder.isActive()) {
+                    hasOrdersWithoutResults = true;
+                }
+            }
+        }
+
+        String resultSummary = resultsLog.toString();
+
+        // Complete individual orders that have results using SQL-based approach (no duplication)
+        for (Order resultedOrder : resultedOrders.stream().filter(Order::isActive).collect(Collectors.toList())) {
+            if (resultedOrder.isActive()) {
+                Context.getOrderService().updateOrderFulfillerStatus(
+                        resultedOrder,
+                        Order.FulfillerStatus.COMPLETED,
+                        resultSummary
+                );
+
+                // Use SQL to close order without creating duplicate
+                closeOrderWithoutDuplication(resultedOrder);
+            }
+        }
+
+        return new EncounterCompletionResult(resultedOrders, allActiveOrders, hasOrdersWithoutResults, resultSummary);
+    }
+
+    /**
+     * Closes an order using direct SQL update to avoid creating duplicate orders.
+     * This method updates the date_stopped field directly in the database
+     * without calling discontinueOrder() which creates a new stop order.
+     *
+     * @param order the order to close
+     */
+    private void closeOrderWithoutDuplication(Order order) {
+        try {
+            if (order == null || order.getOrderId() == null) {
+                log.warn(String.format("Cannot close order: order or order ID is null"));
+                return;
+            }
+
+            // Use SQL to directly update the order's date_stopped field
+            String sql = String.format(
+                "UPDATE orders SET date_stopped = '%s' WHERE order_id = %d",
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                order.getOrderId()
+            );
+
+            Context.getAdministrationService().executeSQL(sql, false);
+
+            log.info(String.format("Closed order %s using SQL (no duplication)", order.getAccessionNumber()));
+
+        } catch (Exception e) {
+            log.error(String.format("Failed to close order %s using SQL", order.getAccessionNumber()), e);
+            // Fallback to traditional method if SQL fails
+            try {
+                Context.getOrderService().discontinueOrder(
+                    order,
+                    "Completed",
+                    new Date(),
+                    order.getOrderer(),
+                    order.getEncounter()
+                );
+            } catch (Exception fallbackException) {
+                log.error("Fallback to discontinueOrder also failed", fallbackException);
+            }
+        }
+    }
+
+    private void appendOrderResults(StringBuilder resultsLog, Encounter encounter, Order order) {
+        for (Obs obs : encounter.getAllObs(false)) {
+            if (obs.getOrder() != null && obs.getOrder().equals(order)) {
+                appendObsResult(resultsLog, obs);
+            }
+        }
+    }
+
+    private void appendObsResult(StringBuilder resultsLog, Obs obs) {
+        if (obs == null) {
+            return;
+        }
+
+        if (obs.isObsGrouping()) {
+            if (obs.getGroupMembers() != null) {
+                for (Obs member : obs.getGroupMembers()) {
+                    appendObsResult(resultsLog, member);
+                }
+            }
+            return;
+        }
+
+        String value = obs.getValueAsString(Locale.ENGLISH);
+        if (value == null || value.trim().isEmpty()) {
+            return;
+        }
+
+        if (resultsLog.length() > 0) {
+            resultsLog.append(", ");
+        }
+
+        String conceptName = obs.getConcept() != null
+                ? obs.getConcept().getDisplayString()
+                : "Unknown Result";
+
+        resultsLog.append(conceptName).append(": ").append(value);
     }
 
 
@@ -2897,9 +3064,63 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
 
         try {
             Context.getOrderService().updateOrderFulfillerStatus(order, Order.FulfillerStatus.COMPLETED, resultValue);
-            Context.getOrderService().discontinueOrder(order, "Completed", new Date(), order.getOrderer(), order.getEncounter());
+            closeOrderWithoutDuplication(order);
         } catch (Exception e) {
-            log.error("Failed to discontinue order", e);
+            log.error("Failed to complete order", e);
+        }
+    }
+
+    /**
+     * Completes ALL sync tasks for orders on the given encounters when all expected results are present.
+     * This ensures that sync tasks are only marked as completed when the entire encounter's test results are available.
+     *
+     * @param encounters List of encounters that received results
+     * @param syncTaskType The sync task type
+     * @param responseCode HTTP response code
+     * @param resultValue Summary of results
+     */
+    private void completeAllSyncTasksForEncounter(List<Encounter> encounters, SyncTaskType syncTaskType,
+                                                   Integer responseCode, String resultValue) {
+        Set<SyncTask> completedSyncTasks = new HashSet<>();
+        Set<String> processedAccessionNumbers = new HashSet<>();
+
+        for (Encounter encounter : encounters) {
+            for (Order encounterOrder : encounter.getOrders()) {
+                if (encounterOrder == null || !encounterOrder.isActive()) {
+                    continue;
+                }
+
+                String accessionNumber = encounterOrder.getAccessionNumber();
+                if (accessionNumber == null || processedAccessionNumbers.contains(accessionNumber)) {
+                    continue;
+                }
+
+                processedAccessionNumbers.add(accessionNumber);
+
+                // Find all sync tasks for this order's accession number
+                List<SyncTask> syncTasks = getSyncTasksBySyncTaskId(accessionNumber).stream()
+                        .filter(task -> task.getSyncTaskType().equals(syncTaskType))
+                        .collect(Collectors.toList());
+
+                // Complete all applicable sync tasks
+                for (SyncTask task : syncTasks) {
+                    if (task.getRequireAction() && !task.getActionCompleted()) {
+                        task.setActionCompleted(true);
+                        saveSyncTask(task);
+                        completedSyncTasks.add(task);
+
+                        logTransaction(syncTaskType, responseCode, resultValue, accessionNumber,
+                                      resultValue, new Date(), syncTaskType.getUrl(), false, false);
+
+                        log.info(String.format("Completed sync task for order %s (all encounter results complete)",
+                                             accessionNumber));
+                    }
+                }
+            }
+        }
+
+        if (!completedSyncTasks.isEmpty()) {
+            log.info(String.format("Completed %d sync tasks for encounter (all tests resulted)", completedSyncTasks.size()));
         }
     }
 
@@ -3049,7 +3270,7 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         OrderService orderService = Context.getOrderService();
         try {
             if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().contains("The specimen ID:") && response.get("responseMessage").toString().contains("is not HIE compliant")) {
-                orderService.discontinueOrder(order, response.get("responseMessage").toString(), new Date(), order.getOrderer(), order.getEncounter());
+                closeOrderWithoutDuplication(order);
                 responseType.put("responseType", "Not HIE compliant");
                 responseType.put("responseMessage", response.get("responseMessage").toString().contains("is not HIE compliant"));
             } else if (response.get("responseCode").equals(400) && response.get("responseMessage").toString().toLowerCase().contains("duplicate")) {
