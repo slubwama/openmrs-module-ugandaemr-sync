@@ -1,4 +1,4 @@
-package org.openmrs.module.ugandaemrsync.mapper;
+package org.openmrs.module.ugandaemrsync.dto.mapper;
 
 import java.io.Serializable;
 

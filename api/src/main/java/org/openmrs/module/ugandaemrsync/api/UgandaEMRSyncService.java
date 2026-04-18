@@ -16,6 +16,7 @@ import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.api.APIException;
 import org.openmrs.api.OpenmrsService;
+import org.openmrs.module.ugandaemrsync.dto.EncounterCompletionResult;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirResource;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
@@ -376,6 +377,16 @@ public interface UgandaEMRSyncService extends OpenmrsService {
      * @return Encounter the encounter where the test results have been added.
      */
     public List<Encounter> addTestResultsToEncounter(String bundleResults, Order order);
+
+    /**
+     * Completes orders for the given encounters and returns completion status.
+     * This method processes all orders on the encounters, completes those that have results,
+     * and provides detailed status information about completion.
+     *
+     * @param encounters List of encounters to process
+     * @return EncounterCompletionResult containing completion status, order counts, and result summary
+     */
+    public EncounterCompletionResult completeOrdersForEncounter(List<Encounter> encounters);
 
 
     /**
