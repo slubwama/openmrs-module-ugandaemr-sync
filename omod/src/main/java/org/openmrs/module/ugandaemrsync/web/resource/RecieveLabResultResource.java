@@ -1,8 +1,8 @@
 package org.openmrs.module.ugandaemrsync.web.resource;
 
-import org.json.JSONObject;
 import org.openmrs.Encounter;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.ugandaemrsync.dto.EncounterCompletionResult;
 import org.openmrs.module.ugandaemrsync.api.UgandaEMRSyncService;
 import org.openmrs.module.ugandaemrsync.web.resource.DTO.TestResultDTO;
 import org.openmrs.module.webservices.rest.SimpleObject;
@@ -42,6 +42,27 @@ public class RecieveLabResultResource extends DelegatingCrudResource<TestResultD
     public Object create(SimpleObject propertiesToCreate, RequestContext context) throws ResponseException {
 
         List<Encounter> encounters = Context.getService(UgandaEMRSyncService.class).addTestResultsToEncounter(propertiesToCreate.toString(), null);
+
+        // Complete orders using the shared completion logic
+        if (encounters != null && !encounters.isEmpty()) {
+            UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+            EncounterCompletionResult completionResult =
+                ugandaEMRSyncService.completeOrdersForEncounter(encounters);
+
+            // Log completion details
+            if (!completionResult.resultedOrders.isEmpty()) {
+                String message = String.format("Processed %d orders for encounter. Completed: %d, Pending: %d",
+                    completionResult.allActiveOrders.size(),
+                    completionResult.resultedOrders.size(),
+                    completionResult.allActiveOrders.size() - completionResult.resultedOrders.size());
+
+                if (completionResult.hasOrdersWithoutResults) {
+                    message += " (Partial results - some orders still pending)";
+                }
+
+                System.out.println(String.format("Encounter result processing: %s", message));
+            }
+        }
 
         TestResultDTO delegate = new TestResultDTO();
 
