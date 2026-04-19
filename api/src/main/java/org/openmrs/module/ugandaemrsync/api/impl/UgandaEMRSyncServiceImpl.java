@@ -3197,18 +3197,11 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
     }
 
     public List<Order> getOrders() throws IOException, ParseException {
-        OrderService orderService = Context.getOrderService();
-        List<Order> orders = new ArrayList<>();
-        List list = Context.getAdministrationService().executeSQL(VIRAL_LOAD_ORDERS_QUERY, true);
-        if (list.size() > 0) {
-            for (Object o : list) {
-                Order order = orderService.getOrder(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString()));
-                if (order.getAccessionNumber() != null && order.isActive() && order.getInstructions().equalsIgnoreCase("REFER TO cphl")) {
-                    orders.add(order);
-                }
-            }
-        }
-        return orders;
+        // Get order IDs using optimized single query
+        List<Integer> orderIds = getViralLoadOrderIdsWithAccessionNumbers();
+
+        // Batch fetch all orders in one call instead of N+1 individual queries
+        return getOrdersByIds(orderIds);
     }
 
 
@@ -3769,6 +3762,52 @@ public class UgandaEMRSyncServiceImpl extends BaseOpenmrsService implements Ugan
         }
 
         return referralOrderConceptList;
+    }
+
+    @Override
+    public List<Integer> getPatientsByOrderTypeAndDate(Integer orderTypeId, Date dateFrom) {
+        return dao.getPatientsByOrderTypeAndDate(orderTypeId, dateFrom);
+    }
+
+    @Override
+    public List<Integer> getPatientsByIdentifierTypeExcludingProfile(Integer identifierTypeId, Integer profileId) {
+        return dao.getPatientsByIdentifierTypeExcludingProfile(identifierTypeId, profileId);
+    }
+
+    @Override
+    public List<Integer> getPatientsByCohortType(String cohortTypeUuid) {
+        return dao.getPatientsByCohortType(cohortTypeUuid);
+    }
+
+    @Override
+    public List<Integer> getViralLoadOrderIdsWithAccessionNumbers() {
+        // Get the configured days boundary from global properties
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        String daysString = syncGlobalProperties.getGlobalProperty(GP_VIRAL_LOAD_SYNC_DAYS_BOUNDARY);
+        int days = 90; // Default to 90 days if not configured
+        if (daysString != null && !daysString.isEmpty()) {
+            try {
+                days = Integer.parseInt(daysString);
+            } catch (NumberFormatException e) {
+                // If parsing fails, use default
+                days = 90;
+            }
+        }
+        return dao.getViralLoadOrderIdsWithAccessionNumbers(days);
+    }
+
+    /**
+     * Get viral load orders with custom days boundary
+     * @param days Number of days to look back for orders
+     * @return list of Order IDs for viral load orders with accession numbers
+     */
+    public List<Integer> getViralLoadOrderIdsWithAccessionNumbers(int days) {
+        return dao.getViralLoadOrderIdsWithAccessionNumbers(days);
+    }
+
+    @Override
+    public List<org.openmrs.Order> getOrdersByIds(List<Integer> orderIds) {
+        return dao.getOrdersByIds(orderIds);
     }
 }
 

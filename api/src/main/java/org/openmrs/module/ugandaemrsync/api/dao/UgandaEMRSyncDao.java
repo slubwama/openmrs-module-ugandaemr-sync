@@ -27,6 +27,7 @@ import org.openmrs.module.ugandaemrsync.model.SyncFhirProfile;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirProfileLog;
 import org.openmrs.module.ugandaemrsync.model.SyncFhirCase;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -483,5 +484,115 @@ public class UgandaEMRSyncDao {
 
     public void deleteUnSuccessfulSyncTasks(String syncTask, SyncTaskType syncTaskType) {
         Context.getAdministrationService().executeSQL(String.format("delete from sync_task where status_code != %s and sync_task = '%s' and sync_task_type= %s",200,syncTask,syncTaskType.getSyncTaskTypeId()),false);
+    }
+
+    /**
+     * Secure method to get patients by order type and date
+     * @param orderTypeId the order type ID
+     * @param dateFrom the start date
+     * @return list of patient IDs
+     */
+    public List<Integer> getPatientsByOrderTypeAndDate(Integer orderTypeId, Date dateFrom) {
+        String sql = "SELECT DISTINCT patient_id FROM orders WHERE order_type_id = ? AND date_activated >= ? AND date_stopped IS NULL";
+        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+        sqlQuery.setParameter(0, orderTypeId);
+        sqlQuery.setParameter(1, dateFrom);
+        return sqlQuery.list();
+    }
+
+    /**
+     * Secure method to get patients by identifier type excluding existing cases
+     * @param identifierTypeId the patient identifier type ID
+     * @param profileId the sync profile ID
+     * @return list of patient IDs
+     */
+    public List<Integer> getPatientsByIdentifierTypeExcludingProfile(Integer identifierTypeId, Integer profileId) {
+        String sql = "SELECT patient_id FROM patient_identifier WHERE identifier_type = ? AND patient_id NOT IN (SELECT patient FROM sync_fhir_case WHERE profile = ?)";
+        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+        sqlQuery.setParameter(0, identifierTypeId);
+        sqlQuery.setParameter(1, profileId);
+        return sqlQuery.list();
+    }
+
+    /**
+     * Secure method to get patients by cohort type
+     * @param cohortTypeUuid the cohort type UUID
+     * @return list of patient IDs
+     */
+    public List<Integer> getPatientsByCohortType(String cohortTypeUuid) {
+        String sql = "SELECT cm.patient_id FROM cohort_member cm " +
+                     "INNER JOIN cohort c ON cm.cohort_id = c.cohort_id " +
+                     "INNER JOIN cohort_type ct ON c.cohort_type_id = ct.cohort_type_id " +
+                     "WHERE ct.uuid = ? AND c.voided = 0 AND cm.voided = 0";
+        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+        sqlQuery.setParameter(0, cohortTypeUuid);
+        return sqlQuery.list();
+    }
+
+    /**
+     * Secure method to get incomplete action sync tasks
+     * @param syncTaskTypeUuid the sync task type UUID
+     * @return list of sync tasks
+     */
+    public List<SyncTask> getIncompleteActionSyncTasksSecure(String syncTaskTypeUuid) {
+        String sql = "SELECT sync_task.* FROM sync_task " +
+                     "INNER JOIN sync_task_type ON (sync_task_type.sync_task_type_id = sync_task.sync_task_type) " +
+                     "WHERE sync_task_type.uuid = ? AND require_action = true AND action_completed = false";
+        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+        sqlQuery.setParameter(0, syncTaskTypeUuid);
+        sqlQuery.addEntity(SyncTask.class);
+        return sqlQuery.list();
+    }
+
+    /**
+     * Secure method to get synced FHIR resources by profile and date range
+     * @param profileUuid the sync profile UUID
+     * @param from start date
+     * @param to end date
+     * @return list of sync FHIR resources
+     */
+    /**
+     * Secure method to get viral load orders with accession numbers
+     * Optimized to eliminate N+1 query pattern and includes time boundary for performance
+     * @param days Number of days to look back for orders (prevents querying all historical data)
+     * @return list of Order IDs for viral load orders with accession numbers within the time boundary
+     */
+    public List<Integer> getViralLoadOrderIdsWithAccessionNumbers(int days) {
+        String sql = "SELECT orders.order_id FROM orders " +
+                     "INNER JOIN test_order ON (test_order.order_id = orders.order_id) " +
+                     "WHERE accession_number IS NOT NULL " +
+                     "AND specimen_source IS NOT NULL " +
+                     "AND orders.instructions = 'REFER TO cphl' " +
+                     "AND orders.concept_id = 165412 " +
+                     "AND date_stopped IS NULL " +
+                     "AND orders.date_created >= DATE_SUB(CURDATE(), INTERVAL ? DAY)";
+
+        SQLQuery sqlQuery = getSession().createSQLQuery(sql);
+        sqlQuery.setParameter(0, days);
+        List<Object> results = sqlQuery.list();
+
+        List<Integer> orderIds = new ArrayList<>();
+        for (Object result : results) {
+            if (result != null) {
+                orderIds.add(Integer.parseInt(result.toString()));
+            }
+        }
+        return orderIds;
+    }
+
+    /**
+     * Batch get orders by IDs to avoid N+1 queries
+     * @param orderIds list of order IDs to fetch
+     * @return list of Orders
+     */
+    public List<org.openmrs.Order> getOrdersByIds(List<Integer> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Criteria criteria = getSession().createCriteria(org.openmrs.Order.class);
+        criteria.add(Restrictions.in("orderId", orderIds));
+        criteria.add(Restrictions.eq("voided", false));
+        return criteria.list();
     }
 }

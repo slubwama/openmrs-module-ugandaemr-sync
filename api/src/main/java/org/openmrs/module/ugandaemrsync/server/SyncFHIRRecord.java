@@ -52,6 +52,8 @@ import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TY
 import static org.openmrs.module.ugandaemrsync.UgandaEMRSyncConfig.PATIENT_ID_TYPE_CROSS_BORDER_NAME;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_ENABLE_SYNC_CBS_FHIR_DATA;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DEFAULT_LOCATION_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.DEFAULT_LOCATION_UUID_PLACE_HOLDER;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PERSON_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PRACTITIONER_UUID_QUERY;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.PATIENT_UUID_QUERY;
@@ -95,7 +97,21 @@ public class SyncFHIRRecord {
 
     public SyncFHIRRecord() {
         healthCenterIdentifier = Context.getAdministrationService().getGlobalProperty(GP_DHIS2);
-        healthCenterName = Context.getLocationService().getLocationByUuid("629d78e9-93e5-43b0-ad8a-48313fd99117").getName();
+
+        // Get default location UUID from global properties
+        String defaultLocationUuid = Context.getAdministrationService().getGlobalProperty(GP_DEFAULT_LOCATION_UUID);
+        if (defaultLocationUuid == null || defaultLocationUuid.isEmpty()) {
+            defaultLocationUuid = DEFAULT_LOCATION_UUID_PLACE_HOLDER;
+        }
+
+        Location location = Context.getLocationService().getLocationByUuid(defaultLocationUuid);
+        if (location != null) {
+            healthCenterName = location.getName();
+        } else {
+            log.warn("Default location not found for UUID: " + defaultLocationUuid + ", using default");
+            healthCenterName = "Unknown Location";
+        }
+
         lastSyncDate = Context.getAdministrationService().getGlobalProperty(LAST_SYNC_DATE);
     }
 
@@ -375,14 +391,16 @@ public class SyncFHIRRecord {
             if (orderType != null) {
 
                 SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-                String formattedDate = formatter.format(new Date());
+                Date today = new Date();
 
-                List list = Context.getAdministrationService().executeSQL("select Distinct patient_id from  orders where order_type_id = " + orderType.getId() + "  AND date_activated >= \"" + formattedDate + "\" and date_stopped is NULL ;", true);
+                UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+                List<Integer> patientIds = ugandaEMRSyncService.getPatientsByOrderTypeAndDate(orderType.getId(), today);
                 List<Patient> patientList = new ArrayList<>();
 
-                if (list.size() > 0) {
-                    for (Object o : list) {
-                        patientList.add(Context.getPatientService().getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
+                for (Integer patientId : patientIds) {
+                    Patient patient = Context.getPatientService().getPatient(patientId);
+                    if (patient != null) {
+                        patientList.add(patient);
                     }
                 }
                 for (Patient patient : patientList) {
@@ -396,18 +414,15 @@ public class SyncFHIRRecord {
 
             if (patientIdentifierType != null) {
 
-                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-                String formattedDate = formatter.format(new Date());
-                List<Patient> patients = new ArrayList<>();
-
-
-                List list = Context.getAdministrationService().executeSQL("select patient_id from patient_identifier where identifier_type=" + patientIdentifierType.getId() + " and patient_id not  in (select patient from sync_fhir_case where profile=" + syncFhirProfile.getId() + ");", true);
+                UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+                List<Integer> patientIds = ugandaEMRSyncService.getPatientsByIdentifierTypeExcludingProfile(patientIdentifierType.getId(), syncFhirProfile.getId());
 
                 List<Patient> patientList = new ArrayList<>();
 
-                if (list.size() > 0) {
-                    for (Object o : list) {
-                        patientList.add(patientService.getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
+                for (Integer patientId : patientIds) {
+                    Patient patient = patientService.getPatient(patientId);
+                    if (patient != null) {
+                        patientList.add(patient);
                     }
                 }
                 for (Patient patient : patientList.stream().filter(patient -> !patient.getVoided()).collect(Collectors.toList())) {
@@ -1657,13 +1672,15 @@ public class SyncFHIRRecord {
     }
 
     private List<Patient> getPatientByCohortType(String cohortTypeUuid) {
-        List list = Context.getAdministrationService().executeSQL("SELECT patient_id from cohort_member cm inner join cohort c on cm.cohort_id = c.cohort_id inner join cohort_type ct on c.cohort_type_id = ct.cohort_type_id where ct.uuid='" + cohortTypeUuid + "' and c.voided=0 and cm.voided=0;", true);
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+        List<Integer> patientIds = ugandaEMRSyncService.getPatientsByCohortType(cohortTypeUuid);
         PatientService patientService = Context.getPatientService();
         List<Patient> patientList = new ArrayList<>();
 
-        if (list.size() > 0) {
-            for (Object o : list) {
-                patientList.add(patientService.getPatient(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString())));
+        for (Integer patientId : patientIds) {
+            Patient patient = patientService.getPatient(patientId);
+            if (patient != null) {
+                patientList.add(patient);
             }
         }
         return patientList;

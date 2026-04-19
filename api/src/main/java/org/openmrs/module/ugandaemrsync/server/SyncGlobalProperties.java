@@ -17,6 +17,10 @@ import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DAT
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.LAST_SYNC_DATE_PLACE_HOLDER;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.MAX_NUMBER_OF_ROWS;
 import static org.openmrs.module.ugandaemrsync.server.SyncConstant.MAX_NUMBER_OF_ROWS_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_DEFAULT_LOCATION_UUID;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.DEFAULT_LOCATION_UUID_PLACE_HOLDER;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.GP_VIRAL_LOAD_SYNC_DAYS_BOUNDARY;
+import static org.openmrs.module.ugandaemrsync.server.SyncConstant.VIRAL_LOAD_SYNC_DAYS_BOUNDARY_PLACE_HOLDER;
 
 /**
  * Created by lubwamasamuel on 10/11/2016.
@@ -62,7 +66,17 @@ public class SyncGlobalProperties {
 			setGlobalProperty(MAX_NUMBER_OF_ROWS, MAX_NUMBER_OF_ROWS_PLACE_HOLDER);
 			log.info("Place Holder for max number of row is set");
 		}
-		
+
+		if (getGlobalProperty(GP_DEFAULT_LOCATION_UUID) == null) {
+			setGlobalProperty(GP_DEFAULT_LOCATION_UUID, DEFAULT_LOCATION_UUID_PLACE_HOLDER);
+			log.info("Place Holder for default location UUID is set");
+		}
+
+		if (getGlobalProperty(GP_VIRAL_LOAD_SYNC_DAYS_BOUNDARY) == null) {
+			setGlobalProperty(GP_VIRAL_LOAD_SYNC_DAYS_BOUNDARY, VIRAL_LOAD_SYNC_DAYS_BOUNDARY_PLACE_HOLDER);
+			log.info("Place Holder for viral load sync days boundary is set to " + VIRAL_LOAD_SYNC_DAYS_BOUNDARY_PLACE_HOLDER + " days");
+		}
+
 	}
 	
 	public GlobalProperty setGlobalProperty(String property, String propertyValue) {

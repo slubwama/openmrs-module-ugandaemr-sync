@@ -32,7 +32,9 @@ public class UgandaEMRSyncActivator extends BaseModuleActivator {
 			syncGlobalProperties.setSyncFacilityProperties();
 		}
 		catch (Exception e) {
-			
+			log.error("Failed to initialize sync module global properties", e);
+			// Re-throw to prevent module from starting with broken configuration
+			throw new RuntimeException("Failed to initialize UgandaEMR Sync module: " + e.getMessage(), e);
 		}
 		log.info("Started UgandaemrSync");
 	}

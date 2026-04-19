@@ -38,6 +38,16 @@ public class ReceiveLabResultFromALISTask extends AbstractTask {
             Order order = getOrder(syncTask.getSyncTask());
             Map results = new HashMap();
 
+            // Fetch lab results for the order
+            if (order != null) {
+                try {
+                    results = ugandaEMRSyncService.requestLabResult(order, syncTask);
+                } catch (Exception e) {
+                    log.error("Failed to fetch lab results for order: " + order.getOrderNumber(), e);
+                    continue;
+                }
+            }
+
             if (results != null && results.size() > 0 ) {
                 Map reasonReference = (Map) results.get("reasonReference");
                 ArrayList<Map> result = (ArrayList<Map>) reasonReference.get("result");

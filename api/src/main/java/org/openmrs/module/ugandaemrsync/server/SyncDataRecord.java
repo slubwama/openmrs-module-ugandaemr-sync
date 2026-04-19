@@ -41,18 +41,22 @@ public class SyncDataRecord {
         }
         if (connectionStatus == SyncConstant.CONNECTION_SUCCESS_200) {
             int size = 0;
-            Iterator it = newSyncRecords.iterator();
-            while (it.hasNext()) {
-                Object row[] = (Object[]) it.next();
+            // Batch process records in groups to reduce HTTP calls
+            int batchSize = 100; // Process 100 records at a time
+            int totalRecords = newSyncRecords.size();
+
+            for (int i = 0; i < totalRecords; i += batchSize) {
+                int end = Math.min(i + batchSize, totalRecords);
+                List batch = newSyncRecords.subList(i, end);
+
                 try {
-                    Map response = syncData(String.valueOf(row[1]));
-                    Integer uuid = Integer.valueOf(String.valueOf(row[0]));
+                    Map response = syncBatchData(batch);
                     String success = String.valueOf(response.get("response"));
                     if (success.equalsIgnoreCase("successful")) {
-                        size += 1;
+                        size += batch.size();
                     }
                 } catch (Exception e) {
-                    log.error("Failed to Sync data", e);
+                    log.error("Failed to Sync batch data", e);
                 }
             }
             return size;
@@ -78,8 +82,6 @@ public class SyncDataRecord {
 
         String url = serverProtocol + serverIP + "/api";
 
-        UgandaEMRHttpURLConnection ugandaEMRHttpURLConnection = new UgandaEMRHttpURLConnection();
-
         try {
             UUID uuid = UUID.fromString(facilitySyncId);
 
@@ -89,6 +91,50 @@ public class SyncDataRecord {
 
         } catch (IllegalArgumentException exception) {
             Map<String, String> map = new HashMap<String, String>();
+            map.put("message", "No valid facility Id Found");
+            return map;
+        }
+    }
+
+    /**
+     * Sync multiple records in a single batch to reduce HTTP calls
+     * @param batchRecords List of records to sync as a batch
+     * @return Response from the server
+     * @throws Exception
+     */
+    private Map syncBatchData(List batchRecords) throws Exception {
+        if (batchRecords == null || batchRecords.isEmpty()) {
+            Map<String, String> emptyResponse = new HashMap<String, String>();
+            emptyResponse.put("response", "failed");
+            emptyResponse.put("message", "Empty batch");
+            return emptyResponse;
+        }
+
+        // Build JSON array of all records in the batch
+        JSONArray batchJson = new JSONArray();
+        for (Object record : batchRecords) {
+            Object row[] = (Object[]) record;
+            if (row.length > 1) {
+                batchJson.put(row[1]);
+            }
+        }
+
+        String contentTypeJSON = SyncConstant.JSON_CONTENT_TYPE;
+        SyncGlobalProperties syncGlobalProperties = new SyncGlobalProperties();
+        String serverIP = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_IP);
+        String serverProtocol = syncGlobalProperties.getGlobalProperty(SyncConstant.SERVER_PROTOCOL);
+        String facilitySyncId = syncGlobalProperties.getGlobalProperty(HEALTH_CENTER_SYNC_ID);
+        String url = serverProtocol + serverIP + "/api/batch";
+
+        try {
+            UUID uuid = UUID.fromString(facilitySyncId);
+            facilitySyncId = uuid.toString();
+
+            return ugandaEMRHttpURLConnection.sendPostByWithBasicAuth(contentTypeJSON, batchJson.toString(), facilitySyncId, url, syncGlobalProperties.getGlobalProperty(SERVER_USERNAME), syncGlobalProperties.getGlobalProperty(SERVER_PASSWORD), null);
+
+        } catch (IllegalArgumentException exception) {
+            Map<String, String> map = new HashMap<String, String>();
+            map.put("response", "failed");
             map.put("message", "No valid facility Id Found");
             return map;
         }
@@ -117,10 +163,9 @@ public class SyncDataRecord {
 
     public static Map<String, String> convertListOfMapsToJsonString(List list, List<String> columns) throws IOException {
         JSONArray result = new JSONArray();
-        Iterator it = list.iterator();
         Map<String, String> vals = new HashMap<String, String>();
-        while (it.hasNext()) {
-            Object rows[] = (Object[]) it.next();
+        for (Object item : list) {
+            Object rows[] = (Object[]) item;
             JSONObject row = new JSONObject();
 
             for (int i = 0; i < columns.size(); i++) {
@@ -156,10 +201,9 @@ public class SyncDataRecord {
     }
 
     private Map<String, Integer> convertListToMap(List list) {
-        Map<String, Integer> result = new HashMap<String, Integer>();
-        Iterator it = list.iterator();
-        while (it.hasNext()) {
-            Object rows[] = (Object[]) it.next();
+        Map<String, Integer> result = new HashMap<String, Integer>(list.size());
+        for (Object item : list) {
+            Object rows[] = (Object[]) item;
             result.put(String.valueOf(rows[1]), Integer.valueOf(String.valueOf(rows[0])));
         }
         return result;

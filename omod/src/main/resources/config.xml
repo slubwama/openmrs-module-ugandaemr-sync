@@ -427,6 +427,14 @@
     </globalProperty>
 
     <globalProperty>
+        <property>ugandaemrsync.viralloadSyncDaysBoundary</property>
+        <defaultValue>90</defaultValue>
+        <description>
+          The number of days to look back for viral load orders to sync. Prevents querying all historical orders. Default is 90 days.
+        </description>
+    </globalProperty>
+
+    <globalProperty>
         <property>ugandaemrsync.testReferralValidators</property>
         <defaultValue>{"validatableTest":["1eb05918-f50c-4cad-a827-3c78f296a10a","163610AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","dc8d4af2-30ab-102d-86b0-7a5022ba4115","907e11ae-5d80-4ee5-8167-42417b8bc4c9"],"testValidators":{"1eb05918-f50c-4cad-a827-3c78f296a10a":"413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2","163610AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA":"413946009,385354005,202501002,LL5723-3,202501009,202501016,202501020,33882-2","dc8d4af2-30ab-102d-86b0-7a5022ba4115":"202512021,202512050,202512011,202512030,202512080,202512090,202512100,202512001","907e11ae-5d80-4ee5-8167-42417b8bc4c9":"202512021,202512050,202512011,202512030,202512080,202512090,202512100,202512001"},"allowableMultiTestInOneBundle":["dc8d4af2-30ab-102d-86b0-7a5022ba4115","907e11ae-5d80-4ee5-8167-42417b8bc4c9"]}</defaultValue>
         <description>

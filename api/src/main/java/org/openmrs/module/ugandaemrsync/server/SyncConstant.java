@@ -85,6 +85,8 @@ public class SyncConstant {
 
     public static final String MAX_NUMBER_OF_ROWS_PLACE_HOLDER = "500";
 
+    public static final String VIRAL_LOAD_SYNC_DAYS_BOUNDARY_PLACE_HOLDER = "90";
+
     public static final String HIV_ENCOUNTER_PAGE_UUID = "8d5b2be0-c2cc-11de-8d13-0010c6dffd0f";
 
     public static final String VIRAL_LOAD_LAB_REQUEST_ENCOUNTER_TYPE_UUID = "077c43ee-9745-11e9-bc42-526af7764f64";
@@ -123,6 +125,12 @@ public class SyncConstant {
     public static final int VL_SUPPRESSED_CELL_NO = 11;
 
     public static final String GP_DHIS2 = "ugandaemr.dhis2.organizationuuid";
+
+    public static final String GP_DEFAULT_LOCATION_UUID = "ugandaemrsync.defaultLocationUuid";
+
+    public static final String GP_VIRAL_LOAD_SYNC_DAYS_BOUNDARY = "ugandaemrsync.viralloadSyncDaysBoundary";
+
+    public static final String DEFAULT_LOCATION_UUID_PLACE_HOLDER = "629d78e9-93e5-43b0-ad8a-48313fd99117";
 
     public static final String VL_SEND_SAMPLE_FHIR_JSON_STRING = "{\"resourceType\":\"ServiceRequest\",\"locationCode\":\"%s\",\"locationReference\":\"%s\",\"code\":\"%s\",\"performerType\":\"????\",\"status\":\"active\",\"intent\":\"order\",\"subject\":{\"resourceType\":\"Location\",\"name\":\"%s\"},\"specimen\":[{\"subject\":{\"resourceType\":\"Patient\",\"identifier\":\"%s\"},\"resourceType\":\"Specimen\",\"identifier\":\"%s\",\"type\":\"%s\",\"status\":\"available\",\"collection\":{\"collectedDateTime\":\"%s\",\"collector\":{\"resourceType\":\"Practitioner\",\"name\":\"%s\",\"telecom\":\"%s\"},\"processing\": [{\"procedure\": {\"code\": {\"coding\": [{\"system\": \"http://snomed.info/sct\",\"code\": \"701947005\",\"display\": \"Blood centrifugation system\"}]},\"text\": \"Centrifugation\"},\"timeDateTime\": \"%s\"}\n" +
 			"          ]}}],\"requester\":{\"resourceType\":\"Practitioner\",\"name\":\"%s\",\"telecom\":\"%s\"},\"performer\":[{\"resourceType\":\"Organization\",\"endpoint\":\"%s\"}]}";

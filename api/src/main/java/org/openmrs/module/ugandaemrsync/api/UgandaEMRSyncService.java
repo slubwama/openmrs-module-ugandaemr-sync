@@ -567,5 +567,49 @@ public interface UgandaEMRSyncService extends OpenmrsService {
 
 
     public List getReferralOrderConcepts();
+
+    /**
+     * Secure method to get patients by order type and date
+     * @param orderTypeId the order type ID
+     * @param dateFrom the start date
+     * @return list of patient IDs
+     */
+    public List<Integer> getPatientsByOrderTypeAndDate(Integer orderTypeId, Date dateFrom);
+
+    /**
+     * Secure method to get patients by identifier type excluding existing cases
+     * @param identifierTypeId the patient identifier type ID
+     * @param profileId the sync profile ID
+     * @return list of patient IDs
+     */
+    public List<Integer> getPatientsByIdentifierTypeExcludingProfile(Integer identifierTypeId, Integer profileId);
+
+    /**
+     * Secure method to get patients by cohort type
+     * @param cohortTypeUuid the cohort type UUID
+     * @return list of patient IDs
+     */
+    public List<Integer> getPatientsByCohortType(String cohortTypeUuid);
+
+    /**
+     * Get viral load orders with accession numbers (optimized)
+     * Uses default time boundary from global properties (90 days)
+     * @return list of Order IDs for viral load orders with accession numbers within the time boundary
+     */
+    public List<Integer> getViralLoadOrderIdsWithAccessionNumbers();
+
+    /**
+     * Get viral load orders with custom days boundary
+     * @param days Number of days to look back for orders (prevents querying all historical data)
+     * @return list of Order IDs for viral load orders with accession numbers within the time boundary
+     */
+    public List<Integer> getViralLoadOrderIdsWithAccessionNumbers(int days);
+
+    /**
+     * Batch get orders by IDs to avoid N+1 queries
+     * @param orderIds list of order IDs to fetch
+     * @return list of Orders
+     */
+    public List<org.openmrs.Order> getOrdersByIds(List<Integer> orderIds);
 }
 

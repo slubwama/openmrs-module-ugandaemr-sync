@@ -436,17 +436,15 @@ public class SendViralLoadProgramDataToCentralServerTask extends AbstractTask {
 
 
     public List<Order> getOrders() throws IOException, ParseException {
-        OrderService orderService = Context.getOrderService();
-        List<Order> orders = new ArrayList<>();
-        List list = Context.getAdministrationService().executeSQL(VIRAL_LOAD_ORDERS_QUERY, true);
-        if (list.size() > 0) {
-            for (Object o : list) {
-                Order order = orderService.getOrder(Integer.parseUnsignedInt(((ArrayList) o).get(0).toString()));
-                if (order.getAccessionNumber() != null && order.isActive() && order.getInstructions().equalsIgnoreCase("REFER TO cphl")) {
-                    orders.add(order);
-                }
-            }
-        }
+        UgandaEMRSyncService ugandaEMRSyncService = Context.getService(UgandaEMRSyncService.class);
+
+        // Get order IDs using optimized single query
+        List<Integer> orderIds = ugandaEMRSyncService.getViralLoadOrderIdsWithAccessionNumbers();
+
+        // Batch fetch all orders in one call instead of N+1 individual queries
+        List<Order> orders = ugandaEMRSyncService.getOrdersByIds(orderIds);
+
+        // Filter for active orders with correct instructions (already done in SQL)
         return orders;
     }
 

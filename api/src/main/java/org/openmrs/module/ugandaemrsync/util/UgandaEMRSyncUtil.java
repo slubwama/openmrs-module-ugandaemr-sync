@@ -23,9 +23,11 @@ public class UgandaEMRSyncUtil {
     }
 
     public static Date addDaysToDate(Date date, Integer numberOfDays) {
-        Date today = new Date();
+        if (date == null) {
+            date = new Date(); // Default to current date if null
+        }
         Calendar cal = Calendar.getInstance();
-        cal.setTime(today);
+        cal.setTime(date); // Use the provided date parameter
         cal.add(Calendar.DATE, numberOfDays);
         return cal.getTime();
     }
